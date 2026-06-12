@@ -23,10 +23,11 @@ db = firestore.client()
 
 def clean_mobile(mobile):
     mobile = str(mobile).strip()
-    mobile = mobile.replace(" ", "").replace("-", "")
-    mobile = mobile.replace("+91", "")
+    mobile = "".join(ch for ch in mobile if ch.isdigit())
+
     if mobile.startswith("91") and len(mobile) == 12:
         mobile = mobile[2:]
+
     return mobile
 
 
@@ -40,6 +41,7 @@ def login():
 
     if request.method == "POST":
         login_id = request.form.get("login_id", "").strip().lower()
+        login_mobile = clean_mobile(login_id)
         password = request.form.get("password", "").strip()
 
         docs = db.collection("users").stream()
@@ -47,12 +49,12 @@ def login():
         for doc in docs:
             data = doc.to_dict()
 
-            db_mobile = str(data.get("mobile", "")).strip().lower()
-            db_phone = str(data.get("phone", "")).strip().lower()
+            db_mobile = clean_mobile(data.get("mobile", ""))
+            db_phone = clean_mobile(data.get("phone", ""))
             db_email = str(data.get("email", "")).strip().lower()
             db_password = str(data.get("password", "")).strip()
 
-            if (login_id == db_mobile or login_id == db_phone or login_id == db_email) and password == db_password:
+            if (login_mobile == db_mobile or login_mobile == db_phone or login_id == db_email) and password == db_password:
                 session["user_id"] = doc.id
                 session["user_name"] = data.get("name", "")
                 return redirect("/home")
@@ -69,7 +71,7 @@ def signup():
     if request.method == "POST":
 
         name = request.form["name"]
-        mobile = request.form["mobile"]
+        mobile = clean_mobile(request.form["mobile"])
         email = request.form["email"]
         password = request.form["password"]
         language_code = request.form["language_code"]
