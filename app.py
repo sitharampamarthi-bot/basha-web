@@ -54,7 +54,13 @@ def login():
             db_email = str(data.get("email", "")).strip().lower()
             db_password = str(data.get("password", "")).strip()
 
-            if (login_mobile == db_mobile or login_mobile == db_phone or login_id == db_email) and password == db_password:
+            mobile_match = login_mobile and (
+                login_mobile == db_mobile or login_mobile == db_phone
+            )
+
+            email_match = login_id == db_email
+
+            if (mobile_match or email_match) and password == db_password:
                 session["user_id"] = doc.id
                 session["user_name"] = data.get("name", "")
                 return redirect("/home")
@@ -72,7 +78,7 @@ def signup():
 
         name = request.form["name"]
         mobile = clean_mobile(request.form["mobile"])
-        email = request.form["email"]
+        email = request.form["email"].strip().lower()
         password = request.form["password"]
         language_code = request.form["language_code"]
         language_name = request.form["language_name"]
