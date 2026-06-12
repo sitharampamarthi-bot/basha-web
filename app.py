@@ -44,6 +44,9 @@ def login():
         login_mobile = clean_mobile(login_id)
         password = request.form.get("password", "").strip()
 
+        matched_user = None
+        matched_doc_id = None
+
         docs = db.collection("users").stream()
 
         for doc in docs:
@@ -54,18 +57,20 @@ def login():
             db_email = str(data.get("email", "")).strip().lower()
             db_password = str(data.get("password", "")).strip()
 
-            mobile_match = login_mobile and (
-                login_mobile == db_mobile or login_mobile == db_phone
-            )
+            if login_id == db_email or login_mobile == db_mobile or login_mobile == db_phone:
+                matched_user = data
+                matched_doc_id = doc.id
 
-            email_match = login_id == db_email
+                if password == db_password:
+                    session["user_id"] = matched_doc_id
+                    session["user_name"] = data.get("name", "")
+                    return redirect("/home")
+                else:
+                    error = "Password wrong. Please use Forgot Password."
+                    break
 
-            if (mobile_match or email_match) and password == db_password:
-                session["user_id"] = doc.id
-                session["user_name"] = data.get("name", "")
-                return redirect("/home")
-
-        error = "Invalid mobile/email or password"
+        if not matched_user:
+            error = "Mobile/email not registered"
 
     return render_template("login.html", error=error)
 
@@ -77,7 +82,7 @@ def signup():
     if request.method == "POST":
 
         name = request.form["name"]
-        mobile = clean_mobile(request.form["mobile"])
+        mobile = clean_mobile(request.form.get("mobile", ""))
         email = request.form["email"].strip().lower()
         password = request.form["password"]
         language_code = request.form["language_code"]
@@ -113,7 +118,7 @@ def forgot_password():
     message = ""
 
     if request.method == "POST":
-        mobile = request.form.get("mobile", "").strip()
+        mobile = clean_mobile(request.form.get("mobile", ""))
         email = request.form.get("email", "").strip().lower()
 
         found_id = None
@@ -123,8 +128,8 @@ def forgot_password():
         for doc in docs:
             data = doc.to_dict()
 
-            db_mobile = str(data.get("mobile", "")).strip()
-            db_phone = str(data.get("phone", "")).strip()
+            db_mobile = clean_mobile(data.get("mobile", ""))
+            db_phone = clean_mobile(data.get("phone", ""))
             db_email = str(data.get("email", "")).strip().lower()
 
             if mobile and (db_mobile == mobile or db_phone == mobile):
