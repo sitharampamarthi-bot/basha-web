@@ -15,6 +15,9 @@
         <span class="navbar-brand fw-bold">
             <i class="bi bi-translate"></i> Basha App
         </span>
+        <a href="/contacts" class="btn btn-light btn-sm me-2">
+            Contacts
+        </a>        
         <a href="/" class="btn btn-light btn-sm">Logout</a>
     </div>
 </nav>
@@ -26,17 +29,27 @@
         <p class="text-muted mb-0">Chat with users in your language</p>
     </div>
 
-    <div class="row g-3">
-        <div class="col-md-6">
-        <a href="/contacts" class="text-decoration-none">
-            <div class="card shadow p-4 text-center" style="border-radius:20px;">
-                <i class="bi bi-person-lines-fill fs-1 text-success"></i>
-                <h4 class="mt-3 text-dark">My Contacts</h4>
-                <p class="text-muted">Add / invite contacts</p>
-            </div>
-        </a>
-    </div>
+    <div class="card shadow p-4 mb-4" style="border-radius:20px;">
+        <h4 class="fw-bold mb-3">Available Contacts</h4>
 
+        {% if contacts|length == 0 %}
+            <div class="alert alert-warning mb-0">
+                No Basha contacts found. Add contacts or send invite.
+            </div>
+        {% endif %}
+
+        {% for c in contacts %}
+        <div class="d-flex justify-content-between align-items-center border-bottom py-3">
+            <div>
+                <h5 class="mb-1">{{ c.savedName }}</h5>
+                <small class="text-muted">{{ c.mobile }}</small>
+            </div>
+
+            <a href="/chat/{{ c.mobile }}" class="btn btn-success btn-sm">
+                Chat
+            </a>
+        </div>
+        {% endfor %}
     </div>
 
 </div>

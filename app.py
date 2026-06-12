@@ -156,7 +156,33 @@ def reset_password(user_id):
 
 @app.route("/home")
 def home():
-    return render_template("home.html")
+    if "user_id" not in session:
+        return redirect("/")
+
+    current_user_id = session["user_id"]
+
+    registered_contacts = []
+
+    contact_docs = db.collection("users").document(current_user_id)\
+        .collection("contacts").stream()
+
+    for c in contact_docs:
+        cdata = c.to_dict()
+
+        if cdata.get("contactUserId"):
+            user_doc = db.collection("users").document(cdata["contactUserId"]).get()
+
+            if user_doc.exists:
+                u = user_doc.to_dict()
+                u["id"] = cdata["contactUserId"]
+                u["savedName"] = cdata.get("savedName", u.get("name", ""))
+                u["mobile"] = cdata.get("mobile", u.get("mobile", ""))
+                registered_contacts.append(u)
+
+    return render_template(
+        "home.html",
+        contacts=registered_contacts
+    )
 
 @app.route("/users")
 def users():
@@ -299,6 +325,7 @@ def check_phone_contact():
             "contactUserId": found_id,
             "savedName": name or found_user.get("name", ""),
             "mobile": mobile,
+            "registered": True,
             "createdAt": firestore.SERVER_TIMESTAMP
         })
 
@@ -340,6 +367,7 @@ def contacts():
                         "contactUserId": found_id,
                         "savedName": saved_name or found_user.get("name", ""),
                         "mobile": mobile,
+                        "registered": True,
                         "createdAt": firestore.SERVER_TIMESTAMP
                     })
                 message = "Contact added successfully"
