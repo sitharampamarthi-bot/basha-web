@@ -1,19 +1,24 @@
-from flask import Flask, jsonify, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, jsonify
 import firebase_admin
 from firebase_admin import credentials, firestore
 import os
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+import json
 
 app = Flask(__name__)
 app.secret_key = "basha_secret_key"
 
-cred = credentials.Certificate(
-    os.path.join(BASE_DIR, "serviceAccountKey.json")
-)
+firebase_json = os.getenv("FIREBASE_SERVICE_ACCOUNT")
+
+if firebase_json:
+    cred_dict = json.loads(firebase_json)
+    cred = credentials.Certificate(cred_dict)
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    cred = credentials.Certificate(
+        os.path.join(BASE_DIR, "serviceAccountKey.json")
+    )
 
 firebase_admin.initialize_app(cred)
-
 db = firestore.client()
 
 def clean_mobile(mobile):
