@@ -20,25 +20,27 @@
 <div class="container" style="padding-top:80px;padding-bottom:85px;">
 
     {% for msg in messages %}
+
         {% if msg.senderMobile == current_mobile %}
+
             <div class="d-flex justify-content-end mb-2">
                 <div class="p-3 text-white"
-                     style="background:#198754;border-radius:16px;max-width:70%;">
-                    {% if msg.senderMobile == current_mobile %}
-                        {{ msg.message }}
-                    {% else %}
-                        {{ msg.translatedMessage }}
-                    {% endif %}
-                </div>
-            </div>
-        {% else %}
-            <div class="d-flex justify-content-start mb-2">
-                <div class="p-3 text-dark"
-                     style="background:#e1e1e1;border-radius:16px;max-width:70%;">
+                    style="background:#198754;border-radius:16px;max-width:70%;">
                     {{ msg.message }}
                 </div>
             </div>
+
+        {% else %}
+
+            <div class="d-flex justify-content-start mb-2">
+                <div class="p-3 text-dark"
+                    style="background:#e1e1e1;border-radius:16px;max-width:70%;">
+                    {{ msg.translatedMessage or msg.message }}
+                </div>
+            </div>
+
         {% endif %}
+
     {% endfor %}
 
 </div>
