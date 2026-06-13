@@ -188,10 +188,12 @@ def home():
     user_doc = db.collection("users").document(current_user_id).get()
     user_data = user_doc.to_dict()
 
+    current_mobile = clean_mobile(user_data.get("mobile", ""))
     user_name = user_data.get("name", "User")
     profile_pic = user_data.get("profilePic", "")
 
     contacts = []
+    total_unread = 0
 
     contact_docs = db.collection("users").document(current_user_id)\
         .collection("contacts").stream()
@@ -204,17 +206,53 @@ def home():
 
         if udoc.exists:
             u = udoc.to_dict()
+            contact_mobile = clean_mobile(u.get("mobile", ""))
+
+            chat_id = get_chat_id(current_mobile, contact_mobile)
+            chat_doc = db.collection("chats").document(chat_id).get()
+
+            unread_count = 0
+            last_time = None
+            last_message = ""
+
+            if chat_doc.exists:
+                chat_data = chat_doc.to_dict()
+                last_time = chat_data.get("lastMessageTime")
+                last_message = chat_data.get("lastMessage", "")
+
+                msg_docs = db.collection("chats").document(chat_id)\
+                    .collection("messages")\
+                    .where("receiverMobile", "==", current_mobile)\
+                    .stream()
+
+                for msg in msg_docs:
+                    m = msg.to_dict()
+                    read_by = m.get("readBy", [])
+                    if current_mobile not in read_by:
+                        unread_count += 1
+
+            total_unread += unread_count
+
             contacts.append({
                 "savedName": cdata.get("savedName", u.get("name", "")),
-                "mobile": u.get("mobile", ""),
-                "languageName": u.get("languageName", "English")
+                "mobile": contact_mobile,
+                "languageName": u.get("languageName", "English"),
+                "unreadCount": unread_count,
+                "lastMessage": last_message,
+                "lastTime": last_time
             })
+
+    contacts.sort(
+        key=lambda x: x["lastTime"] or "",
+        reverse=True
+    )
 
     return render_template(
         "home.html",
         user_name=user_name,
         profile_pic=profile_pic,
-        contacts=contacts
+        contacts=contacts,
+        total_unread=total_unread
     )
 
 @app.route("/users")
@@ -271,7 +309,16 @@ def chat(mobile):
         .stream()
 
     for m in msg_docs:
+
         data = m.to_dict()
+
+        # message current user ki vachindi ante read mark cheyyi
+        if data.get("receiverMobile") == current_mobile:
+
+            m.reference.update({
+                "readBy": firestore.ArrayUnion([current_mobile])
+            })
+
         messages.append(data)
 
     return render_template(
@@ -373,7 +420,14 @@ def get_messages(receiver_mobile):
     messages = []
 
     for m in msg_docs:
-        messages.append(m.to_dict())
+        data = m.to_dict()
+
+        if data.get("receiverMobile") == current_mobile:
+            m.reference.update({
+                "readBy": firestore.ArrayUnion([current_mobile])
+            })
+
+        messages.append(data)
 
     return render_template(
         "message_bubbles.html",
