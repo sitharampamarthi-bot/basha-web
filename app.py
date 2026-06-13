@@ -272,6 +272,46 @@ def chat(mobile):
         current_mobile=current_mobile
     )
     
+def save_chat_message(sender_id, receiver_mobile, message):
+    sender_doc = db.collection("users").document(sender_id).get()
+    sender = sender_doc.to_dict()
+
+    sender_mobile = clean_mobile(sender.get("mobile", ""))
+    receiver_mobile = clean_mobile(receiver_mobile)
+
+    receiver_docs = db.collection("users") \
+        .where("mobile", "==", receiver_mobile) \
+        .limit(1) \
+        .get()
+
+    receiver_language = "en"
+
+    if receiver_docs:
+        receiver_language = receiver_docs[0].to_dict().get("languageCode", "en")
+
+    translated_message = translate_text(message, receiver_language)
+
+    chat_id = get_chat_id(sender_mobile, receiver_mobile)
+    chat_ref = db.collection("chats").document(chat_id)
+
+    chat_ref.set({
+        "participants": [sender_mobile, receiver_mobile],
+        "lastMessage": translated_message,
+        "lastMessageTime": firestore.SERVER_TIMESTAMP
+    }, merge=True)
+
+    chat_ref.collection("messages").add({
+        "senderMobile": sender_mobile,
+        "receiverMobile": receiver_mobile,
+        "message": message,
+        "translatedMessage": translated_message,
+        "receiverLanguage": receiver_language,
+        "readBy": [sender_mobile],
+        "timestamp": firestore.SERVER_TIMESTAMP
+    })
+
+    return chat_id    
+    
 @app.route("/send-message", methods=["POST"])
 def send_message():
     if "user_id" not in session:
@@ -320,7 +360,51 @@ def send_message():
         "timestamp": firestore.SERVER_TIMESTAMP
     })
 
-    return redirect(f"/chat/{receiver_mobile}")    
+    return redirect(f"/chat/{receiver_mobile}")
+
+@app.route("/send-message", methods=["POST"])
+def send_message():
+    if "user_id" not in session:
+        return redirect("/")
+
+    receiver_mobile = request.form.get("receiver_mobile", "").strip()
+    message = request.form.get("message", "").strip()
+
+    if message:
+        save_chat_message(session["user_id"], receiver_mobile, message)
+
+    return redirect(f"/chat/{receiver_mobile}")
+
+@app.route("/get-messages/<receiver_mobile>")
+def get_messages(receiver_mobile):
+    if "user_id" not in session:
+        return ""
+
+    current_user_id = session["user_id"]
+
+    current_doc = db.collection("users").document(current_user_id).get()
+    current_user = current_doc.to_dict()
+
+    current_mobile = clean_mobile(current_user.get("mobile", ""))
+    receiver_mobile = clean_mobile(receiver_mobile)
+
+    chat_id = get_chat_id(current_mobile, receiver_mobile)
+
+    msg_docs = db.collection("chats").document(chat_id) \
+        .collection("messages") \
+        .order_by("timestamp") \
+        .stream()
+
+    messages = []
+
+    for m in msg_docs:
+        messages.append(m.to_dict())
+
+    return render_template(
+        "message_bubbles.html",
+        messages=messages,
+        current_mobile=current_mobile
+    )    
     
 @app.route("/check-phone-contact", methods=["POST"])
 def check_phone_contact():

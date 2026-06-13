@@ -17,7 +17,7 @@
     </div>
 </nav>
 
-<div class="container" style="padding-top:80px;padding-bottom:85px;">
+<div id="messagesBox" class="container" style="padding-top:80px;padding-bottom:85px;">
 
     {% for msg in messages %}
 
@@ -46,21 +46,60 @@
 </div>
 
 <div class="fixed-bottom bg-white p-2">
-    <form action="/send-message" method="POST" class="d-flex gap-2">
-        <input type="hidden" name="receiver_mobile" value="{{ receiver.mobile }}">
+    <form id="messageForm" class="d-flex gap-2">
+        <input type="hidden" id="receiver_mobile" value="{{ receiver.mobile }}">
 
         <input type="text"
-               name="message"
+               id="messageInput"
                class="form-control"
                placeholder="Type message..."
                required
                autocomplete="off">
 
-        <button class="btn btn-success px-4">
+        <button class="btn btn-success px-4" type="submit">
             Send
         </button>
     </form>
 </div>
+
+<script>
+document.getElementById("messageForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    let msg = document.getElementById("messageInput").value.trim();
+    let receiver = document.getElementById("receiver_mobile").value;
+
+    if (!msg) return;
+
+    document.getElementById("messageInput").value = "";
+
+    fetch("/send-message-ajax", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            receiver_mobile: receiver,
+            message: msg
+        })
+    }).then(() => {
+        loadMessages();
+    });
+});
+
+function loadMessages() {
+    let receiver = document.getElementById("receiver_mobile").value;
+
+    fetch("/get-messages/" + receiver)
+        .then(res => res.text())
+        .then(html => {
+            document.getElementById("messagesBox").innerHTML = html;
+            window.scrollTo(0, document.body.scrollHeight);
+        });
+}
+
+setInterval(loadMessages, 2000);
+</script>
 
 </body>
 </html>
