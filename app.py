@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, session, jsonify
 import firebase_admin
 from firebase_admin import credentials, firestore
+from werkzeug.utils import secure_filename
 import os
 import json
 from deep_translator import GoogleTranslator
@@ -325,7 +326,8 @@ def chat(mobile):
         "chat.html",
         receiver=receiver,
         messages=messages,
-        current_mobile=current_mobile
+        current_mobile=current_mobile,
+        back_url=request.args.get("from", "/home")
     )
     
 def save_chat_message(sender_id, receiver_mobile, message):
@@ -485,7 +487,108 @@ def check_phone_contact():
         "message": "Contact added",
         "mobile": mobile,
         "name": name
-    })        
+    })
+    
+@app.route("/settings", methods=["GET", "POST"])
+def settings():
+    if "user_id" not in session:
+        return redirect("/")
+
+    current_user_id = session["user_id"]
+    message = ""
+
+    user_ref = db.collection("users").document(current_user_id)
+    user_doc = user_ref.get()
+
+    if not user_doc.exists:
+        return redirect("/")
+
+    user = user_doc.to_dict()
+
+    if request.method == "POST":
+        action = request.form.get("action", "")
+
+        if action == "profile":
+            name = request.form.get("name", "").strip()
+            email = request.form.get("email", "").strip().lower()
+            mobile = clean_mobile(request.form.get("mobile", ""))
+
+            profile_pic = user.get("profilePic", "")
+
+            file = request.files.get("profile_image")
+
+            if file and file.filename:
+
+                upload_folder = os.path.join(
+                    os.path.dirname(os.path.abspath(__file__)),
+                    "static",
+                    "profile_pics"
+                )
+
+                os.makedirs(upload_folder, exist_ok=True)
+
+                filename = secure_filename(
+                    f"{current_user_id}_{file.filename}"
+                )
+
+                save_path = os.path.join(
+                    upload_folder,
+                    filename
+                )
+
+                file.save(save_path)
+                
+
+                profile_pic = f"/static/profile_pics/{filename}"
+
+            user_ref.update({
+                "name": name,
+                "email": email,
+                "mobile": mobile,
+                "profilePic": profile_pic
+            })
+
+            session["user_name"] = name
+            message = "Profile updated successfully"
+
+        elif action == "password":
+            old_password = request.form.get("old_password", "").strip()
+            new_password = request.form.get("new_password", "").strip()
+            confirm_password = request.form.get("confirm_password", "").strip()
+
+            db_password = str(user.get("password", "")).strip()
+
+            if old_password != db_password:
+                message = "Old password is wrong"
+            elif new_password != confirm_password:
+                message = "New passwords do not match"
+            elif len(new_password) < 4:
+                message = "Password must be at least 4 characters"
+            else:
+                user_ref.update({
+                    "password": new_password
+                })
+                message = "Password changed successfully"
+
+        elif action == "language":
+            language_code = request.form.get("language_code", "en")
+            language_name = request.form.get("language_name", "English")
+
+            user_ref.update({
+                "languageCode": language_code,
+                "languageName": language_name
+            })
+
+            message = "Language updated successfully"
+
+        user_doc = user_ref.get()
+        user = user_doc.to_dict()
+
+    return render_template(
+        "settings.html",
+        user=user,
+        message=message
+    )            
     
 @app.route("/contacts", methods=["GET", "POST"])
 def contacts():

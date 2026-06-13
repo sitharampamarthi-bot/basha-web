@@ -11,7 +11,7 @@
 
 <nav class="navbar navbar-dark fixed-top" style="background:#6f42c1;">
     <div class="container-fluid">
-        <a href="/contacts" class="btn btn-light btn-sm">←</a>
+        <a href="{{ back_url if back_url else '/home' }}" class="btn btn-light btn-sm">←</a>
         <span class="navbar-brand fw-bold">{{ receiver.name }}</span>
         <span></span>
     </div>
