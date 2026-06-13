@@ -24,7 +24,11 @@
             <div class="d-flex justify-content-end mb-2">
                 <div class="p-3 text-white"
                      style="background:#198754;border-radius:16px;max-width:70%;">
-                    {{ msg.message }}
+                    {% if msg.senderMobile == current_mobile %}
+                        {{ msg.message }}
+                    {% else %}
+                        {{ msg.translatedMessage }}
+                    {% endif %}
                 </div>
             </div>
         {% else %}

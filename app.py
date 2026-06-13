@@ -3,6 +3,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 import os
 import json
+from deep_translator import GoogleTranslator
 
 app = Flask(__name__)
 app.secret_key = "basha_secret_key"
@@ -29,6 +30,16 @@ def clean_mobile(mobile):
         mobile = mobile[2:]
 
     return mobile
+
+def translate_text(text, target_lang):
+    try:
+        return GoogleTranslator(
+            source="auto",
+            target=target_lang
+        ).translate(text)
+    except Exception as e:
+        print("TRANSLATION ERROR:", e)
+        return text
 
 
 def get_chat_id(mobile1, mobile2):
@@ -279,13 +290,24 @@ def send_message():
     sender_mobile = clean_mobile(sender.get("mobile", ""))
     receiver_mobile = clean_mobile(receiver_mobile)
 
-    chat_id = get_chat_id(sender_mobile, receiver_mobile)
+    receiver_docs = db.collection("users") \
+        .where("mobile", "==", receiver_mobile) \
+        .limit(1) \
+        .get()
 
+    receiver_language = "en"
+
+    if receiver_docs:
+        receiver_language = receiver_docs[0].to_dict().get("languageCode", "en")
+
+    translated_message = translate_text(message, receiver_language)
+
+    chat_id = get_chat_id(sender_mobile, receiver_mobile)
     chat_ref = db.collection("chats").document(chat_id)
 
     chat_ref.set({
         "participants": [sender_mobile, receiver_mobile],
-        "lastMessage": message,
+        "lastMessage": translated_message,
         "lastMessageTime": firestore.SERVER_TIMESTAMP
     }, merge=True)
 
@@ -293,6 +315,8 @@ def send_message():
         "senderMobile": sender_mobile,
         "receiverMobile": receiver_mobile,
         "message": message,
+        "translatedMessage": translated_message,
+        "receiverLanguage": receiver_language,
         "timestamp": firestore.SERVER_TIMESTAMP
     })
 
