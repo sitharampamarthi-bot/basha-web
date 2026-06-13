@@ -185,27 +185,36 @@ def home():
 
     current_user_id = session["user_id"]
 
-    registered_contacts = []
+    user_doc = db.collection("users").document(current_user_id).get()
+    user_data = user_doc.to_dict()
+
+    user_name = user_data.get("name", "User")
+    profile_pic = user_data.get("profilePic", "")
+
+    contacts = []
 
     contact_docs = db.collection("users").document(current_user_id)\
         .collection("contacts").stream()
 
     for c in contact_docs:
         cdata = c.to_dict()
+        contact_user_id = cdata.get("contactUserId")
 
-        if cdata.get("contactUserId"):
-            user_doc = db.collection("users").document(cdata["contactUserId"]).get()
+        udoc = db.collection("users").document(contact_user_id).get()
 
-            if user_doc.exists:
-                u = user_doc.to_dict()
-                u["id"] = cdata["contactUserId"]
-                u["savedName"] = cdata.get("savedName", u.get("name", ""))
-                u["mobile"] = cdata.get("mobile", u.get("mobile", ""))
-                registered_contacts.append(u)
+        if udoc.exists:
+            u = udoc.to_dict()
+            contacts.append({
+                "savedName": cdata.get("savedName", u.get("name", "")),
+                "mobile": u.get("mobile", ""),
+                "languageName": u.get("languageName", "English")
+            })
 
     return render_template(
         "home.html",
-        contacts=registered_contacts
+        user_name=user_name,
+        profile_pic=profile_pic,
+        contacts=contacts
     )
 
 @app.route("/users")
