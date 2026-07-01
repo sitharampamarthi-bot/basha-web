@@ -3,3 +3,8 @@ flask-cors
 firebase-admin
 gunicorn
 deep-translator
+google-generativeai
+python-dotenv
+requests
+Pillow
+google-genai

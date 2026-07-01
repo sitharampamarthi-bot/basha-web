@@ -1,3 +1,5 @@
+import datetime
+import uuid
 from flask import Flask, render_template, request, redirect, session, jsonify
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -5,6 +7,15 @@ from werkzeug.utils import secure_filename
 import os
 import json
 from deep_translator import GoogleTranslator
+import requests
+import google.generativeai as genai
+from PIL import Image, ImageDraw, ImageFont
+import textwrap
+from dotenv import load_dotenv
+from image_translator import make_advanced_translated_image
+load_dotenv()
+
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 app = Flask(__name__)
 app.secret_key = "basha_secret_key"
@@ -22,6 +33,15 @@ else:
 
 firebase_admin.initialize_app(cred)
 db = firestore.client()
+
+ALLOWED_EXTENSIONS = {
+    "png", "jpg", "jpeg", "gif", "webp",
+    "pdf", "doc", "docx", "xls", "xlsx",
+    "mp4", "mov", "avi", "mkv", "webm"
+}
+
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def clean_mobile(mobile):
     mobile = str(mobile).strip()
@@ -41,6 +61,79 @@ def translate_text(text, target_lang):
     except Exception as e:
         print("TRANSLATION ERROR:", e)
         return text
+    
+def get_best_font(text, size=34):
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    font_dir = os.path.join(BASE_DIR, "static", "fonts")
+
+    fonts = [
+        "NotoSansTelugu-Regular.ttf",
+        "NotoSansDevanagari-Regular.ttf",
+        "NotoSansTamil-Regular.ttf",
+        "NotoSansKannada-Regular.ttf",
+        "NotoSansMalayalam-Regular.ttf",
+        "NotoSansGujarati-Regular.ttf",
+        "NotoSansBengali-Regular.ttf",
+        "NotoSansGurmukhi-Regular.ttf",
+        "NotoSansOriya-Regular.ttf",
+        "NotoSansArabic-Regular.ttf",
+        "NotoSansSinhala-Regular.ttf",
+        "NotoSansMyanmar-Regular.ttf",
+        "NotoSansThai-Regular.ttf",
+        "NotoSansKhmer-Regular.ttf",
+        "NotoSansLao-Regular.ttf",
+        "NotoSansHebrew-Regular.ttf",
+        "NotoSansSC-Regular.otf",
+        "NotoSansJP-Regular.otf",
+        "NotoSansKR-Regular.otf",
+        "NotoSans-Regular.ttf",
+    ]
+
+    for font_name in fonts:
+        font_path = os.path.join(font_dir, font_name)
+        if os.path.exists(font_path):
+            try:
+                return ImageFont.truetype(font_path, size)
+            except:
+                pass
+
+    windows_fonts = [
+        r"C:\Windows\Fonts\Nirmala.ttf",
+        r"C:\Windows\Fonts\arialuni.ttf",
+        r"C:\Windows\Fonts\arial.ttf",
+    ]
+
+    for path in windows_fonts:
+        if os.path.exists(path):
+            return ImageFont.truetype(path, size)
+
+    return ImageFont.load_default()
+
+
+def wrap_text_by_width(text, font, max_width):
+    lines = []
+
+    for paragraph in text.split("\n"):
+        words = paragraph.split(" ")
+
+        current = ""
+
+        for word in words:
+            test_line = word if current == "" else current + " " + word
+            bbox = font.getbbox(test_line)
+            width = bbox[2] - bbox[0]
+
+            if width <= max_width:
+                current = test_line
+            else:
+                if current:
+                    lines.append(current)
+                current = word
+
+        if current:
+            lines.append(current)
+
+    return lines    
 
 
 def get_chat_id(mobile1, mobile2):
@@ -76,6 +169,7 @@ def login():
                 if password == db_password:
                     session["user_id"] = matched_doc_id
                     session["user_name"] = data.get("name", "")
+                    session["mobile"] = clean_mobile(data.get("mobile", ""))
                     return redirect("/home")
                 else:
                     error = "Password wrong. Please use Forgot Password."
@@ -189,12 +283,14 @@ def home():
     user_doc = db.collection("users").document(current_user_id).get()
     user_data = user_doc.to_dict()
 
-    current_mobile = clean_mobile(user_data.get("mobile", ""))
+    current_mobile = clean_mobile(user_data.get("mobile", "") or session.get("mobile", ""))
     user_name = user_data.get("name", "User")
     profile_pic = user_data.get("profilePic", "")
 
     contacts = []
+    groups = []
     total_unread = 0
+    
 
     contact_docs = db.collection("users").document(current_user_id)\
         .collection("contacts").stream()
@@ -235,6 +331,8 @@ def home():
             total_unread += unread_count
 
             contacts.append({
+                "isOnline": u.get("isOnline", False),
+                "profilePic": u.get("profilePic", ""),
                 "savedName": cdata.get("savedName", u.get("name", "")),
                 "mobile": contact_mobile,
                 "languageName": u.get("languageName", "English"),
@@ -242,18 +340,58 @@ def home():
                 "lastMessage": last_message,
                 "lastTime": last_time
             })
+            
+    def sort_time(contact):
+        t = contact.get("lastTime")
 
-    contacts.sort(
-        key=lambda x: x["lastTime"] or "",
+        if t is None:
+            return 0
+
+        try:
+            return t.timestamp()
+        except:
+            return 0
+    groups_dict = {}
+
+    group_docs = db.collection("groups").stream()
+
+    for g in group_docs:
+        gdata = g.to_dict()
+
+        members_raw = gdata.get("members", [])
+        members_mobile = [clean_mobile(m) for m in members_raw]
+
+        created_by = clean_mobile(gdata.get("createdBy", ""))
+
+        if (
+            current_mobile in members_mobile
+            or current_mobile == created_by
+            or current_user_id in members_raw
+        ):
+            gdata["id"] = g.id
+            groups_dict[g.id] = gdata
+
+    groups = list(groups_dict.values())
+
+    groups.sort(
+        key=lambda x: x.get("lastMessageTime").timestamp() if x.get("lastMessageTime") else 0,
         reverse=True
     )
+    contacts.sort(
+        key=sort_time,
+        reverse=True
+    )
+    print("CURRENT MOBILE:", current_mobile)
+    print("GROUPS COUNT:", len(groups))
 
     return render_template(
         "home.html",
         user_name=user_name,
         profile_pic=profile_pic,
         contacts=contacts,
+        groups=groups,
         total_unread=total_unread
+        
     )
 
 @app.route("/users")
@@ -315,10 +453,16 @@ def chat(mobile):
 
         # message current user ki vachindi ante read mark cheyyi
         if data.get("receiverMobile") == current_mobile:
-
+            
             m.reference.update({
+                "delivered": True,
                 "readBy": firestore.ArrayUnion([current_mobile])
             })
+            data["delivered"] = True
+            read_by = data.get("readBy", [])
+            if current_mobile not in read_by:
+                read_by.append(current_mobile)
+            data["readBy"] = read_by
 
         messages.append(data)
 
@@ -330,7 +474,7 @@ def chat(mobile):
         back_url=request.args.get("from", "/home")
     )
     
-def save_chat_message(sender_id, receiver_mobile, message):
+def save_chat_message(sender_id, receiver_mobile, message, file_url="", file_name="", file_type=""):
     sender_doc = db.collection("users").document(sender_id).get()
     sender = sender_doc.to_dict()
 
@@ -345,16 +489,21 @@ def save_chat_message(sender_id, receiver_mobile, message):
     receiver_language = "en"
 
     if receiver_docs:
-        receiver_language = receiver_docs[0].to_dict().get("languageCode", "en")
+        receiver_data = receiver_docs[0].to_dict()
+        receiver_language = receiver_data.get("languageCode") or "en"
 
-    translated_message = translate_text(message, receiver_language)
+    translated_message = translate_text(message, receiver_language) if message else ""
 
     chat_id = get_chat_id(sender_mobile, receiver_mobile)
     chat_ref = db.collection("chats").document(chat_id)
 
     chat_ref.set({
         "participants": [sender_mobile, receiver_mobile],
-        "lastMessage": translated_message,
+        "lastMessage": translated_message if translated_message else (
+            "📷 Photo" if file_type == "image" else
+            "🎥 Video" if file_type == "video" else
+            "📄 Document"
+        ),
         "lastMessageTime": firestore.SERVER_TIMESTAMP
     }, merge=True)
 
@@ -365,6 +514,10 @@ def save_chat_message(sender_id, receiver_mobile, message):
         "translatedMessage": translated_message,
         "receiverLanguage": receiver_language,
         "readBy": [sender_mobile],
+        "delivered": False,
+        "fileUrl": file_url,
+        "fileName": file_name,
+        "fileType": file_type,
         "timestamp": firestore.SERVER_TIMESTAMP
     })
 
@@ -372,16 +525,73 @@ def save_chat_message(sender_id, receiver_mobile, message):
     
 @app.route("/send-message", methods=["POST"])
 def send_message():
-    if "user_id" not in session:
-        return redirect("/")
+    try:
+        if "user_id" not in session:
+            return jsonify({"success": False, "error": "Login required"}), 401
 
-    receiver_mobile = request.form.get("receiver_mobile", "").strip()
-    message = request.form.get("message", "").strip()
+        receiver_mobile = request.form.get("receiver_mobile", "").strip()
+        message = request.form.get("message", "").strip()
+        files = request.files.getlist("chat_files")
 
-    if message:
-        save_chat_message(session["user_id"], receiver_mobile, message)
+        sent_any = False
 
-    return redirect(f"/chat/{receiver_mobile}")
+        if message:
+            save_chat_message(
+                session["user_id"],
+                receiver_mobile,
+                message,
+                "",
+                "",
+                ""
+            )
+            sent_any = True
+
+        for file in files:
+            if file and file.filename and allowed_file(file.filename):
+
+                upload_folder = os.path.join(
+                    os.path.dirname(os.path.abspath(__file__)),
+                    "static",
+                    "chat_uploads"
+                )
+                os.makedirs(upload_folder, exist_ok=True)
+
+                original_name = secure_filename(file.filename)
+                saved_name = f"{session['user_id']}_{uuid.uuid4().hex}_{original_name}"
+
+                save_path = os.path.join(upload_folder, saved_name)
+                file.save(save_path)
+
+                file_url = f"/static/chat_uploads/{saved_name}"
+
+                ext = original_name.rsplit(".", 1)[1].lower()
+
+                if ext in ["png", "jpg", "jpeg", "gif", "webp"]:
+                    file_type = "image"
+                elif ext in ["mp4", "mov", "avi", "mkv"]:
+                    file_type = "video"
+                else:
+                    file_type = "document"
+
+                save_chat_message(
+                    session["user_id"],
+                    receiver_mobile,
+                    "",
+                    file_url,
+                    original_name,
+                    file_type
+                )
+
+                sent_any = True
+
+        if not sent_any:
+            return jsonify({"success": False, "error": "Empty message"}), 400
+
+        return jsonify({"success": True})
+
+    except Exception as e:
+        print("SEND MESSAGE ERROR:", str(e))
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route("/send-message-ajax", methods=["POST"])
 def send_message_ajax():
@@ -426,8 +636,14 @@ def get_messages(receiver_mobile):
 
         if data.get("receiverMobile") == current_mobile:
             m.reference.update({
+                "delivered": True,
                 "readBy": firestore.ArrayUnion([current_mobile])
             })
+            data["delivered"] = True
+            read_by = data.get("readBy", [])
+            if current_mobile not in read_by:
+                read_by.append(current_mobile)
+            data["readBy"] = read_by
 
         messages.append(data)
 
@@ -435,7 +651,97 @@ def get_messages(receiver_mobile):
         "message_bubbles.html",
         messages=messages,
         current_mobile=current_mobile
-    )    
+    )
+    
+@app.route("/update-presence", methods=["POST"])
+def update_presence():
+    if "user_id" not in session:
+        return jsonify({"success": False})
+
+    current_user_id = session["user_id"]
+
+    db.collection("users").document(current_user_id).update({
+        "isOnline": True,
+        "lastSeen": firestore.SERVER_TIMESTAMP
+    })
+
+    return jsonify({"success": True})
+
+
+@app.route("/set-typing", methods=["POST"])
+def set_typing():
+    if "user_id" not in session:
+        return jsonify({"success": False})
+
+    data = request.get_json()
+    receiver_mobile = clean_mobile(data.get("receiver_mobile", ""))
+    is_typing = data.get("is_typing", False)
+
+    current_mobile = clean_mobile(session.get("mobile", ""))
+    chat_id = get_chat_id(current_mobile, receiver_mobile)
+
+    db.collection("chats").document(chat_id).set({
+        f"typing_{current_mobile}": is_typing
+    }, merge=True)
+
+    return jsonify({"success": True})
+
+
+@app.route("/chat-status/<receiver_mobile>")
+def chat_status(receiver_mobile):
+    if "user_id" not in session:
+        return jsonify({"success": False})
+
+    current_mobile = clean_mobile(session.get("mobile", ""))
+    receiver_mobile = clean_mobile(receiver_mobile)
+
+    chat_id = get_chat_id(current_mobile, receiver_mobile)
+
+    receiver_docs = db.collection("users").where("mobile", "==", receiver_mobile).limit(1).get()
+
+    is_online = False
+    last_seen = ""
+
+    if receiver_docs:
+        receiver = receiver_docs[0].to_dict()
+        is_online = receiver.get("isOnline", False)
+        last_seen = str(receiver.get("lastSeen", ""))
+
+    chat_doc = db.collection("chats").document(chat_id).get()
+    is_typing = False
+
+    if chat_doc.exists:
+        chat_data = chat_doc.to_dict()
+        is_typing = chat_data.get(f"typing_{receiver_mobile}", False)
+
+    return jsonify({
+        "success": True,
+        "isOnline": is_online,
+        "lastSeen": last_seen,
+        "isTyping": is_typing
+    })    
+    
+@app.route("/groups")
+def groups():
+    if "user_id" not in session:
+        return redirect("/")
+
+    current_mobile = clean_mobile(session.get("mobile", ""))
+
+    groups = []
+
+    docs = db.collection("groups").stream()
+
+    for doc in docs:
+        data = doc.to_dict()
+
+        members = [clean_mobile(m) for m in data.get("members", [])]
+
+        if current_mobile in members:
+            data["id"] = doc.id
+            groups.append(data)
+
+    return render_template("groups.html", groups=groups)           
     
 @app.route("/check-phone-contact", methods=["POST"])
 def check_phone_contact():
@@ -646,7 +952,190 @@ def contacts():
         "contacts.html",
         contacts=contacts_list,
         message=message
-    )    
+    )
+    
+@app.route("/create-group", methods=["GET", "POST"])
+def create_group():
+    if "user_id" not in session:
+        return redirect("/")
+
+    current_mobile = clean_mobile(session.get("mobile", ""))
+
+    contacts = []
+    contact_docs = db.collection("users").document(session["user_id"]).collection("contacts").stream()
+
+    for c in contact_docs:
+        cdata = c.to_dict()
+        user_doc = db.collection("users").document(cdata.get("contactUserId")).get()
+        if user_doc.exists:
+            u = user_doc.to_dict()
+            u["mobile"] = clean_mobile(u.get("mobile", ""))
+            u["savedName"] = cdata.get("savedName", u.get("name", ""))
+            contacts.append(u)
+
+    if request.method == "POST":
+        group_name = request.form.get("group_name", "").strip()
+        members = request.form.getlist("members")
+
+        if current_mobile not in members:
+            members.append(current_mobile)
+            
+        existing_groups = db.collection("groups") \
+            .where("createdBy", "==", current_mobile) \
+            .where("groupName", "==", group_name) \
+            .limit(1) \
+            .get()
+
+        if len(existing_groups) > 0:
+            return redirect("/home")                            
+
+        db.collection("groups").add({
+            "groupName": group_name,
+            "createdBy": current_mobile,
+            "members": members,
+            "createdAt": firestore.SERVER_TIMESTAMP,
+            "lastMessage": "",
+            "lastMessageTime": firestore.SERVER_TIMESTAMP
+        })
+
+        return redirect("/home")
+
+    return render_template("create_group.html", contacts=contacts)
+
+
+@app.route("/group-chat/<group_id>")
+def group_chat(group_id):
+    if "user_id" not in session:
+        return redirect("/")
+
+    current_mobile = clean_mobile(session.get("mobile", ""))
+
+    group_doc = db.collection("groups").document(group_id).get()
+    if not group_doc.exists:
+        return redirect("/home")
+
+    group = group_doc.to_dict()
+    group["id"] = group_id
+
+    messages = []
+    msg_docs = db.collection("groups").document(group_id).collection("messages").order_by("timestamp").stream()
+
+    for m in msg_docs:
+        messages.append(m.to_dict())
+
+    return render_template(
+        "group_chat.html",
+        group=group,
+        messages=messages,
+        current_mobile=current_mobile
+    )
+
+
+@app.route("/send-group-message", methods=["POST"])
+def send_group_message():
+    if "user_id" not in session:
+        return redirect("/")
+
+    group_id = request.form.get("group_id")
+    message = request.form.get("message", "").strip()
+
+    file = request.files.get("chat_file")
+
+    file_url = ""
+    file_name = ""
+    file_type = ""
+
+    if file and file.filename and allowed_file(file.filename):
+
+        upload_folder = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "static",
+            "chat_uploads"
+        )
+        os.makedirs(upload_folder, exist_ok=True)
+
+        file_name = secure_filename(file.filename)
+
+        saved_name = f"{session['user_id']}_{file_name}"
+
+        save_path = os.path.join(upload_folder, saved_name)
+
+        file.save(save_path)
+
+        file_url = f"/static/chat_uploads/{saved_name}"
+
+        ext = file_name.rsplit(".", 1)[1].lower()
+
+        if ext in ["png", "jpg", "jpeg", "gif", "webp"]:
+            file_type = "image"
+
+        elif ext in ["mp4", "mov", "avi", "mkv"]:
+            file_type = "video"
+
+        else:
+            file_type = "document"
+
+    if not message and not file_url:
+        return redirect(f"/group-chat/{group_id}")
+
+    sender_mobile = clean_mobile(session.get("mobile", ""))
+    sender_name = session.get("user_name", "")
+
+    group_ref = db.collection("groups").document(group_id)
+
+    group_ref.collection("messages").add({
+        "senderMobile": sender_mobile,
+        "senderName": sender_name,
+        "message": message,
+        "fileUrl": file_url,
+        "fileName": file_name,
+        "fileType": file_type,
+        "timestamp": firestore.SERVER_TIMESTAMP
+    })
+
+    group_ref.update({
+        "lastMessage": message if message else f"📎 {file_name}",
+        "lastMessageTime": firestore.SERVER_TIMESTAMP
+    })
+
+    return redirect(f"/group-chat/{group_id}")
+    
+@app.route("/convert-image-text", methods=["POST"])
+def convert_image_text():
+    try:
+        if "user_id" not in session:
+            return jsonify({"error": "Login required"}), 401
+
+        data = request.get_json()
+        image_url = data.get("image_url", "")
+
+        if not image_url:
+            return jsonify({"error": "Image not found"}), 400
+
+        user_doc = db.collection("users").document(session["user_id"]).get()
+        user = user_doc.to_dict() if user_doc.exists else {}
+
+        target_language = user.get("languageName", "English")
+
+        image_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            image_url.lstrip("/")
+        )
+
+        if not os.path.exists(image_path):
+            return jsonify({"error": "Image file not found"}), 404
+
+        result = make_advanced_translated_image(
+            image_path=image_path,
+            target_language=target_language
+        )
+
+        return jsonify(result)
+
+    except Exception as e:
+        print("GEMINI ERROR:", str(e))
+        return jsonify({"error": str(e)}), 500
+        
 
 if __name__ == "__main__":
     app.run(debug=True)

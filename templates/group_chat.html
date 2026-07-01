@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Basha Chat</title>
+    <title>Group Chat</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
@@ -11,7 +10,7 @@
             height:100%;
             margin:0;
             overflow:hidden;
-            background:#efeae2;
+            background:#f1f1f1;
             font-family:Arial, sans-serif;
         }
 
@@ -33,22 +32,12 @@
         .chat-title {
             font-size:18px;
             font-weight:700;
-            line-height:1.1;
         }
 
-        .chat-status {
-            font-size:12px;
-            color:#d9ffd9;
-        }
-
-        #messagesBox{
-            position:fixed;
-            top:64px;
-            left:0;
-            right:0;
-            bottom:70px;
+        #messagesBox {
+            height:calc(100vh - 130px);
             overflow-y:auto;
-            padding:12px;
+            padding:76px 12px 90px 12px;
             background:#f1f1f1;
         }
 
@@ -59,107 +48,72 @@
             align-items:flex-end;
         }
 
-        .msg-left {
-            justify-content:flex-start;
-        }
-
-        .msg-right {
-            justify-content:flex-end;
-        }
+        .msg-left { justify-content:flex-start; }
+        .msg-right { justify-content:flex-end; }
 
         .msg-bubble {
             display:inline-block;
-            width:fit-content !important;
-            max-width:72%;
-            min-width:45px;
-            height:auto !important;
-            padding:8px 10px;
-            border-radius:14px;
-            font-size:16px;
-            line-height:1.45;
+            width:fit-content;
+            max-width:75%;
+            min-width:70px;
+            padding:10px 14px;
+            border-radius:16px;
             word-break:break-word;
             overflow-wrap:anywhere;
             white-space:pre-wrap;
-            box-shadow:0 1px 2px rgba(0,0,0,0.12);
+            box-shadow:0 1px 2px rgba(0,0,0,.15);
+            font-size:16px;
+            line-height:1.5;
         }
 
         .msg-me {
             background:#198754;
             color:white;
             border-top-right-radius:4px;
-            margin-left:auto;
         }
 
         .msg-other {
             background:#e1e1e1;
             color:#111;
             border-top-left-radius:4px;
-            margin-right:auto;
+        }
+
+        .sender-name {
+            font-size:12px;
+            font-weight:bold;
+            color:#0d6efd;
+            margin-bottom:4px;
         }
 
         .chatImage {
-            width:auto !important;
-            height:auto !important;
+            width:auto;
             max-width:260px;
-            max-height:330px;
+            max-height:300px;
             object-fit:contain;
             border-radius:10px;
             display:block;
-            margin-top:6px;
+            margin-top:8px;
             cursor:pointer;
-            transition:0.25s;
-        }
-
-        .doc-card {
-            display:inline-block;
-            background:#fff;
-            color:#111;
-            border-radius:10px;
-            padding:10px 12px;
-            margin-top:6px;
-            text-decoration:none;
-            max-width:260px;
-            word-break:break-word;
-            border:1px solid #ddd;
         }
 
         .convert-btn {
             background:#ffc107;
             border:none;
-            border-radius:14px;
-            padding:4px 10px;
-            margin-top:6px;
-            font-size:12px;
-            display:inline-block;
+            border-radius:16px;
+            padding:4px 12px;
+            margin-top:8px;
+            font-size:13px;
         }
 
-        .msg-status {
-            text-align:right;
-            font-size:12px;
-            margin-top:3px;
-            line-height:1;
-        }
-
-        .tick-seen {
-            color:#53bdeb;
-            font-weight:bold;
-        }
-
-        .tick-normal {
-            color:rgba(255,255,255,0.85);
-            font-weight:bold;
-        }
-
-        .input-bar{
+        .input-bar {
             position:fixed;
+            bottom:0;
             left:0;
             right:0;
-            bottom:0;
-            z-index:9999;
-            background:#fff;
-            border-top:1px solid #ddd;
+            background:white;
             padding:8px;
-            padding-bottom:env(safe-area-inset-bottom);
+            border-top:1px solid #ddd;
+            z-index:1000;
         }
 
         .input-inner {
@@ -171,20 +125,13 @@
         }
 
         .file-btn {
-            width:42px;
-            height:42px;
-            min-width:42px;
+            width:46px;
+            height:46px;
             flex-shrink:0;
             border-radius:50%;
             border:none;
             background:#eee;
-            color:#111;
             font-size:22px;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            cursor:pointer;
-            margin:0;
         }
 
         #chatFileInput {
@@ -195,20 +142,19 @@
             flex:1;
             width:100%;
             min-width:0;
-            height:42px;
-            max-height:100px;
+            min-height:45px;
+            max-height:120px;
             resize:none;
             overflow-y:auto;
-            border:1px solid #ddd;
             border-radius:22px;
-            padding:9px 14px;
-            font-size:15px;
+            padding:10px 15px;
+            font-size:16px;
         }
 
         #sendBtn {
             flex-shrink:0;
-            width:72px;
-            height:42px;
+            width:80px;
+            height:45px;
             border-radius:22px;
             background:#198754;
             color:white;
@@ -216,32 +162,12 @@
             font-weight:600;
         }
 
-        .emoji-panel {
-            display:none;
-            position:fixed;
-            bottom:64px;
-            left:8px;
-            right:8px;
-            background:white;
-            border-radius:14px;
-            padding:12px;
-            box-shadow:0 4px 18px rgba(0,0,0,0.2);
-            z-index:1200;
-            font-size:26px;
-        }
-
-        .emoji-panel span {
-            cursor:pointer;
-            margin:6px;
-            display:inline-block;
-        }
-
         .file-preview-pill {
             display:none;
             position:fixed;
-            bottom:60px;
-            left:8px;
-            right:8px;
+            bottom:64px;
+            left:12px;
+            right:12px;
             background:#fff7d6;
             border:1px solid #ffd75c;
             border-radius:12px;
@@ -250,146 +176,37 @@
             font-size:14px;
         }
 
-        @media(max-width:600px) {
+        @media(max-width:600px){
             .msg-bubble {
-                max-width:84%;
+                max-width:86%;
                 font-size:15px;
             }
-
-            .chatImage{
-                display:block !important;
-                width:auto !important;
-                max-width:230px !important;
-                max-height:320px !important;
-                height:auto !important;
-                object-fit:contain !important;
-            }
-
-            .doc-card{
-                display:block !important;
-                max-width:220px !important;
-            }
-
-            #sendBtn {
-                width:70px;
-            }
-            .file-btn {
-                width:42px;
-                height:42px;
-                min-width:42px;
-                flex-shrink:0;
-                border-radius:50%;
-                border:none;
-                background:#eee;
-                color:#111;
-                font-size:22px;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                cursor:pointer;
-                margin:0;
-            }
-
-            .input-inner{
-                display:flex !important;
-                flex-direction:row !important;
-                align-items:center !important;
+            .chatImage {
+                max-width:230px;
             }
         }
-        .msg-text{
-            white-space:normal !important;
-            display:inline;
-        }
-
-        .msg-bubble{
-            white-space:normal !important;
-            vertical-align:top;
-        }
-
-        @media(max-width:600px){
-            .input-bar{
-                display:block !important;
-                position:fixed !important;
-                bottom:0 !important;
-                left:0 !important;
-                right:0 !important;
-                z-index:99999 !important;
-                background:#fff !important;
-            }
-
-            .input-inner{
-                display:flex !important;
-                flex-direction:row !important;
-                align-items:center !important;
-                gap:6px !important;
-            }
-
-            .file-btn,
-            #sendBtn{
-                display:flex !important;
-                align-items:center !important;
-                justify-content:center !important;
-                visibility:visible !important;
-                opacity:1 !important;
-            }
-
-            #messageInput{
-                flex:1 !important;
-                min-width:0 !important;
-                width:auto !important;
-            }
-
-            #messagesBox{
-                bottom:64px !important;
-            }
-
-            .msg-status{
-                display:block !important;
-            }
-
-            .chatImage,
-            video{
-                display:block !important;
-                max-width:230px !important;
-                height:auto !important;
-            }
-
-            .doc-card{
-                display:block !important;
-                max-width:230px !important;
-            }
-        }
-</style>
+    </style>
 </head>
 
 <body>
 
 <div class="chat-header">
-    <a href="{{ back_url if back_url else '/home' }}" class="btn btn-light btn-sm">←</a>
-
-    <div>
-        <div class="chat-title">{{ receiver.name }}</div>
-        <div id="userStatusText" class="chat-status">checking...</div>
-    </div>
+    <a href="/home" class="btn btn-light btn-sm">←</a>
+    <div class="chat-title">{{ group.groupName }}</div>
 </div>
 
 <div id="messagesBox">
-
     {% for msg in messages %}
-
         {% if msg.senderMobile == current_mobile %}
             <div class="msg-row msg-right">
                 <div class="msg-bubble msg-me">
         {% else %}
             <div class="msg-row msg-left">
                 <div class="msg-bubble msg-other">
+                    <div class="sender-name">{{ msg.senderName }}</div>
         {% endif %}
 
-                    {% set clean_msg = (msg.translatedMessage if msg.senderMobile != current_mobile and msg.translatedMessage else msg.message) %}
-
-                    {% if clean_msg %}
-                        <div class="msg-text">{{ clean_msg|trim }}</div>
-                    {% endif %}
+                    {{ msg.message }}
 
                     {% if msg.fileUrl %}
                         {% if msg.fileType == "image" %}
@@ -410,63 +227,39 @@
                             </video>
                         {% else %}
                             <br>
-                            <a href="{{ msg.fileUrl }}" target="_blank" class="doc-card">
-                                📄 {{ msg.fileName }}
+                            <a href="{{ msg.fileUrl }}"
+                                target="_blank"
+                                class="doc-card">
+                            📄 {{ msg.fileName }}
                             </a>
                         {% endif %}
                     {% endif %}
-
-                    {% if msg.senderMobile == current_mobile %}
-                        <div class="msg-status">
-                            {% set rb = msg.readBy if msg.readBy else [] %}
-
-                            {% if rb|length > 1 %}
-                                <span class="tick-seen">✓✓</span>
-                            {% elif msg.delivered %}
-                                <span class="tick-normal">✓✓</span>
-                            {% else %}
-                                <span class="tick-normal">✓</span>
-                            {% endif %}
-                        </div>
-                    {% endif %}
-
                 </div>
             </div>
-    
-        {% endfor %}
-
+    {% endfor %}
 </div>
 
-<div class="emoji-panel" id="emojiPanel">
-    <span onclick="addEmoji('😀')">😀</span>
-    <span onclick="addEmoji('😂')">😂</span>
-    <span onclick="addEmoji('😍')">😍</span>
-    <span onclick="addEmoji('👍')">👍</span>
-    <span onclick="addEmoji('🙏')">🙏</span>
-    <span onclick="addEmoji('❤️')">❤️</span>
-    <span onclick="addEmoji('🔥')">🔥</span>
-    <span onclick="addEmoji('🎉')">🎉</span>
-</div>
 <div id="filePreviewPill" class="file-preview-pill">
     📎 <span id="selectedFileName"></span>
     <button type="button" onclick="clearSelectedFile()" style="float:right;border:none;background:none;">✕</button>
 </div>
 
 <div class="input-bar">
-    <form id="messageForm" method="POST" enctype="multipart/form-data" class="input-inner">
-        <input type="hidden" name="receiver_mobile" id="receiver_mobile" value="{{ receiver.mobile }}">
+    <form id="groupMessageForm" method="POST" enctype="multipart/form-data" class="input-inner">
+        <input type="hidden" name="group_id" id="group_id" value="{{ group.id }}">
 
         <label for="chatFileInput" class="file-btn">＋</label>
-        <input type="file" name="chat_files" id="chatFileInput"
-               accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx" multiple>
+        <input type="file" name="chat_files" id="chatFileInput" accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx" multiple>
 
-        <button type="button" class="file-btn" onclick="toggleEmoji()">😊</button>
-
-        <textarea name="message" id="messageInput" placeholder="Type message..."></textarea>
+        <textarea name="message"
+                  id="messageInput"
+                  placeholder="Type message..."
+                  autocomplete="off"></textarea>
 
         <button id="sendBtn" type="submit">Send</button>
     </form>
 </div>
+
 <div class="modal fade" id="filePreviewModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content" style="border-radius:18px;">
@@ -493,8 +286,7 @@
 let convertedTextGlobal = "";
 let isSending = false;
 let isRefreshing = false;
-let typingTimer = null;
-const receiverMobile = document.getElementById("receiver_mobile").value;
+
 const fileInput = document.getElementById("chatFileInput");
 
 fileInput.addEventListener("change", function () {
@@ -502,20 +294,7 @@ fileInput.addEventListener("change", function () {
     const nameSpan = document.getElementById("selectedFileName");
 
     if (this.files.length > 0) {
-        let names = [];
-
-        for (let i=0; i < this.files.length; i++){
-            names.push(this.files[i].name);
-        }
-        if(names.length==1){
-
-        nameSpan.innerText=names[0];
-
-        }else{
-
-        nameSpan.innerText=names.length+" files selected";
-
-        }
+        nameSpan.innerText = this.files[0].name;
         pill.style.display = "block";
     } else {
         nameSpan.innerText = "";
@@ -529,7 +308,7 @@ function clearSelectedFile() {
     document.getElementById("filePreviewPill").style.display = "none";
 }
 
-function scrollBottom(){
+function scrollBottom() {
     const box = document.getElementById("messagesBox");
     box.scrollTop = box.scrollHeight;
 }
@@ -545,13 +324,19 @@ function loadMessages(forceBottom = false) {
 
     const stayBottom = isNearBottom();
 
-    fetch("/get-messages/" + receiverMobile, { cache: "no-store" })
+    fetch(window.location.href, { cache: "no-store" })
         .then(res => res.text())
         .then(html => {
-            document.getElementById("messagesBox").innerHTML = html;
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, "text/html");
+            const newBox = doc.getElementById("messagesBox");
 
-            if (forceBottom || stayBottom) {
-                setTimeout(scrollBottom, 80);
+            if (newBox) {
+                document.getElementById("messagesBox").innerHTML = newBox.innerHTML;
+
+                if (forceBottom || stayBottom) {
+                    setTimeout(scrollBottom, 100);
+                }
             }
         })
         .finally(() => {
@@ -636,77 +421,22 @@ function convertImageText(imageUrl) {
     });
 }
 
-function toggleEmoji() {
-    const panel = document.getElementById("emojiPanel");
-    panel.style.display = panel.style.display === "block" ? "none" : "block";
-}
-
-function addEmoji(emoji) {
-    const input = document.getElementById("messageInput");
-    input.value += emoji;
-    input.focus();
-}
-
-function updatePresence() {
-    fetch("/update-presence", { method: "POST" });
-}
-
-function setTypingStatus(status) {
-    fetch("/set-typing", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            receiver_mobile: receiverMobile,
-            is_typing: status
-        })
-    });
-}
-
-function loadChatStatus() {
-    fetch("/chat-status/" + receiverMobile)
-        .then(res => res.json())
-        .then(data => {
-            if (!data.success) return;
-
-            const statusEl = document.getElementById("userStatusText");
-
-            if (data.isTyping) {
-                statusEl.innerHTML = "✍️ typing...";
-            } else if (data.isOnline) {
-                statusEl.innerHTML = "🟢 Online";
-            } else {
-                statusEl.innerHTML = "⚫ Offline";
-            }
-        });
-}
-
-document.getElementById("messageInput").addEventListener("input", function () {
-    setTypingStatus(true);
-    clearTimeout(typingTimer);
-
-    typingTimer = setTimeout(function () {
-        setTypingStatus(false);
-    }, 1500);
-});
-
-document.getElementById("messageForm").addEventListener("submit", function(e) {
+document.getElementById("groupMessageForm").addEventListener("submit", function(e) {
     e.preventDefault();
 
     if (isSending) return;
 
-    const form = document.getElementById("messageForm");
+    const form = document.getElementById("groupMessageForm");
     const msg = document.getElementById("messageInput");
-    const file = document.getElementById("chatFileInput");
     const btn = document.getElementById("sendBtn");
 
-    msg.value = msg.value.trim();
-    if (msg.value.trim() === "" && file.files.length === 0) return;
+    if (msg.value.trim() === "" && fileInput.files.length === 0) return;
 
     isSending = true;
     btn.disabled = true;
     btn.innerText = "...";
 
-    fetch("/send-message", {
+    fetch("/send-group-message", {
         method: "POST",
         body: new FormData(form)
     })
@@ -714,11 +444,8 @@ document.getElementById("messageForm").addEventListener("submit", function(e) {
     .then(data => {
         if (data.success) {
             msg.value = "";
-            file.value = "";
-            document.getElementById("filePreviewPill").style.display = "none";
-            setTypingStatus(false);
+            clearSelectedFile();
             loadMessages(true);
-            setTimeout(scrollBottom, 100);
         } else {
             alert(data.error || "Send failed");
         }
@@ -742,31 +469,12 @@ document.getElementById("copyTextBtn").addEventListener("click", function () {
 });
 
 window.addEventListener("load", function() {
-    updatePresence();
-    loadChatStatus();
     setTimeout(scrollBottom, 200);
 });
 
-setInterval(updatePresence, 10000);
-setInterval(loadChatStatus, 2000);
 setInterval(function() {
     loadMessages(false);
 }, 3000);
-if (window.visualViewport) {
-    visualViewport.addEventListener("resize", function () {
-        const inputBar = document.querySelector(".input-bar");
-        inputBar.style.bottom = (window.innerHeight - visualViewport.height) + "px";
-        setTimeout(scrollBottom, 100);
-    });
-}
-
-document.getElementById("messageInput").addEventListener("focus", function () {
-    setTimeout(scrollBottom, 300);
-});
-
-document.querySelectorAll("img").forEach(function (img) {
-    img.onload = scrollBottom;
-});
 </script>
 
 </body>

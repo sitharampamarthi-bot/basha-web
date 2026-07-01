@@ -1,23 +1,68 @@
 {% for msg in messages %}
 
-    {% if msg.senderMobile == current_mobile %}
+{% set ftype = msg.fileType or "" %}
+{% set fname = msg.fileName or "" %}
+{% set furl = msg.fileUrl or "" %}
 
-        <div class="d-flex justify-content-end mb-2">
-            <div class="p-3 text-white"
-                 style="background:#198754;border-radius:16px;max-width:70%;">
-                {{ msg.message }}
-            </div>
-        </div>
-
+{% if not ftype and furl %}
+    {% if furl.endswith(".png") or furl.endswith(".jpg") or furl.endswith(".jpeg") or furl.endswith(".gif") or furl.endswith(".webp") %}
+        {% set ftype = "image" %}
+    {% elif furl.endswith(".mp4") or furl.endswith(".mov") or furl.endswith(".avi") or furl.endswith(".mkv") or furl.endswith(".webm") %}
+        {% set ftype = "video" %}
     {% else %}
-
-        <div class="d-flex justify-content-start mb-2">
-            <div class="p-3 text-dark"
-                 style="background:#e1e1e1;border-radius:16px;max-width:70%;">
-                {{ msg.translatedMessage or msg.message }}
-            </div>
-        </div>
-
+        {% set ftype = "document" %}
     {% endif %}
+{% endif %}
 
+{% if msg.senderMobile == current_mobile %}
+<div class="msg-row msg-right">
+    <div class="msg-bubble msg-me">
+{% else %}
+<div class="msg-row msg-left">
+    <div class="msg-bubble msg-other">
+{% endif %}
+
+        {% set clean_msg = (msg.translatedMessage if msg.senderMobile != current_mobile and msg.translatedMessage else msg.message) %}
+
+        {% if clean_msg %}
+            <div class="msg-text">{{ clean_msg|trim }}</div>
+        {% endif %}
+
+        {% if furl %}
+            {% if ftype == "image" %}
+                <img src="{{ furl }}" class="chatImage"
+                     onclick='openPreview({{ furl|tojson }}, "image", {{ fname|tojson }})'>
+
+                <button type="button" class="convert-btn"
+                        onclick='convertImageText({{ furl|tojson }})'>
+                    🌐 Convert
+                </button>
+
+            {% elif ftype == "video" %}
+                <video controls class="chatVideo" style="max-width:260px;border-radius:12px;margin-top:8px;">
+                    <source src="{{ furl }}">
+                </video>
+
+            {% else %}
+                <a href="{{ furl }}" target="_blank" class="doc-card">
+                    📄 {{ fname or "Document" }}
+                </a>
+            {% endif %}
+        {% endif %}
+
+        {% if msg.senderMobile == current_mobile %}
+            <div class="msg-status">
+                {% set rb = msg.readBy if msg.readBy else [] %}
+                {% if rb|length > 1 %}
+                    <span class="tick-seen">✓✓</span>
+                {% elif msg.delivered %}
+                    <span class="tick-normal">✓✓</span>
+                {% else %}
+                    <span class="tick-normal">✓</span>
+                {% endif %}
+            </div>
+        {% endif %}
+
+    </div>
+</div>
 {% endfor %}

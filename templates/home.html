@@ -12,27 +12,27 @@
             background:linear-gradient(135deg,#f5f2ff,#eee6ff);
             font-family:Arial, sans-serif;
         }
+
         .topbar{
             background:#6f42c1;
             padding:14px 18px;
             color:white;
         }
-        .profile-img{
-            width:48px;
-            height:48px;
-            border-radius:50%;
-            object-fit:cover;
-            background:white;
-        }
+
         .hero-card,.contacts-card{
             border-radius:26px;
             border:none;
             box-shadow:0 18px 40px rgba(70,40,120,0.15);
         }
-        .contact-row{
-            padding:15px 0;
-            border-bottom:1px solid #eee;
+
+        .profile-img{
+            width:58px;
+            height:58px;
+            border-radius:50%;
+            object-fit:cover;
+            background:white;
         }
+
         .avatar{
             width:50px;
             height:50px;
@@ -43,10 +43,72 @@
             align-items:center;
             justify-content:center;
             font-size:24px;
+            flex-shrink:0;
         }
+
+        .contact-row{
+            padding:14px 0;
+            border-bottom:1px solid #eee;
+        }
+
+        .contact-name{
+            font-weight:700;
+            font-size:18px;
+            margin-bottom:2px;
+        }
+
+        .last-msg{
+            color:#666;
+            font-size:14px;
+            word-break:break-word;
+        }
+
         .chat-btn{
-            border-radius:14px;
-            padding:8px 16px;
+            padding:10px 16px;
+            min-width:90px;
+        }
+
+        @media(max-width:600px){
+            .topbar .fw-bold{
+                font-size:20px !important;
+            }
+
+            .container{
+                padding-left:12px;
+                padding-right:12px;
+            }
+
+            .hero-card,.contacts-card{
+                border-radius:24px;
+                padding:22px !important;
+            }
+
+            .profile-img{
+                width:54px;
+                height:54px;
+            }
+
+            .hero-card h3{
+                font-size:26px;
+            }
+
+            .contact-name{
+                font-size:22px;
+            }
+
+            .chat-text{
+                display:inline;
+            }
+
+            .chat-btn{
+                width:auto;
+                min-width:80px;
+                padding:10px 8px;
+            }
+
+            .contact-info{
+                min-width:0;
+            }
         }
     </style>
 </head>
@@ -67,7 +129,7 @@
     </div>
 </nav>
 
-<div class="container mt-4 mb-5">
+<div class="container mt-4 mb-5" style="max-width:1050px;">
 
     <div class="card hero-card p-4 mb-4">
         <div class="d-flex align-items-center gap-3">
@@ -82,6 +144,44 @@
         </div>
     </div>
 
+    <div class="card contacts-card p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="fw-bold mb-0">Groups</h4>
+            <a href="/create-group" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-circle"></i> Create
+            </a>
+        </div>
+
+        {% if groups|length == 0 %}
+            <div class="alert alert-info mb-0">No groups found. Create your first group.</div>
+        {% endif %}
+
+        {% for g in groups %}
+        <div class="contact-row row align-items-center">
+            <div class="col-8 col-md-9 d-flex align-items-center gap-3 contact-info">
+                <div class="avatar">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+
+                <div class="contact-info">
+                    <div class="contact-name">{{ g.groupName }}</div>
+
+                    {% if g.lastMessage %}
+                        <div class="last-msg">{{ g.lastMessage }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="col-4 col-md-3 text-end">
+                <a href="/group-chat/{{ g.id }}" class="btn btn-success btn-sm chat-btn">
+                    <i class="bi bi-chat-dots-fill"></i>
+                    <span class="chat-text">Chat</span>
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
     <div class="card contacts-card p-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h4 class="fw-bold mb-0">Available Contacts</h4>
@@ -91,20 +191,22 @@
         </div>
 
         {% if contacts|length == 0 %}
-            <div class="alert alert-warning mb-0">
-                No Basha contacts found. Add contacts or send invite.
-            </div>
+            <div class="alert alert-warning mb-0">No Basha contacts found. Add contacts or send invite.</div>
         {% endif %}
 
         {% for c in contacts %}
-        <div class="contact-row d-flex align-items-center justify-content-between">
-            <div class="d-flex align-items-center gap-3">
-                <div class="avatar">
-                    <i class="bi bi-person-fill"></i>
-                </div>
+        <div class="contact-row row align-items-center">
+            <div class="col-8 col-md-9 d-flex align-items-center gap-3 contact-info">
+                {% if c.profilePic %}
+                    <img src="{{ c.profilePic }}" class="profile-img">
+                {% else %}
+                    <div class="avatar">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                {% endif %}
 
-                <div>
-                    <h5 class="mb-1 fw-bold">
+                <div class="contact-info">
+                    <div class="contact-name">
                         {{ c.savedName }}
 
                         {% if c.unreadCount > 0 %}
@@ -112,18 +214,28 @@
                                 {{ c.unreadCount }}
                             </span>
                         {% endif %}
-                    </h5>
+                    </div>
+
+                    {% if c.isOnline %}
+                        <div class="small text-success">● Online</div>
+                    {% else %}
+                        <div class="small text-muted">● Offline</div>
+                    {% endif %}
 
                     {% if c.lastMessage %}
-                        <div class="small text-muted">{{ c.lastMessage }}</div>
+                        <div class="last-msg">{{ c.lastMessage }}</div>
                     {% endif %}
+
                     <small class="text-muted">{{ c.mobile }}</small>
                 </div>
             </div>
 
-            <a href="/chat/{{ c.mobile }}" class="btn btn-success btn-sm chat-btn">
-                <i class="bi bi-chat-dots-fill"></i> Chat
-            </a>
+            <div class="col-4 col-md-3 text-end">
+                <a href="/chat/{{ c.mobile }}" class="btn btn-success btn-sm chat-btn">
+                    <i class="bi bi-chat-dots-fill"></i>
+                    <span class="chat-text">Chat</span>
+                </a>
+            </div>
         </div>
         {% endfor %}
     </div>
