@@ -7,4 +7,3 @@ google-generativeai
 python-dotenv
 requests
 Pillow
-google-genai
