@@ -29,27 +29,42 @@
         {% endif %}
 
         {% if furl %}
-            {% if ftype == "image" %}
-                <img src="{{ furl }}" class="chatImage"
-                     onclick='openPreview({{ furl|tojson }}, "image", {{ fname|tojson }})'>
+        {% if ftype == "image" %}
+            <img src="{{ furl }}" class="chatImage"
+                onclick='openPreview({{ furl|tojson }}, "image", {{ fname|tojson }})'>
 
-                <button type="button" class="convert-btn"
-                        onclick='convertImageText({{ furl|tojson }})'>
-                    🌐 Convert
-                </button>
+            <button type="button" class="convert-btn"
+                    onclick='convertImageText({{ furl|tojson }})'>
+                🌐 Convert
+            </button>
 
-            {% elif ftype == "video" %}
-                <video controls class="chatVideo" style="max-width:260px;border-radius:12px;margin-top:8px;">
-                    <source src="{{ furl }}">
-                </video>
+            <button type="button" class="convert-btn"
+                    onclick='openPreview({{ furl|tojson }}, "image", {{ fname|tojson }})'>
+                View
+            </button>
 
-            {% else %}
-                <a href="{{ furl }}" target="_blank" class="doc-card">
-                    📄 {{ fname or "Document" }}
-                </a>
-            {% endif %}
+        {% elif ftype == "video" %}
+            <video controls class="chatVideo">
+                <source src="{{ furl }}">
+            </video>
+
+            <button type="button" class="convert-btn"
+                    onclick='openPreview({{ furl|tojson }}, "video", {{ fname|tojson }})'>
+                View
+            </button>
+
+        {% else %}
+            <div class="doc-card"
+                onclick='openPreview({{ furl|tojson }}, "document", {{ fname|tojson }})'>
+                📄 {{ fname or "Document" }}
+            </div>
+
+            <button type="button" class="convert-btn"
+                    onclick='openPreview({{ furl|tojson }}, "document", {{ fname|tojson }})'>
+                View
+            </button>
         {% endif %}
-
+    {% endif %}
         {% if msg.senderMobile == current_mobile %}
             <div class="msg-status">
                 {% set rb = msg.readBy if msg.readBy else [] %}
