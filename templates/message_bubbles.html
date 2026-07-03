@@ -3,11 +3,12 @@
 {% set ftype = msg.fileType or "" %}
 {% set fname = msg.fileName or "" %}
 {% set furl = msg.fileUrl or "" %}
+{% set check_url = furl.split("?")[0]|lower %}
 
 {% if not ftype and furl %}
-    {% if furl.endswith(".png") or furl.endswith(".jpg") or furl.endswith(".jpeg") or furl.endswith(".gif") or furl.endswith(".webp") %}
+    {% if check_url.endswith(".png") or check_url.endswith(".jpg") or check_url.endswith(".jpeg") or check_url.endswith(".gif") or check_url.endswith(".webp") %}
         {% set ftype = "image" %}
-    {% elif furl.endswith(".mp4") or furl.endswith(".mov") or furl.endswith(".avi") or furl.endswith(".mkv") or furl.endswith(".webm") %}
+    {% elif check_url.endswith(".mp4") or check_url.endswith(".mov") or check_url.endswith(".avi") or check_url.endswith(".mkv") or check_url.endswith(".webm") %}
         {% set ftype = "video" %}
     {% else %}
         {% set ftype = "document" %}
@@ -44,7 +45,7 @@
             </button>
 
         {% elif ftype == "video" %}
-            <video controls class="chatVideo">
+            <video controls preload="none" class="chatVideo">
                 <source src="{{ furl }}">
             </video>
 

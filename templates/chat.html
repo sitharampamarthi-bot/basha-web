@@ -546,8 +546,10 @@ function isNearBottom() {
     return (box.scrollTop + box.clientHeight) >= (box.scrollHeight - 200);
 }
 
+let lastMessagesHtml = "";
+
 function loadMessages(forceBottom = false) {
-    if (isRefreshing) return;
+    if (isRefreshing || isSending) return;
     isRefreshing = true;
 
     const stayBottom = isNearBottom();
@@ -555,10 +557,13 @@ function loadMessages(forceBottom = false) {
     fetch("/get-messages/" + receiverMobile, { cache: "no-store" })
         .then(res => res.text())
         .then(html => {
-            document.getElementById("messagesBox").innerHTML = html;
+            if (html.trim() !== lastMessagesHtml.trim()) {
+                lastMessagesHtml = html;
+                document.getElementById("messagesBox").innerHTML = html;
 
-            if (forceBottom || stayBottom) {
-                setTimeout(scrollBottom, 80);
+                if (forceBottom || stayBottom) {
+                    setTimeout(scrollBottom, 50);
+                }
             }
         })
         .finally(() => {
@@ -713,6 +718,46 @@ document.getElementById("messageForm").addEventListener("submit", function(e) {
     btn.disabled = true;
     btn.innerText = "...";
 
+    let tempHtml = "";
+
+    if (msg.value) {
+        tempHtml += `
+            <div class="msg-row msg-right temp-msg">
+                <div class="msg-bubble msg-me">
+                    <div class="msg-text">${msg.value}</div>
+                    <div class="msg-status"><span class="tick-normal">⏳</span></div>
+                </div>
+            </div>`;
+    }
+
+    if (file.files.length > 0) {
+        for (let i = 0; i < file.files.length; i++) {
+            let localUrl = URL.createObjectURL(file.files[i]);
+            let type = file.files[i].type;
+
+            if (type.startsWith("image/")) {
+                tempHtml += `
+                    <div class="msg-row msg-right temp-msg">
+                        <div class="msg-bubble msg-me">
+                            <img src="${localUrl}" class="chatImage">
+                            <div class="msg-status"><span class="tick-normal">Uploading...</span></div>
+                        </div>
+                    </div>`;
+            } else {
+                tempHtml += `
+                    <div class="msg-row msg-right temp-msg">
+                        <div class="msg-bubble msg-me">
+                            <div class="doc-card">📎 ${file.files[i].name}</div>
+                            <div class="msg-status"><span class="tick-normal">Uploading...</span></div>
+                        </div>
+                    </div>`;
+            }
+        }
+    }
+
+    document.getElementById("messagesBox").insertAdjacentHTML("beforeend", tempHtml);
+    scrollBottom();
+
     fetch("/send-message", {
         method: "POST",
         body: new FormData(form)
@@ -754,11 +799,12 @@ window.addEventListener("load", function() {
     setTimeout(scrollBottom, 200);
 });
 
-setInterval(updatePresence, 10000);
-setInterval(loadChatStatus, 2000);
+setInterval(updatePresence, 15000);
+setInterval(loadChatStatus, 5000);
 setInterval(function() {
     loadMessages(false);
 }, 3000);
+
 if (window.visualViewport) {
     visualViewport.addEventListener("resize", function () {
         const inputBar = document.querySelector(".input-bar");

@@ -1,10 +1,10 @@
 import datetime
-import uuid
+import uuid, os
 from flask import Flask, render_template, request, redirect, session, jsonify
 import firebase_admin
-from firebase_admin import credentials, firestore
+from firebase_admin import credentials, firestore, storage
 from werkzeug.utils import secure_filename
-import os
+from urllib.parse import quote
 import json
 from deep_translator import GoogleTranslator
 import requests
@@ -30,8 +30,11 @@ else:
     cred = credentials.Certificate(
         os.path.join(BASE_DIR, "serviceAccountKey.json")
     )
+    
+firebase_admin.initialize_app(cred, {
+    "storageBucket": "basha-web.firebasestorage.app"
+})
 
-firebase_admin.initialize_app(cred)
 db = firestore.client()
 
 ALLOWED_EXTENSIONS = {
@@ -39,6 +42,38 @@ ALLOWED_EXTENSIONS = {
     "pdf", "doc", "docx", "xls", "xlsx",
     "mp4", "mov", "avi", "mkv", "webm"
 }
+
+def upload_chat_file_to_firebase(file, sender_uid):
+    original_name = secure_filename(file.filename)
+    ext = os.path.splitext(original_name)[1].lower()
+
+    unique_name = f"chat_uploads/{sender_uid}_{uuid.uuid4().hex}_{original_name}"
+
+    bucket = storage.bucket()
+    blob = bucket.blob(unique_name)
+
+    token = str(uuid.uuid4())
+
+    blob.metadata = {
+        "firebaseStorageDownloadTokens": token
+    }
+
+    blob.upload_from_file(
+        file,
+        content_type=file.content_type
+    )
+
+    encoded_path = quote(unique_name, safe="")
+    file_url = f"https://firebasestorage.googleapis.com/v0/b/{bucket.name}/o/{encoded_path}?alt=media&token={token}"
+
+    if ext in [".png", ".jpg", ".jpeg", ".gif", ".webp"]:
+        file_type = "image"
+    elif ext in [".mp4", ".mov", ".avi", ".mkv", ".webm"]:
+        file_type = "video"
+    else:
+        file_type = "document"
+
+    return file_url, file_type, original_name
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -549,29 +584,10 @@ def send_message():
         for file in files:
             if file and file.filename and allowed_file(file.filename):
 
-                upload_folder = os.path.join(
-                    os.path.dirname(os.path.abspath(__file__)),
-                    "static",
-                    "chat_uploads"
+                file_url, file_type, original_name = upload_chat_file_to_firebase(
+                    file,
+                    session["user_id"]
                 )
-                os.makedirs(upload_folder, exist_ok=True)
-
-                original_name = secure_filename(file.filename)
-                saved_name = f"{session['user_id']}_{uuid.uuid4().hex}_{original_name}"
-
-                save_path = os.path.join(upload_folder, saved_name)
-                file.save(save_path)
-
-                file_url = f"/static/chat_uploads/{saved_name}"
-
-                ext = original_name.rsplit(".", 1)[1].lower()
-
-                if ext in ["png", "jpg", "jpeg", "gif", "webp"]:
-                    file_type = "image"
-                elif ext in ["mp4", "mov", "avi", "mkv"]:
-                    file_type = "video"
-                else:
-                    file_type = "document"
 
                 save_chat_message(
                     session["user_id"],
@@ -635,16 +651,20 @@ def get_messages(receiver_mobile):
         data = m.to_dict()
 
         if data.get("receiverMobile") == current_mobile:
-            m.reference.update({
-                "delivered": True,
-                "readBy": firestore.ArrayUnion([current_mobile])
-            })
-            data["delivered"] = True
             read_by = data.get("readBy", [])
+            already_read = current_mobile in read_by
+            already_delivered = data.get("delivered", False)
+
+            if not already_read or not already_delivered:
+                m.reference.update({
+                    "delivered": True,
+                    "readBy": firestore.ArrayUnion([current_mobile])
+                })
+
+            data["delivered"] = True
             if current_mobile not in read_by:
                 read_by.append(current_mobile)
-            data["readBy"] = read_by
-
+            data["readBy"] = read_by            
         messages.append(data)
 
     return render_template(
@@ -1047,34 +1067,10 @@ def send_group_message():
 
     if file and file.filename and allowed_file(file.filename):
 
-        upload_folder = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            "static",
-            "chat_uploads"
+        file_url, file_type, file_name = upload_chat_file_to_firebase(
+            file,
+            session["user_id"]
         )
-        os.makedirs(upload_folder, exist_ok=True)
-
-        file_name = secure_filename(file.filename)
-
-        saved_name = f"{session['user_id']}_{file_name}"
-
-        save_path = os.path.join(upload_folder, saved_name)
-
-        file.save(save_path)
-
-        file_url = f"/static/chat_uploads/{saved_name}"
-
-        ext = file_name.rsplit(".", 1)[1].lower()
-
-        if ext in ["png", "jpg", "jpeg", "gif", "webp"]:
-            file_type = "image"
-
-        elif ext in ["mp4", "mov", "avi", "mkv"]:
-            file_type = "video"
-
-        else:
-            file_type = "document"
-
     if not message and not file_url:
         return redirect(f"/group-chat/{group_id}")
 
