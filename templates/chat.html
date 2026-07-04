@@ -723,25 +723,30 @@ function convertImageText(imageUrl) {
         <div class="preview-container">
 
         <div class="preview-left">
-
-        <img
-        id="previewImage"
-        class="zoomImage"
-        src="${data.translated_image_url}"
-        style="max-width:100%;">
-
+            <div style="overflow:auto;height:100%;">
+                <img
+                id="previewImage"
+                class="zoomImage"
+                src="${data.translated_image_url}"
+                style="max-width:none;width:auto;height:auto;">
+            </div>
         </div>
 
         <div class="preview-right">
-
-        <h5>🌐 Translated Content - ${data.language||""}</h5>
-
-        ${lines.map(t=>`<p>${t}</p>`).join("")}
-
+            <h4>
+                🌐
+                Translated Content - ${data.language}
+            </h4>
+            <hr>
+                ${lines.map(line=>`
+                    <p style="font-size:18px;line-height:1.7">
+                        ${line}
+                    </p>
+                `).join("")}
         </div>
 
         </div>
-
+        
         `;
 
         window.zoomScale=1;

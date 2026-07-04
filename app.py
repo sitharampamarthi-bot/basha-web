@@ -1148,22 +1148,9 @@ def convert_image_text():
         for line in lines:
             wrapped_lines.extend(wrap_text_by_width(line, font, w - 60))
 
-        text_height = 80 + (len(wrapped_lines) * 48)
-        new_img = Image.new("RGB", (w, h + text_height), "white")
-        new_img.paste(img, (0, 0))
-
-        draw = ImageDraw.Draw(new_img)
-        y = h + 25
-
-        draw.text((padding, y), f"Translated Content - {target_language}", fill=(0, 0, 0), font=title_font)
-        y += 60
-
-        for line in wrapped_lines:
-            draw.text((padding, y), line, fill=(0, 0, 0), font=font)
-            y += 48
-
+        # Original image ni save chestham.
         output_path = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg").name
-        new_img.save(output_path, "JPEG", quality=95)
+        img.save(output_path, "JPEG", quality=95)
 
         bucket = storage.bucket()
         firebase_path = f"translated_images/{session['user_id']}_{uuid.uuid4().hex}.jpg"
@@ -1183,11 +1170,11 @@ def convert_image_text():
             pass
 
         return jsonify({
-        "success":True,
-        "translated_image_url":translated_image_url,
-        "title":result["title"],
-        "language":target_language,
-        "translated_text":wrapped_lines
+            "success": True,
+            "translated_image_url": translated_image_url,
+            "translated_text": wrapped_lines,
+            "language": target_language,
+            "title": result.get("title", "")
         })
 
     except Exception as e:
