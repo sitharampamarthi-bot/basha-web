@@ -732,6 +732,8 @@ function loadMessages(forceBottom = false) {
 }
 
 function openPreview(url, type, name) {
+    document.querySelector("#filePreviewModal .modal-dialog").style.maxWidth = "";
+    
     const body = document.getElementById("previewBody");
     const downloadBtn = document.getElementById("downloadBtn");
     const sendBtn = document.getElementById("sendConvertedBtn");
@@ -748,7 +750,7 @@ function openPreview(url, type, name) {
     if (type === "image") {
         body.innerHTML = `
             <div class="single-preview-wrap">
-                <img src="${url}" class="single-preview-img">
+                <img src="${url}" class="single-preview-img" onload="fitSinglePreviewModal(this)">
             </div>
         `;
     } else if (type === "video") {
@@ -1046,6 +1048,19 @@ function updateZoom(){
     document.getElementById("zoomPercent").innerText=
     Math.round(window.zoomScale*100)+"%";
 }
+
+function fitSinglePreviewModal(img){
+    const dialog = document.querySelector("#filePreviewModal .modal-dialog");
+
+    if (!dialog || window.innerWidth <= 768) return;
+
+    const imgWidth = img.naturalWidth;
+    const maxWidth = window.innerWidth * 0.75;
+    const finalWidth = Math.min(imgWidth + 80, maxWidth);
+
+    dialog.style.maxWidth = finalWidth + "px";
+}
+
 </script>
 
 </body>
