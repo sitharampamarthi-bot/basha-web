@@ -1129,6 +1129,8 @@ def convert_image_text():
             image_path=image_path,
             target_language=target_language
         )
+        if not result:
+            return jsonify({"error": "Image translation failed. Please try again"}), 500
 
         lines = result.get("translated_text", [])
         if isinstance(lines, str):
