@@ -1104,7 +1104,7 @@ def convert_image_text():
         if "user_id" not in session:
             return jsonify({"error": "Login required"}), 401
 
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
         image_url = data.get("image_url", "")
 
         if not image_url:
