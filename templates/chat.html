@@ -711,11 +711,17 @@ function openPreview(url, type, name) {
     if (copyBtn) copyBtn.style.display = "none";
 
     downloadBtn.style.display = "inline-block";
-    downloadBtn.href = url;
-    downloadBtn.setAttribute("download", name || "");
+    downloadBtn.href = "/download-image?url=" + encodeURIComponent(url);
+    downloadBtn.setAttribute("download", name || "basha-image.jpg");
+    downloadBtn.removeAttribute("target");
 
     if (type === "image") {
-        body.innerHTML = `<img src="${url}" style="max-width:100%;max-height:70vh;object-fit:contain;border-radius:12px;">`;
+        body.innerHTML = `
+            <div style="height:72vh;display:flex;align-items:center;justify-content:center;background:white;">
+                <img src="${url}"
+                    style="max-width:100%;max-height:100%;object-fit:contain;border-radius:12px;">
+            </div>
+        `;
     } else if (type === "video") {
         body.innerHTML = `<video controls style="max-width:100%;border-radius:12px;"><source src="${url}"></video>`;
     } else {
@@ -803,9 +809,9 @@ function convertImageText(imageUrl) {
 
         window.zoomScale=1;
 
-        downloadBtn.href = data.translated_image_url;
+        downloadBtn.href = "/download-image?url=" + encodeURIComponent(data.translated_image_url);
         downloadBtn.setAttribute("download", "translated-image.jpg");
-        downloadBtn.setAttribute("target", "_blank");
+        downloadBtn.removeAttribute("target");
         downloadBtn.style.display = "inline-block";
 
         if (sendBtn) sendBtn.style.display = "inline-block";

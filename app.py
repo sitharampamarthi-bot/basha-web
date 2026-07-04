@@ -1,6 +1,6 @@
 import datetime
 import uuid, os
-from flask import Flask, render_template, request, redirect, session, jsonify
+from flask import Flask, render_template, request, redirect, session, jsonify, send_file
 import firebase_admin
 from firebase_admin import credentials, firestore, storage
 from werkzeug.utils import secure_filename
@@ -14,6 +14,7 @@ import textwrap
 from dotenv import load_dotenv
 from image_translator import make_advanced_translated_image
 import tempfile
+from io import BytesIO
 load_dotenv()
 
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
@@ -1179,7 +1180,30 @@ def convert_image_text():
 
     except Exception as e:
         print("CONVERT IMAGE ERROR:", str(e))
-        return jsonify({"error": str(e)}), 500        
+        return jsonify({"error": str(e)}), 500
+    
+@app.route("/download-image")
+def download_image():
+    try:
+        image_url = request.args.get("url", "")
+
+        if not image_url:
+            return "Image URL missing", 400
+
+        response = requests.get(image_url, timeout=30)
+
+        if response.status_code != 200:
+            return "Unable to download image", 400
+
+        return send_file(
+            BytesIO(response.content),
+            mimetype="image/jpeg",
+            as_attachment=True,
+            download_name="basha-image.jpg"
+        )
+
+    except Exception as e:
+        return str(e), 500            
 
 if __name__ == "__main__":
     app.run(debug=True)
