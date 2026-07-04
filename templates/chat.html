@@ -429,54 +429,71 @@
 
         @media(max-width:768px){
 
+            .modal-dialog{
+                margin:10px !important;
+                max-width:calc(100vw - 20px) !important;
+            }
+
+            .modal-content{
+                max-height:88vh !important;
+                overflow:hidden !important;
+            }
+
+            #previewBody{
+                height:calc(88vh - 145px);
+                overflow:hidden;
+            }
+
+            .preview-toolbar{
+                height:58px;
+                gap:8px;
+                padding:8px 10px;
+                flex-shrink:0;
+            }
+
             .preview-container{
-                flex-direction:row;
-                height:calc(100vh - 230px);
+                display:flex !important;
+                flex-direction:row !important;
+                width:100%;
+                height:calc(88vh - 205px);
                 overflow:hidden;
             }
 
             .preview-left{
-                width:50%;
-                min-width:50%;
-                height:100%;
+                width:50% !important;
+                min-width:50% !important;
+                height:100% !important;
                 padding:6px;
                 overflow:auto;
+                display:flex;
                 align-items:flex-start;
+                justify-content:center;
             }
 
             .preview-right{
-                width:50%;
-                min-width:50%;
-                height:100%;
+                width:50% !important;
+                min-width:50% !important;
+                height:100% !important;
                 padding:8px;
                 overflow:auto;
                 border-left:1px solid #ddd;
             }
 
             .preview-right h4{
-                font-size:18px;
-                line-height:1.3;
+                font-size:16px !important;
+                line-height:1.25;
                 text-align:center;
             }
 
             .preview-right p{
-                font-size:15px !important;
-                line-height:1.6 !important;
+                font-size:14px !important;
+                line-height:1.55 !important;
                 text-align:left;
             }
 
             .zoomImage{
                 width:100%;
                 height:auto;
-            }
-
-            .preview-toolbar{
-                gap:8px;
-                padding:8px;
-            }
-
-            .preview-toolbar button{
-                min-width:42px;
             }
         }
 </style>
@@ -595,7 +612,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
 
-            <div class="modal-body text-center p-3" id="previewBody" style="max-height:78vh;overflow:auto;"></div>
+            <div class="modal-body p-0" id="previewBody"></div>
 
             <div class="modal-footer">
                 <button type="button" id="copyTextBtn" class="btn btn-info" style="display:none;">Copy Text</button>
@@ -787,6 +804,8 @@ function convertImageText(imageUrl) {
         window.zoomScale=1;
 
         downloadBtn.href = data.translated_image_url;
+        downloadBtn.setAttribute("download", "translated-image.jpg");
+        downloadBtn.setAttribute("target", "_blank");
         downloadBtn.style.display = "inline-block";
 
         if (sendBtn) sendBtn.style.display = "inline-block";
