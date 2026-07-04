@@ -1183,10 +1183,11 @@ def convert_image_text():
             pass
 
         return jsonify({
-            "success": True,
-            "title": result.get("title", "Translated Content"),
-            "translated_text": lines,
-            "translated_image_url": translated_image_url
+        "success":True,
+        "translated_image_url":translated_image_url,
+        "title":result["title"],
+        "language":target_language,
+        "translated_text":wrapped_lines
         })
 
     except Exception as e:

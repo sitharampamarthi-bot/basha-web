@@ -366,6 +366,82 @@
                 max-width:230px !important;
             }
         }
+        .preview-toolbar{
+            display:flex;
+            gap:10px;
+            align-items:center;
+            padding:10px;
+            border-bottom:1px solid #ddd;
+            background:#fafafa;
+            position:sticky;
+            top:0;
+            z-index:5;
+        }
+
+        .preview-toolbar button{
+            min-width:46px;
+        }
+
+        .preview-container{
+            display:flex;
+            height:75vh;
+            overflow:hidden;
+        }
+
+        .preview-left{
+            flex:1;
+            overflow:auto;
+            text-align:center;
+            background:white;
+        }
+
+        .preview-right{
+            width:45%;
+            overflow:auto;
+            border-left:1px solid #ddd;
+            padding:20px;
+            background:white;
+        }
+
+        .preview-right h5{
+            font-weight:bold;
+            margin-bottom:15px;
+        }
+
+        .zoomImage{
+            transform-origin:top center;
+            transition:.2s;
+        }
+
+        @media(max-width:768px){
+
+        .preview-container{
+
+        display:flex;
+
+        flex-direction:row;
+
+        height:65vh;
+
+        }
+
+        .preview-left{
+
+        width:50%;
+
+        }
+
+        .preview-right{
+
+        width:50%;
+
+        padding:10px;
+
+        font-size:14px;
+
+        }
+
+        }
 </style>
 </head>
 
@@ -625,15 +701,50 @@ function convertImageText(imageUrl) {
         let lines = data.translated_text || [];
         if (typeof lines === "string") lines = [lines];
 
-        convertedTextGlobal = lines.join("\n\n");
+        convertedTextGlobal = lines.join("\n\n");        
 
-        body.innerHTML = `
-            <div class="text-center">
-                <h6>🌐 ${data.title || "Translated Image"}</h6>
-                <img src="${data.translated_image_url}" 
-                    style="max-width:100%;max-height:70vh;object-fit:contain;border-radius:12px;background:white;">
-            </div>
+        body.innerHTML=`
+
+        <div class="preview-toolbar">
+
+        <button class="btn btn-dark btn-sm"
+        onclick="zoomOut()">−</button>
+
+        <span id="zoomPercent">100%</span>
+
+        <button class="btn btn-dark btn-sm"
+        onclick="zoomIn()">+</button>
+
+        <button class="btn btn-secondary btn-sm"
+        onclick="fitImage()">Fit</button>
+
+        </div>
+
+        <div class="preview-container">
+
+        <div class="preview-left">
+
+        <img
+        id="previewImage"
+        class="zoomImage"
+        src="${data.translated_image_url}"
+        style="max-width:100%;">
+
+        </div>
+
+        <div class="preview-right">
+
+        <h5>🌐 Translated Content - ${data.language||""}</h5>
+
+        ${lines.map(t=>`<p>${t}</p>`).join("")}
+
+        </div>
+
+        </div>
+
         `;
+
+        window.zoomScale=1;
 
         downloadBtn.href = data.translated_image_url;
         downloadBtn.style.display = "inline-block";
@@ -815,6 +926,48 @@ document.getElementById("messageInput").addEventListener("focus", function () {
 document.querySelectorAll("img").forEach(function (img) {
     img.onload = scrollBottom;
 });
+window.zoomScale=1;
+
+function zoomIn(){
+
+window.zoomScale+=0.1;
+
+updateZoom();
+
+}
+
+function zoomOut(){
+
+window.zoomScale-=0.1;
+
+if(window.zoomScale<0.3)
+
+window.zoomScale=0.3;
+
+updateZoom();
+
+}
+
+function fitImage(){
+
+window.zoomScale=1;
+
+updateZoom();
+
+}
+
+function updateZoom(){
+
+const img=document.getElementById("previewImage");
+
+if(!img) return;
+
+img.style.transform=`scale(${window.zoomScale})`;
+
+document.getElementById("zoomPercent").innerText=
+Math.round(window.zoomScale*100)+"%";
+
+}
 </script>
 
 </body>
