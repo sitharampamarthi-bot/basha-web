@@ -13,6 +13,7 @@ from PIL import Image, ImageDraw, ImageFont
 import textwrap
 from dotenv import load_dotenv
 from image_translator import make_advanced_translated_image
+import tempfile
 load_dotenv()
 
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
@@ -1059,18 +1060,19 @@ def send_group_message():
     group_id = request.form.get("group_id")
     message = request.form.get("message", "").strip()
 
-    file = request.files.get("chat_file")
+    files = request.files.getlist("chat_files")
 
     file_url = ""
     file_name = ""
     file_type = ""
 
-    if file and file.filename and allowed_file(file.filename):
-
-        file_url, file_type, file_name = upload_chat_file_to_firebase(
-            file,
-            session["user_id"]
-        )
+    for file in files:
+        if file and file.filename and allowed_file(file.filename):
+            file_url, file_type, file_name = upload_chat_file_to_firebase(
+                file,
+                session["user_id"]
+            )
+            break
     if not message and not file_url:
         return redirect(f"/group-chat/{group_id}")
 
@@ -1110,28 +1112,84 @@ def convert_image_text():
 
         user_doc = db.collection("users").document(session["user_id"]).get()
         user = user_doc.to_dict() if user_doc.exists else {}
-
         target_language = user.get("languageName", "English")
 
-        image_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            image_url.lstrip("/")
-        )
+        response = requests.get(image_url, timeout=20)
 
-        if not os.path.exists(image_path):
-            return jsonify({"error": "Image file not found"}), 404
+        if response.status_code != 200:
+            return jsonify({"error": "Unable to download image"}), 400
+
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
+        temp_file.write(response.content)
+        temp_file.close()
+
+        image_path = temp_file.name
 
         result = make_advanced_translated_image(
             image_path=image_path,
             target_language=target_language
         )
 
-        return jsonify(result)
+        lines = result.get("translated_text", [])
+        if isinstance(lines, str):
+            lines = [lines]
+
+        img = Image.open(image_path).convert("RGB")
+        w, h = img.size
+
+        font = get_best_font("\n".join(lines), 34)
+        title_font = get_best_font(target_language, 38)
+
+        padding = 30
+        wrapped_lines = []
+
+        for line in lines:
+            wrapped_lines.extend(wrap_text_by_width(line, font, w - 60))
+
+        text_height = 80 + (len(wrapped_lines) * 48)
+        new_img = Image.new("RGB", (w, h + text_height), "white")
+        new_img.paste(img, (0, 0))
+
+        draw = ImageDraw.Draw(new_img)
+        y = h + 25
+
+        draw.text((padding, y), f"Translated Content - {target_language}", fill=(0, 0, 0), font=title_font)
+        y += 60
+
+        for line in wrapped_lines:
+            draw.text((padding, y), line, fill=(0, 0, 0), font=font)
+            y += 48
+
+        output_path = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg").name
+        new_img.save(output_path, "JPEG", quality=95)
+
+        bucket = storage.bucket()
+        firebase_path = f"translated_images/{session['user_id']}_{uuid.uuid4().hex}.jpg"
+        blob = bucket.blob(firebase_path)
+
+        token = str(uuid.uuid4())
+        blob.metadata = {"firebaseStorageDownloadTokens": token}
+        blob.upload_from_filename(output_path, content_type="image/jpeg")
+
+        encoded_path = quote(firebase_path, safe="")
+        translated_image_url = f"https://firebasestorage.googleapis.com/v0/b/{bucket.name}/o/{encoded_path}?alt=media&token={token}"
+
+        try:
+            os.remove(image_path)
+            os.remove(output_path)
+        except:
+            pass
+
+        return jsonify({
+            "success": True,
+            "title": result.get("title", "Translated Content"),
+            "translated_text": lines,
+            "translated_image_url": translated_image_url
+        })
 
     except Exception as e:
-        print("GEMINI ERROR:", str(e))
-        return jsonify({"error": str(e)}), 500
-        
+        print("CONVERT IMAGE ERROR:", str(e))
+        return jsonify({"error": str(e)}), 500        
 
 if __name__ == "__main__":
     app.run(debug=True)

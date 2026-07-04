@@ -628,20 +628,15 @@ function convertImageText(imageUrl) {
         convertedTextGlobal = lines.join("\n\n");
 
         body.innerHTML = `
-            <div class="row g-3 align-items-start">
-                <div class="col-md-6">
-                    <h6>Original Image</h6>
-                    <img src="${imageUrl}" style="width:100%;border-radius:12px;">
-                </div>
-
-                <div class="col-md-6">
-                    <h6>🌐 ${data.title || "Translated Content"}</h6>
-                    <div style="height:68vh;overflow:auto;white-space:pre-line;font-size:18px;line-height:1.7;text-align:left;padding:14px;border:1px solid #ddd;border-radius:12px;background:white;">
-                        ${lines.join("<br><br>")}
-                    </div>
-                </div>
+            <div class="text-center">
+                <h6>🌐 ${data.title || "Translated Image"}</h6>
+                <img src="${data.translated_image_url}" 
+                    style="max-width:100%;border-radius:12px;background:white;">
             </div>
         `;
+
+        downloadBtn.href = data.translated_image_url;
+        downloadBtn.style.display = "inline-block";
 
         if (sendBtn) sendBtn.style.display = "inline-block";
         if (copyBtn) copyBtn.style.display = "inline-block";

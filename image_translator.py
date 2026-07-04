@@ -71,4 +71,4 @@ Rules:
     if "title" not in data:
         data["title"] = "Translated Content"
 
-    return data
+        return data
