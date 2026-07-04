@@ -440,8 +440,11 @@
             }
 
             #previewBody{
-                height:calc(88vh - 145px);
-                overflow:hidden;
+                display:flex;
+                justify-content:center;
+                align-items:center;
+                padding:10px;
+                overflow:auto;
             }
 
             .preview-toolbar{
@@ -497,23 +500,20 @@
             }
         }
         .single-preview-wrap{
-            display:flex;
-            align-items:center;
+            display:inline-flex;
             justify-content:center;
-            background:white;
+            align-items:center;
             padding:10px;
-            max-height:72vh;
-            overflow:auto;
+            margin:auto;
         }
 
         .single-preview-img{
             display:block;
-            max-width:100%;
-            max-height:70vh;
             width:auto;
             height:auto;
+            max-width:90vw;
+            max-height:78vh;
             object-fit:contain;
-            border-radius:12px;
         }
 
         @media(max-width:768px){
@@ -733,7 +733,7 @@ function loadMessages(forceBottom = false) {
 
 function openPreview(url, type, name) {
     document.querySelector("#filePreviewModal .modal-dialog").style.maxWidth = "";
-    
+
     const body = document.getElementById("previewBody");
     const downloadBtn = document.getElementById("downloadBtn");
     const sendBtn = document.getElementById("sendConvertedBtn");
@@ -749,9 +749,15 @@ function openPreview(url, type, name) {
 
     if (type === "image") {
         body.innerHTML = `
-            <div class="single-preview-wrap">
-                <img src="${url}" class="single-preview-img" onload="fitSinglePreviewModal(this)">
-            </div>
+        <div class="single-preview-wrap">
+            <img
+                src="${url}"
+                class="single-preview-img"
+                onload="
+                    fitSinglePreviewModal(this);
+                    this.parentElement.style.width=this.clientWidth+'px';
+                ">
+        </div>
         `;
     } else if (type === "video") {
         body.innerHTML = `<video controls style="max-width:100%;border-radius:12px;"><source src="${url}"></video>`;
@@ -1050,15 +1056,18 @@ function updateZoom(){
 }
 
 function fitSinglePreviewModal(img){
-    const dialog = document.querySelector("#filePreviewModal .modal-dialog");
 
-    if (!dialog || window.innerWidth <= 768) return;
+    if(window.innerWidth<=768) return;
 
-    const imgWidth = img.naturalWidth;
-    const maxWidth = window.innerWidth * 0.75;
-    const finalWidth = Math.min(imgWidth + 80, maxWidth);
+    const dialog=document.querySelector("#filePreviewModal .modal-dialog");
 
-    dialog.style.maxWidth = finalWidth + "px";
+    const width=Math.min(
+        img.naturalWidth+40,
+        window.innerWidth*0.65
+    );
+
+    dialog.style.maxWidth=width+"px";
+
 }
 
 </script>
