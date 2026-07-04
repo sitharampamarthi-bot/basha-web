@@ -384,19 +384,27 @@
 
         .preview-container{
             display:flex;
-            height:75vh;
+            width:100%;
+            height:calc(90vh - 120px);
             overflow:hidden;
         }
 
         .preview-left{
             flex:1;
+            min-width:45%;
             overflow:auto;
-            text-align:center;
-            background:white;
+            background:#f8f8f8;
+
+            display:flex;
+            justify-content:center;
+            align-items:flex-start;
+
+            padding:15px;
         }
 
         .preview-right{
-            width:45%;
+            flex:1;
+            min-width:55%;
             overflow:auto;
             border-left:1px solid #ddd;
             padding:20px;
@@ -409,37 +417,42 @@
         }
 
         .zoomImage{
-            transform-origin:top center;
+            width:100%;
+            height:auto;
+            max-width:none;
+            max-height:none;
+            display:block;
+            transform-origin:top left;
             transition:.2s;
+            cursor:grab;
         }
 
         @media(max-width:768px){
+            .preview-container{
+                flex-direction:column;
+                height:calc(100vh - 210px);
+            }
 
-        .preview-container{
+            .preview-left{
+                height:40%;
+                min-width:100%;
+                padding:10px;
+            }
 
-        display:flex;
+            .preview-right{
+                height:60%;
+                min-width:100%;
+                padding:12px;
+            }
 
-        flex-direction:row;
+            .preview-right h4{
+                font-size:28px;
+            }
 
-        height:65vh;
-
-        }
-
-        .preview-left{
-
-        width:50%;
-
-        }
-
-        .preview-right{
-
-        width:50%;
-
-        padding:10px;
-
-        font-size:14px;
-
-        }
+            .preview-right p{
+                font-size:20px;
+                line-height:1.8;
+            }
 
         }
 </style>
@@ -707,46 +720,44 @@ function convertImageText(imageUrl) {
 
         <div class="preview-toolbar">
 
-        <button class="btn btn-dark btn-sm"
-        onclick="zoomOut()">−</button>
+            <button class="btn btn-dark btn-sm"
+                onclick="zoomOut()">−</button>
 
-        <span id="zoomPercent">100%</span>
+            <span id="zoomPercent">100%</span>
 
-        <button class="btn btn-dark btn-sm"
-        onclick="zoomIn()">+</button>
+            <button class="btn btn-dark btn-sm"
+                onclick="zoomIn()">+</button>
 
-        <button class="btn btn-secondary btn-sm"
-        onclick="fitImage()">Fit</button>
+            <button class="btn btn-secondary btn-sm"
+                onclick="fitImage()">Fit</button>
 
         </div>
 
         <div class="preview-container">
 
-        <div class="preview-left">
-            <div style="overflow:auto;height:100%;">
+            <div class="preview-left">
+
                 <img
-                id="previewImage"
-                class="zoomImage"
-                src="${data.translated_image_url}"
-                style="max-width:none;width:auto;height:auto;">
+                    id="previewImage"
+                    class="zoomImage"
+                    src="${data.translated_image_url}">
             </div>
+
+            <div class="preview-right">
+                <h4>
+                    🌐
+                    Translated Content - ${data.language}
+                </h4>
+                <hr>
+                    ${lines.map(line=>`
+                        <p style="font-size:18px;line-height:1.7">
+                            ${line}
+                        </p>
+                    `).join("")}
+            </div>
+
         </div>
 
-        <div class="preview-right">
-            <h4>
-                🌐
-                Translated Content - ${data.language}
-            </h4>
-            <hr>
-                ${lines.map(line=>`
-                    <p style="font-size:18px;line-height:1.7">
-                        ${line}
-                    </p>
-                `).join("")}
-        </div>
-
-        </div>
-        
         `;
 
         window.zoomScale=1;
@@ -934,44 +945,28 @@ document.querySelectorAll("img").forEach(function (img) {
 window.zoomScale=1;
 
 function zoomIn(){
-
-window.zoomScale+=0.1;
-
-updateZoom();
-
+    window.zoomScale+=0.1;
+    updateZoom();
 }
 
 function zoomOut(){
-
-window.zoomScale-=0.1;
-
-if(window.zoomScale<0.3)
-
-window.zoomScale=0.3;
-
-updateZoom();
-
+    window.zoomScale-=0.1;
+    if(window.zoomScale<0.3)
+    window.zoomScale=0.3;
+    updateZoom();
 }
 
 function fitImage(){
-
-window.zoomScale=1;
-
-updateZoom();
-
+    window.zoomScale=1;
+    updateZoom();
 }
 
 function updateZoom(){
-
-const img=document.getElementById("previewImage");
-
-if(!img) return;
-
-img.style.transform=`scale(${window.zoomScale})`;
-
-document.getElementById("zoomPercent").innerText=
-Math.round(window.zoomScale*100)+"%";
-
+    const img=document.getElementById("previewImage");
+    if(!img) return;
+    img.style.transform=`scale(${window.zoomScale})`;
+    document.getElementById("zoomPercent").innerText=
+    Math.round(window.zoomScale*100)+"%";
 }
 </script>
 
