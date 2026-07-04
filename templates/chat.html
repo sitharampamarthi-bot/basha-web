@@ -439,12 +439,18 @@
                 overflow:hidden !important;
             }
 
-            #previewBody{
+            #previewBody.single-mode{
                 display:flex;
                 justify-content:center;
                 align-items:center;
                 padding:10px;
                 overflow:auto;
+            }
+
+            #previewBody.convert-mode{
+                display:block;
+                padding:0;
+                overflow:hidden;
             }
 
             .preview-toolbar{
@@ -735,6 +741,7 @@ function openPreview(url, type, name) {
     document.querySelector("#filePreviewModal .modal-dialog").style.maxWidth = "";
 
     const body = document.getElementById("previewBody");
+    body.className = "modal-body p-0 single-mode";
     const downloadBtn = document.getElementById("downloadBtn");
     const sendBtn = document.getElementById("sendConvertedBtn");
     const copyBtn = document.getElementById("copyTextBtn");
@@ -771,6 +778,8 @@ function openPreview(url, type, name) {
 function convertImageText(imageUrl) {
     const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("filePreviewModal"));
     const body = document.getElementById("previewBody");
+    body.className = "modal-body p-0 convert-mode";
+    document.querySelector("#filePreviewModal .modal-dialog").style.maxWidth = "";
     const downloadBtn = document.getElementById("downloadBtn");
     const sendBtn = document.getElementById("sendConvertedBtn");
     const copyBtn = document.getElementById("copyTextBtn");
@@ -1062,12 +1071,11 @@ function fitSinglePreviewModal(img){
     const dialog=document.querySelector("#filePreviewModal .modal-dialog");
 
     const width=Math.min(
-        img.naturalWidth+40,
-        window.innerWidth*0.65
+        img.naturalWidth + 70,
+        window.innerWidth * 0.55
     );
 
-    dialog.style.maxWidth=width+"px";
-
+    dialog.style.maxWidth = width + "px";
 }
 
 </script>
