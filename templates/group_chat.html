@@ -575,8 +575,8 @@
                     {% if msg.fileUrl %}
                         {% if msg.fileType == "image" %}
                             <img src="{{ msg.fileUrl }}"
-                                class="chatImage"
-                                onclick='openPreview({{ msg.fileUrl|tojson }}, "image", {{ msg.fileName|tojson }})'
+                                 class="chatImage"
+                                 onclick='openPreview({{ msg.fileUrl|tojson }}, {{ msg.fileType|tojson }}, {{ msg.fileName|tojson }})'>
 
                             <button type="button"
                                     class="convert-btn"
