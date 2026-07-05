@@ -505,21 +505,37 @@
                 height:auto;
             }
         }
+        .single-preview-dialog{
+            width:fit-content !important;
+            max-width:90vw !important;
+        }
+
+        .single-preview-dialog .modal-content{
+            width:fit-content !important;
+            max-width:90vw !important;
+        }
+
+        .single-preview-dialog #previewBody{
+            display:flex !important;
+            justify-content:center !important;
+            align-items:center !important;
+            overflow:auto !important;
+        }
+
         .single-preview-wrap{
-            display:inline-flex;
-            justify-content:center;
-            align-items:center;
-            padding:10px;
-            margin:auto;
+            width:auto !important;
+            display:flex !important;
+            justify-content:center !important;
+            align-items:center !important;
+            padding:10px !important;
         }
 
         .single-preview-img{
-            display:block;
-            width:auto;
-            height:auto;
-            max-width:90vw;
-            max-height:78vh;
-            object-fit:contain;
+            max-width:85vw !important;
+            max-height:72vh !important;
+            width:auto !important;
+            height:auto !important;
+            display:block !important;
         }
 
         @media(max-width:768px){
@@ -738,7 +754,9 @@ function loadMessages(forceBottom = false) {
 }
 
 function openPreview(url, type, name) {
-    document.querySelector("#filePreviewModal .modal-dialog").style.maxWidth = "";
+    const dialog = document.querySelector("#filePreviewModal .modal-dialog");
+    dialog.classList.add("single-preview-dialog");
+    dialog.style.maxWidth = "";
 
     const body = document.getElementById("previewBody");
     body.className = "modal-body p-0 single-mode";
@@ -757,13 +775,7 @@ function openPreview(url, type, name) {
     if (type === "image") {
         body.innerHTML = `
         <div class="single-preview-wrap">
-            <img
-                src="${url}"
-                class="single-preview-img"
-                onload="
-                    fitSinglePreviewModal(this);
-                    this.parentElement.style.width=this.clientWidth+'px';
-                ">
+            <img src="${url}" class="single-preview-img">
         </div>
         `;
     } else if (type === "video") {
@@ -778,6 +790,9 @@ function openPreview(url, type, name) {
 function convertImageText(imageUrl) {
     const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("filePreviewModal"));
     const body = document.getElementById("previewBody");
+    const dialog = document.querySelector("#filePreviewModal .modal-dialog");
+    dialog.classList.remove("single-preview-dialog");
+    dialog.style.maxWidth = "";
     body.className = "modal-body p-0 convert-mode";
     document.querySelector("#filePreviewModal .modal-dialog").style.maxWidth = "";
     const downloadBtn = document.getElementById("downloadBtn");
@@ -812,24 +827,17 @@ function convertImageText(imageUrl) {
         body.innerHTML=`
 
         <div class="preview-toolbar">
-
             <button class="btn btn-dark btn-sm"
                 onclick="zoomOut()">−</button>
-
             <span id="zoomPercent">100%</span>
-
             <button class="btn btn-dark btn-sm"
                 onclick="zoomIn()">+</button>
-
             <button class="btn btn-secondary btn-sm"
                 onclick="fitImage()">Fit</button>
-
         </div>
 
         <div class="preview-container">
-
             <div class="preview-left">
-
                 <img
                     id="previewImage"
                     class="zoomImage"
@@ -1063,21 +1071,6 @@ function updateZoom(){
     document.getElementById("zoomPercent").innerText=
     Math.round(window.zoomScale*100)+"%";
 }
-
-function fitSinglePreviewModal(img){
-
-    if(window.innerWidth<=768) return;
-
-    const dialog=document.querySelector("#filePreviewModal .modal-dialog");
-
-    const width=Math.min(
-        img.naturalWidth + 70,
-        window.innerWidth * 0.55
-    );
-
-    dialog.style.maxWidth = width + "px";
-}
-
 </script>
 
 </body>
