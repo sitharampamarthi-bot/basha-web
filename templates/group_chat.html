@@ -568,13 +568,15 @@
                     <div class="sender-name">{{ msg.senderName }}</div>
         {% endif %}
 
-                    {{ msg.message }}
+                    <div class="msg-text">
+                        {{ msg.message }}
+                    </div>
 
                     {% if msg.fileUrl %}
                         {% if msg.fileType == "image" %}
                             <img src="{{ msg.fileUrl }}"
-                                 class="chatImage"
-                                 onclick='openPreview({{ msg.fileUrl|tojson }}, {{ msg.fileType|tojson }}, {{ msg.fileName|tojson }})'>
+                                class="chatImage"
+                                onclick='openPreview({{ msg.fileUrl|tojson }}, "image", {{ msg.fileName|tojson }})'
 
                             <button type="button"
                                     class="convert-btn"
@@ -582,18 +584,34 @@
                                 🌐 Convert
                             </button>
 
-                        {% elif msg.fileType == "video" %}
+                            <button type="button"
+                                    class="convert-btn"
+                                    onclick='openPreview({{ msg.fileUrl|tojson }}, "image", {{ msg.fileName|tojson }})'>
+                                View
+                            </button>
+
+                        {% elif msg.fileType == "video" %}                            
                             <br>
-                            <video controls style="max-width:260px;border-radius:12px;margin-top:8px;">
-                                <source src="{{ msg.fileUrl }}">
-                            </video>
+                                <video controls class="chatVideo">
+                                    <source src="{{ msg.fileUrl }}">
+                                </video>
+                                <button type="button"
+                                        class="convert-btn"
+                                        onclick='openPreview({{ msg.fileUrl|tojson }}, "video", {{ msg.fileName|tojson }})'>
+                                    View
+                                </button>
                         {% else %}
                             <br>
-                            <a href="{{ msg.fileUrl }}"
-                                target="_blank"
-                                class="doc-card">
-                            📄 {{ msg.fileName }}
-                            </a>
+                            <div class="doc-card"
+                                onclick='openPreview({{ msg.fileUrl|tojson }}, "document", {{ msg.fileName|tojson }})'>
+                                📄 {{ msg.fileName }}
+                            </div>
+
+                            <button type="button"
+                                    class="convert-btn"
+                                    onclick='openPreview({{ msg.fileUrl|tojson }}, "document", {{ msg.fileName|tojson }})'>
+                                View
+                            </button>
                         {% endif %}
                     {% endif %}
                 </div>
@@ -744,7 +762,12 @@ function openPreview(url, type, name) {
     } else if (type === "video") {
         body.innerHTML = `<video controls style="max-width:100%;border-radius:12px;"><source src="${url}"></video>`;
     } else {
-        body.innerHTML = `<div class="p-4"><h5>📄 ${name}</h5></div>`;
+        body.innerHTML = `
+        <iframe
+            src="${url}"
+            style="width:100%;height:75vh;border:none;border-radius:12px;">
+        </iframe>
+        `;
     }
 
     bootstrap.Modal.getOrCreateInstance(document.getElementById("filePreviewModal")).show();
@@ -826,6 +849,8 @@ function convertImageText(imageUrl) {
 
         window.zoomScale=1;
 
+        fitImage();
+
         downloadBtn.href = "/download-image?url=" + encodeURIComponent(data.translated_image_url);
         downloadBtn.setAttribute("download", "translated-image.jpg");
         downloadBtn.removeAttribute("target");
@@ -889,6 +914,31 @@ window.addEventListener("load", function() {
 setInterval(function() {
     loadMessages(false);
 }, 3000);
+
+function zoomIn(){
+    window.zoomScale+=0.1;
+    updateZoom();
+}
+
+function zoomOut(){
+    window.zoomScale-=0.1;
+    if(window.zoomScale<0.3)
+    window.zoomScale=0.3;
+    updateZoom();
+}
+
+function fitImage(){
+    window.zoomScale=1;
+    updateZoom();
+}
+
+function updateZoom(){
+    const img=document.getElementById("previewImage");
+    if(!img) return;
+    img.style.transform=`scale(${window.zoomScale})`;
+    document.getElementById("zoomPercent").innerText=
+    Math.round(window.zoomScale*100)+"%";
+}
 </script>
 
 </body>
