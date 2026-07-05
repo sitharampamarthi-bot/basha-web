@@ -1205,10 +1205,37 @@ def download_image():
             mimetype="image/jpeg",
             as_attachment=True,
             download_name="basha-image.jpg"
-        )
+        )     
 
     except Exception as e:
-        return str(e), 500            
+        return str(e), 500 
+    
+               
+@app.route("/download-file")
+def download_file():
 
+    import requests
+    from flask import request, Response
+
+    url = request.args.get("url")
+
+    if not url:
+        return "No URL",400
+
+    r = requests.get(url, stream=True)
+
+    filename = url.split("/")[-1].split("?")[0]
+
+    return Response(
+        r.iter_content(8192),
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Content-Type": r.headers.get(
+                "Content-Type",
+                "application/octet-stream"
+            )
+        }
+    )
+    
 if __name__ == "__main__":
     app.run(debug=True)

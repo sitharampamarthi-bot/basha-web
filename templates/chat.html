@@ -780,7 +780,7 @@ function openPreview(url, type, name) {
     if (copyBtn) copyBtn.style.display = "none";
 
     downloadBtn.style.display = "inline-block";
-    downloadBtn.href = "/download-image?url=" + encodeURIComponent(url);
+    downloadBtn.href = "/download-file?url=" + encodeURIComponent(url);
     downloadBtn.setAttribute("download", name || "basha-image.jpg");
     downloadBtn.removeAttribute("target");
 
@@ -880,7 +880,7 @@ function convertImageText(imageUrl) {
 
         window.zoomScale=1;
 
-        downloadBtn.href = "/download-image?url=" + encodeURIComponent(data.translated_image_url);
+        downloadBtn.href = "/download-file?url=" + encodeURIComponent(data.translated_image_url);
         downloadBtn.setAttribute("download", "translated-image.jpg");
         downloadBtn.removeAttribute("target");
         downloadBtn.style.display = "inline-block";
