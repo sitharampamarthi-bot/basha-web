@@ -1075,7 +1075,9 @@ def send_group_message():
             )
             break
     if not message and not file_url:
-        return redirect(f"/group-chat/{group_id}")
+        return jsonify({
+            "success": True
+        })
 
     sender_mobile = clean_mobile(session.get("mobile", ""))
     sender_name = session.get("user_name", "")

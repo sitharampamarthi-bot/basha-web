@@ -10,7 +10,7 @@
             height:100%;
             margin:0;
             overflow:hidden;
-            background:#f1f1f1;
+            background:#efeae2;
             font-family:Arial, sans-serif;
         }
 
@@ -32,12 +32,22 @@
         .chat-title {
             font-size:18px;
             font-weight:700;
+            line-height:1.1;
         }
 
-        #messagesBox {
-            height:calc(100vh - 130px);
+        .chat-status {
+            font-size:12px;
+            color:#d9ffd9;
+        }
+
+        #messagesBox{
+            position:fixed;
+            top:64px;
+            left:0;
+            right:0;
+            bottom:70px;
             overflow-y:auto;
-            padding:76px 12px 90px 12px;
+            padding:12px;
             background:#f1f1f1;
         }
 
@@ -48,72 +58,107 @@
             align-items:flex-end;
         }
 
-        .msg-left { justify-content:flex-start; }
-        .msg-right { justify-content:flex-end; }
+        .msg-left {
+            justify-content:flex-start;
+        }
+
+        .msg-right {
+            justify-content:flex-end;
+        }
 
         .msg-bubble {
             display:inline-block;
-            width:fit-content;
-            max-width:75%;
-            min-width:70px;
-            padding:10px 14px;
-            border-radius:16px;
+            width:fit-content !important;
+            max-width:72%;
+            min-width:45px;
+            height:auto !important;
+            padding:8px 10px;
+            border-radius:14px;
+            font-size:16px;
+            line-height:1.45;
             word-break:break-word;
             overflow-wrap:anywhere;
             white-space:pre-wrap;
-            box-shadow:0 1px 2px rgba(0,0,0,.15);
-            font-size:16px;
-            line-height:1.5;
+            box-shadow:0 1px 2px rgba(0,0,0,0.12);
         }
 
         .msg-me {
             background:#198754;
             color:white;
             border-top-right-radius:4px;
+            margin-left:auto;
         }
 
         .msg-other {
             background:#e1e1e1;
             color:#111;
             border-top-left-radius:4px;
-        }
-
-        .sender-name {
-            font-size:12px;
-            font-weight:bold;
-            color:#0d6efd;
-            margin-bottom:4px;
+            margin-right:auto;
         }
 
         .chatImage {
-            width:auto;
+            width:auto !important;
+            height:auto !important;
             max-width:260px;
-            max-height:300px;
+            max-height:330px;
             object-fit:contain;
             border-radius:10px;
             display:block;
-            margin-top:8px;
+            margin-top:6px;
             cursor:pointer;
+            transition:0.25s;
+        }
+
+        .doc-card {
+            display:inline-block;
+            background:#fff;
+            color:#111;
+            border-radius:10px;
+            padding:10px 12px;
+            margin-top:6px;
+            text-decoration:none;
+            max-width:260px;
+            word-break:break-word;
+            border:1px solid #ddd;
         }
 
         .convert-btn {
             background:#ffc107;
             border:none;
-            border-radius:16px;
-            padding:4px 12px;
-            margin-top:8px;
-            font-size:13px;
+            border-radius:14px;
+            padding:4px 10px;
+            margin-top:6px;
+            font-size:12px;
+            display:inline-block;
         }
 
-        .input-bar {
+        .msg-status {
+            text-align:right;
+            font-size:12px;
+            margin-top:3px;
+            line-height:1;
+        }
+
+        .tick-seen {
+            color:#53bdeb;
+            font-weight:bold;
+        }
+
+        .tick-normal {
+            color:rgba(255,255,255,0.85);
+            font-weight:bold;
+        }
+
+        .input-bar{
             position:fixed;
-            bottom:0;
             left:0;
             right:0;
-            background:white;
-            padding:8px;
+            bottom:0;
+            z-index:9999;
+            background:#fff;
             border-top:1px solid #ddd;
-            z-index:1000;
+            padding:8px;
+            padding-bottom:env(safe-area-inset-bottom);
         }
 
         .input-inner {
@@ -125,13 +170,20 @@
         }
 
         .file-btn {
-            width:46px;
-            height:46px;
+            width:42px;
+            height:42px;
+            min-width:42px;
             flex-shrink:0;
             border-radius:50%;
             border:none;
             background:#eee;
+            color:#111;
             font-size:22px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            cursor:pointer;
+            margin:0;
         }
 
         #chatFileInput {
@@ -142,19 +194,20 @@
             flex:1;
             width:100%;
             min-width:0;
-            min-height:45px;
-            max-height:120px;
+            height:42px;
+            max-height:100px;
             resize:none;
             overflow-y:auto;
+            border:1px solid #ddd;
             border-radius:22px;
-            padding:10px 15px;
-            font-size:16px;
+            padding:9px 14px;
+            font-size:15px;
         }
 
         #sendBtn {
             flex-shrink:0;
-            width:80px;
-            height:45px;
+            width:72px;
+            height:42px;
             border-radius:22px;
             background:#198754;
             color:white;
@@ -162,12 +215,32 @@
             font-weight:600;
         }
 
-        .file-preview-pill {
+        .emoji-panel {
             display:none;
             position:fixed;
             bottom:64px;
-            left:12px;
-            right:12px;
+            left:8px;
+            right:8px;
+            background:white;
+            border-radius:14px;
+            padding:12px;
+            box-shadow:0 4px 18px rgba(0,0,0,0.2);
+            z-index:1200;
+            font-size:26px;
+        }
+
+        .emoji-panel span {
+            cursor:pointer;
+            margin:6px;
+            display:inline-block;
+        }
+
+        .file-preview-pill {
+            display:none;
+            position:fixed;
+            bottom:60px;
+            left:8px;
+            right:8px;
             background:#fff7d6;
             border:1px solid #ffd75c;
             border-radius:12px;
@@ -175,14 +248,303 @@
             z-index:1300;
             font-size:14px;
         }
+        .chatVideo{
+            display:block;
+            max-width:260px;
+            max-height:330px;
+            border-radius:12px;
+            margin-top:8px;
+        }
 
-        @media(max-width:600px){
+        @media(max-width:600px) {
             .msg-bubble {
-                max-width:86%;
+                max-width:84%;
                 font-size:15px;
             }
-            .chatImage {
-                max-width:230px;
+
+            .chatImage{
+                display:block !important;
+                width:auto !important;
+                max-width:230px !important;
+                max-height:320px !important;
+                height:auto !important;
+                object-fit:contain !important;
+            }
+
+            .doc-card{
+                display:block !important;
+                max-width:220px !important;
+            }
+
+            #sendBtn {
+                width:70px;
+            }
+            .file-btn {
+                width:42px;
+                height:42px;
+                min-width:42px;
+                flex-shrink:0;
+                border-radius:50%;
+                border:none;
+                background:#eee;
+                color:#111;
+                font-size:22px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                cursor:pointer;
+                margin:0;
+            }
+
+            .input-inner{
+                display:flex !important;
+                flex-direction:row !important;
+                align-items:center !important;
+            }
+        }
+        .msg-text{
+            white-space:normal !important;
+            display:inline;
+        }
+
+        .msg-bubble{
+            white-space:normal !important;
+            vertical-align:top;
+        }
+
+        @media(max-width:600px){
+            .input-bar{
+                display:block !important;
+                position:fixed !important;
+                bottom:0 !important;
+                left:0 !important;
+                right:0 !important;
+                z-index:99999 !important;
+                background:#fff !important;
+            }
+
+            .input-inner{
+                display:flex !important;
+                flex-direction:row !important;
+                align-items:center !important;
+                gap:6px !important;
+            }
+
+            .file-btn,
+            #sendBtn{
+                display:flex !important;
+                align-items:center !important;
+                justify-content:center !important;
+                visibility:visible !important;
+                opacity:1 !important;
+            }
+
+            #messageInput{
+                flex:1 !important;
+                min-width:0 !important;
+                width:auto !important;
+            }
+
+            #messagesBox{
+                bottom:64px !important;
+            }
+
+            .msg-status{
+                display:block !important;
+            }
+
+            .chatImage,
+            video{
+                display:block !important;
+                max-width:230px !important;
+                height:auto !important;
+            }
+
+            .doc-card{
+                display:block !important;
+                max-width:230px !important;
+            }
+        }
+        .preview-toolbar{
+            display:flex;
+            gap:10px;
+            align-items:center;
+            padding:10px;
+            border-bottom:1px solid #ddd;
+            background:#fafafa;
+            position:sticky;
+            top:0;
+            z-index:5;
+        }
+
+        .preview-toolbar button{
+            min-width:46px;
+        }
+
+        .preview-container{
+            display:flex;
+            width:100%;
+            height:calc(90vh - 120px);
+            overflow:hidden;
+        }
+
+        .preview-left{
+            flex:1;
+            min-width:45%;
+            overflow:auto;
+            background:#f8f8f8;
+
+            display:flex;
+            justify-content:center;
+            align-items:flex-start;
+
+            padding:15px;
+        }
+
+        .preview-right{
+            flex:1;
+            min-width:55%;
+            overflow:auto;
+            border-left:1px solid #ddd;
+            padding:20px;
+            background:white;
+        }
+
+        .preview-right h5{
+            font-weight:bold;
+            margin-bottom:15px;
+        }
+
+        .zoomImage{
+            width:100%;
+            height:auto;
+            max-width:none;
+            max-height:none;
+            display:block;
+            transform-origin:top left;
+            transition:.2s;
+            cursor:grab;
+        }
+
+        @media(max-width:768px){
+
+            .modal-dialog{
+                margin:10px !important;
+                max-width:calc(100vw - 20px) !important;
+            }
+
+            .modal-content{
+                max-height:88vh !important;
+                overflow:hidden !important;
+            }
+
+            #previewBody.single-mode{
+                display:flex;
+                justify-content:center;
+                align-items:center;
+                padding:10px;
+                overflow:auto;
+            }
+
+            #previewBody.convert-mode{
+                display:block;
+                padding:0;
+                overflow:hidden;
+            }
+
+            .preview-toolbar{
+                height:58px;
+                gap:8px;
+                padding:8px 10px;
+                flex-shrink:0;
+            }
+
+            .preview-container{
+                display:flex !important;
+                flex-direction:row !important;
+                width:100%;
+                height:calc(88vh - 205px);
+                overflow:hidden;
+            }
+
+            .preview-left{
+                width:50% !important;
+                min-width:50% !important;
+                height:100% !important;
+                padding:6px;
+                overflow:auto;
+                display:flex;
+                align-items:flex-start;
+                justify-content:center;
+            }
+
+            .preview-right{
+                width:50% !important;
+                min-width:50% !important;
+                height:100% !important;
+                padding:8px;
+                overflow:auto;
+                border-left:1px solid #ddd;
+            }
+
+            .preview-right h4{
+                font-size:16px !important;
+                line-height:1.25;
+                text-align:center;
+            }
+
+            .preview-right p{
+                font-size:14px !important;
+                line-height:1.55 !important;
+                text-align:left;
+            }
+
+            .zoomImage{
+                width:100%;
+                height:auto;
+            }
+        }
+        .single-preview-dialog{
+            width:fit-content !important;
+            max-width:90vw !important;
+        }
+
+        .single-preview-dialog .modal-content{
+            width:fit-content !important;
+            max-width:90vw !important;
+        }
+
+        .single-preview-dialog #previewBody{
+            display:flex !important;
+            justify-content:center !important;
+            align-items:center !important;
+            overflow:auto !important;
+        }
+
+        .single-preview-wrap{
+            width:auto !important;
+            display:flex !important;
+            justify-content:center !important;
+            align-items:center !important;
+            padding:10px !important;
+        }
+
+        .single-preview-img{
+            max-width:85vw !important;
+            max-height:72vh !important;
+            width:auto !important;
+            height:auto !important;
+            display:block !important;
+        }
+
+        @media(max-width:768px){
+            .single-preview-wrap{
+                max-height:65vh;
+                padding:6px;
+            }
+
+            .single-preview-img{
+                max-height:62vh;
             }
         }
     </style>
@@ -268,7 +630,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
 
-            <div class="modal-body text-center p-3" id="previewBody" style="max-height:78vh;overflow:auto;"></div>
+            <div class="modal-body p-0" id="previewBody"></div>
 
             <div class="modal-footer">
                 <button type="button" id="copyTextBtn" class="btn btn-info" style="display:none;">Copy Text</button>
@@ -294,7 +656,17 @@ fileInput.addEventListener("change", function () {
     const nameSpan = document.getElementById("selectedFileName");
 
     if (this.files.length > 0) {
-        nameSpan.innerText = this.files[0].name;
+        let names=[];
+
+        for(let i=0;i<this.files.length;i++){
+            names.push(this.files[i].name);
+        }
+
+        if(names.length==1){
+            nameSpan.innerText=names[0];
+        }else{
+            nameSpan.innerText=names.length+" files selected";
+        }
         pill.style.display = "block";
     } else {
         nameSpan.innerText = "";
@@ -345,7 +717,12 @@ function loadMessages(forceBottom = false) {
 }
 
 function openPreview(url, type, name) {
+    const dialog = document.querySelector("#filePreviewModal .modal-dialog");
+    dialog.classList.add("single-preview-dialog");
+    dialog.style.maxWidth = "";
+
     const body = document.getElementById("previewBody");
+    body.className = "modal-body p-0 single-mode";
     const downloadBtn = document.getElementById("downloadBtn");
     const sendBtn = document.getElementById("sendConvertedBtn");
     const copyBtn = document.getElementById("copyTextBtn");
@@ -354,11 +731,16 @@ function openPreview(url, type, name) {
     if (copyBtn) copyBtn.style.display = "none";
 
     downloadBtn.style.display = "inline-block";
-    downloadBtn.href = url;
-    downloadBtn.setAttribute("download", name || "");
+    downloadBtn.href = "/download-image?url=" + encodeURIComponent(url);
+    downloadBtn.setAttribute("download", name || "basha-image.jpg");
+    downloadBtn.removeAttribute("target");
 
     if (type === "image") {
-        body.innerHTML = `<img src="${url}" style="max-width:100%;border-radius:12px;">`;
+        body.innerHTML = `
+        <div class="single-preview-wrap">
+            <img src="${url}" class="single-preview-img">
+        </div>
+        `;
     } else if (type === "video") {
         body.innerHTML = `<video controls style="max-width:100%;border-radius:12px;"><source src="${url}"></video>`;
     } else {
@@ -371,6 +753,11 @@ function openPreview(url, type, name) {
 function convertImageText(imageUrl) {
     const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("filePreviewModal"));
     const body = document.getElementById("previewBody");
+    const dialog = document.querySelector("#filePreviewModal .modal-dialog");
+    dialog.classList.remove("single-preview-dialog");
+    dialog.style.maxWidth = "";
+    body.className = "modal-body p-0 convert-mode";
+    document.querySelector("#filePreviewModal .modal-dialog").style.maxWidth = "";
     const downloadBtn = document.getElementById("downloadBtn");
     const sendBtn = document.getElementById("sendConvertedBtn");
     const copyBtn = document.getElementById("copyTextBtn");
@@ -398,23 +785,51 @@ function convertImageText(imageUrl) {
         let lines = data.translated_text || [];
         if (typeof lines === "string") lines = [lines];
 
-        convertedTextGlobal = lines.join("\n\n");
+        convertedTextGlobal = lines.join("\n\n");        
 
-        body.innerHTML = `
-            <div class="row g-3 align-items-start">
-                <div class="col-md-6">
-                    <h6>Original Image</h6>
-                    <img src="${imageUrl}" style="width:100%;border-radius:12px;">
-                </div>
+        body.innerHTML=`
 
-                <div class="col-md-6">
-                    <h6>🌐 ${data.title || "Translated Content"}</h6>
-                    <div style="height:68vh;overflow:auto;white-space:pre-line;font-size:18px;line-height:1.7;text-align:left;padding:14px;border:1px solid #ddd;border-radius:12px;background:white;">
-                        ${lines.join("<br><br>")}
-                    </div>
-                </div>
+        <div class="preview-toolbar">
+            <button class="btn btn-dark btn-sm"
+                onclick="zoomOut()">−</button>
+            <span id="zoomPercent">100%</span>
+            <button class="btn btn-dark btn-sm"
+                onclick="zoomIn()">+</button>
+            <button class="btn btn-secondary btn-sm"
+                onclick="fitImage()">Fit</button>
+        </div>
+
+        <div class="preview-container">
+            <div class="preview-left">
+                <img
+                    id="previewImage"
+                    class="zoomImage"
+                    src="${data.translated_image_url}">
             </div>
+
+            <div class="preview-right">
+                <h4>
+                    🌐
+                    Translated Content - ${data.language}
+                </h4>
+                <hr>
+                    ${lines.map(line=>`
+                        <p style="font-size:18px;line-height:1.7">
+                            ${line}
+                        </p>
+                    `).join("")}
+            </div>
+
+        </div>
+
         `;
+
+        window.zoomScale=1;
+
+        downloadBtn.href = "/download-image?url=" + encodeURIComponent(data.translated_image_url);
+        downloadBtn.setAttribute("download", "translated-image.jpg");
+        downloadBtn.removeAttribute("target");
+        downloadBtn.style.display = "inline-block";
 
         if (sendBtn) sendBtn.style.display = "inline-block";
         if (copyBtn) copyBtn.style.display = "inline-block";
@@ -441,13 +856,12 @@ document.getElementById("groupMessageForm").addEventListener("submit", function(
         body: new FormData(form)
     })
     .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            msg.value = "";
+    .then(data=>{
+        if(data.success){
+            msg.value="";
             clearSelectedFile();
             loadMessages(true);
-        } else {
-            alert(data.error || "Send failed");
+            setTimeout(scrollBottom,100);
         }
     })
     .finally(() => {
