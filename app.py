@@ -4,7 +4,7 @@ from flask import Flask, render_template, request, redirect, session, jsonify, s
 import firebase_admin
 from firebase_admin import credentials, firestore, storage
 from werkzeug.utils import secure_filename
-from urllib.parse import quote
+from urllib.parse import quote, urljoin
 import json
 from deep_translator import GoogleTranslator
 import requests
@@ -1055,55 +1055,96 @@ def group_chat(group_id):
 
 @app.route("/send-group-message", methods=["POST"])
 def send_group_message():
+
     if "user_id" not in session:
-        return redirect("/")
+        return jsonify({"success": False})
 
     group_id = request.form.get("group_id")
     message = request.form.get("message", "").strip()
 
     files = request.files.getlist("chat_files")
 
-    file_url = ""
-    file_name = ""
-    file_type = ""
-
-    for file in files:
-        if file and file.filename and allowed_file(file.filename):
-            file_url, file_type, file_name = upload_chat_file_to_firebase(
-                file,
-                session["user_id"]
-            )
-            break
-    if not message and not file_url:
-        return jsonify({
-            "success": False,
-            "error": "Empty message"
-        })
-
     sender_mobile = clean_mobile(session.get("mobile", ""))
     sender_name = session.get("user_name", "")
 
     group_ref = db.collection("groups").document(group_id)
 
-    group_ref.collection("messages").add({
-        "senderMobile": sender_mobile,
-        "senderName": sender_name,
-        "message": message,
-        "fileUrl": file_url,
-        "fileName": file_name,
-        "fileType": file_type,
-        "timestamp": firestore.SERVER_TIMESTAMP
-    })
+    sent_any = False
+
+    # text message
+    if message:
+
+        group_ref.collection("messages").add({
+
+            "senderMobile": sender_mobile,
+            "senderName": sender_name,
+            "message": message,
+
+            "fileUrl": "",
+            "fileName": "",
+            "fileType": "",
+
+            "timestamp": firestore.SERVER_TIMESTAMP
+
+        })
+
+        sent_any = True
+
+    # multiple files
+    for file in files:
+
+        if not file:
+            continue
+
+        if file.filename == "":
+            continue
+
+        if not allowed_file(file.filename):
+            continue
+
+        file_url, file_type, file_name = upload_chat_file_to_firebase(
+            file,
+            session["user_id"]
+        )
+
+        group_ref.collection("messages").add({
+
+            "senderMobile": sender_mobile,
+            "senderName": sender_name,
+
+            "message": "",
+
+            "fileUrl": file_url,
+            "fileName": file_name,
+            "fileType": file_type,
+
+            "timestamp": firestore.SERVER_TIMESTAMP
+
+        })
+
+        sent_any = True
+
+    if not sent_any:
+        return jsonify({
+            "success": False,
+            "error": "Empty message"
+        })
 
     group_ref.update({
-        "lastMessage": message if message else f"📎 {file_name}",
-        "lastMessageTime": firestore.SERVER_TIMESTAMP
+
+        "lastMessage":
+            message if message else
+            f"📎 {len(files)} file(s)",
+
+        "lastMessageTime":
+            firestore.SERVER_TIMESTAMP
+
     })
 
     return jsonify({
         "success": True
     })
-    
+        
 @app.route("/convert-image-text", methods=["POST"])
 def convert_image_text():
     try:
@@ -1112,6 +1153,8 @@ def convert_image_text():
 
         data = request.get_json(silent=True) or {}
         image_url = data.get("image_url", "")
+        if image_url.startswith("/"):
+            image_url = urljoin(request.host_url, image_url)
 
         if not image_url:
             return jsonify({"error": "Image not found"}), 400
@@ -1213,29 +1256,58 @@ def download_image():
                
 @app.route("/download-file")
 def download_file():
+    try:
+        from urllib.parse import unquote
+        from flask import send_file
+        import mimetypes
 
-    import requests
-    from flask import request, Response
+        url = request.args.get("url", "")
+        if url.startswith("/"):
+            url = urljoin(request.host_url, url)
 
-    url = request.args.get("url")
+        name = request.args.get("name", "basha-file")
 
-    if not url:
-        return "No URL",400
+        if not url:
+            return "No URL", 400
 
-    r = requests.get(url, stream=True)
+        r = requests.get(url, timeout=30)
 
-    filename = url.split("/")[-1].split("?")[0]
+        if r.status_code != 200:
+            return "Unable to download file", 400
 
-    return Response(
-        r.iter_content(8192),
-        headers={
-            "Content-Disposition": f'attachment; filename="{filename}"',
-            "Content-Type": r.headers.get(
-                "Content-Type",
-                "application/octet-stream"
-            )
-        }
-    )
-    
+        filename = secure_filename(unquote(name)) or "basha-file"
+
+        content_type = (
+            r.headers.get("Content-Type")
+            or mimetypes.guess_type(filename)[0]
+            or "application/octet-stream"
+        )
+
+        ext = os.path.splitext(filename)[1].lower()
+
+        if not ext:
+            if "jpeg" in content_type or "jpg" in content_type:
+                filename += ".jpg"
+            elif "png" in content_type:
+                filename += ".png"
+            elif "gif" in content_type:
+                filename += ".gif"
+            elif "webp" in content_type:
+                filename += ".webp"
+            elif "pdf" in content_type:
+                filename += ".pdf"
+            elif "mp4" in content_type:
+                filename += ".mp4"
+
+        return send_file(
+            BytesIO(r.content),
+            mimetype=content_type,
+            as_attachment=True,
+            download_name=filename
+        )
+
+    except Exception as e:
+        return str(e), 500
+            
 if __name__ == "__main__":
     app.run(debug=True)

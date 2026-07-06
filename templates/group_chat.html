@@ -576,7 +576,7 @@
                         {% if msg.fileType == "image" %}
                             <img src="{{ msg.fileUrl }}"
                                  class="chatImage"
-                                 onclick='openPreview({{ msg.fileUrl|tojson }}, {{ msg.fileType|tojson }}, {{ msg.fileName|tojson }})'>
+                                 onclick='openPreview({{ msg.fileUrl|tojson }}, "image", {{ msg.fileName|tojson }})'>
 
                             <button type="button"
                                     class="convert-btn"
@@ -749,7 +749,9 @@ function openPreview(url, type, name) {
     if (copyBtn) copyBtn.style.display = "none";
 
     downloadBtn.style.display = "inline-block";
-    downloadBtn.href = "/download-image?url=" + encodeURIComponent(url);
+    downloadBtn.href =
+        "/download-file?url=" + encodeURIComponent(url) +
+        "&name=" + encodeURIComponent(name || "basha-file");
     downloadBtn.setAttribute("download", name || "basha-image.jpg");
     downloadBtn.removeAttribute("target");
 
@@ -763,10 +765,16 @@ function openPreview(url, type, name) {
         body.innerHTML = `<video controls style="max-width:100%;border-radius:12px;"><source src="${url}"></video>`;
     } else {
         body.innerHTML = `
-        <iframe
-            src="${url}"
-            style="width:100%;height:75vh;border:none;border-radius:12px;">
-        </iframe>
+            <div class="p-4 text-center">
+                <h5>📄 ${name || "Document"}</h5>
+                <p class="text-muted">Preview may not open on some mobiles.</p>
+
+                <a class="btn btn-primary mt-2"
+                href="${url}"
+                target="_blank">
+                Open File
+                </a>
+            </div>
         `;
     }
 
@@ -851,7 +859,9 @@ function convertImageText(imageUrl) {
 
         fitImage();
 
-        downloadBtn.href = "/download-image?url=" + encodeURIComponent(data.translated_image_url);
+        downloadBtn.href =
+            "/download-file?url=" + encodeURIComponent(data.translated_image_url) +
+            "&name=translated-image.jpg";
         downloadBtn.setAttribute("download", "translated-image.jpg");
         downloadBtn.removeAttribute("target");
         downloadBtn.style.display = "inline-block";
