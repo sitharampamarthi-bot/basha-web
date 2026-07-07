@@ -139,6 +139,13 @@
             line-height:1;
         }
 
+        .sender-name{
+            font-size:12px;
+            font-weight:bold;
+            margin-bottom:4px;
+            color:#6f42c1;
+        }
+
         .tick-seen {
             color:#53bdeb;
             font-weight:bold;
@@ -570,7 +577,7 @@
 
                     <div class="msg-text">
                         {{ msg.message }}
-                    </div>
+                    </div>                    
 
                     {% if msg.fileUrl %}
                         {% if msg.fileType == "image" %}
@@ -614,9 +621,30 @@
                             </button>
                         {% endif %}
                     {% endif %}
+                    <div class="msg-status">
+                        {% if msg.senderMobile == current_mobile %}
+                            {% if msg.status=="seen" %}
+                                <span class="tick-seen">✓✓</span>
+                            {% elif msg.status=="delivered" %}
+                                <span class="tick-normal">✓✓</span>
+                            {% else %}
+                                <span class="tick-normal">✓</span>
+                            {% endif %}
+                        {% endif %}
+                    </div>
                 </div>
             </div>
     {% endfor %}
+</div>
+<div class="emoji-panel" id="emojiPanel">
+    <span onclick="addEmoji('😀')">😀</span>
+    <span onclick="addEmoji('😂')">😂</span>
+    <span onclick="addEmoji('😍')">😍</span>
+    <span onclick="addEmoji('👍')">👍</span>
+    <span onclick="addEmoji('🙏')">🙏</span>
+    <span onclick="addEmoji('❤️')">❤️</span>
+    <span onclick="addEmoji('🔥')">🔥</span>
+    <span onclick="addEmoji('🎉')">🎉</span>
 </div>
 
 <div id="filePreviewPill" class="file-preview-pill">
@@ -630,6 +658,12 @@
 
         <label for="chatFileInput" class="file-btn">＋</label>
         <input type="file" name="chat_files" id="chatFileInput" accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx" multiple>
+        <button
+            type="button"
+            class="file-btn"
+            onclick="toggleEmoji()">
+            😊
+        </button>
 
         <textarea name="message"
                   id="messageInput"
@@ -871,6 +905,10 @@ function convertImageText(imageUrl) {
     });
 }
 
+function updatePresence() {
+    fetch("/update-presence", { method: "POST" });
+}
+
 document.getElementById("groupMessageForm").addEventListener("submit", function(e) {
     e.preventDefault();
 
@@ -921,10 +959,6 @@ window.addEventListener("load", function() {
     setTimeout(scrollBottom, 200);
 });
 
-setInterval(function() {
-    loadMessages(false);
-}, 3000);
-
 function zoomIn(){
     window.zoomScale+=0.1;
     updateZoom();
@@ -949,6 +983,22 @@ function updateZoom(){
     document.getElementById("zoomPercent").innerText=
     Math.round(window.zoomScale*100)+"%";
 }
+function toggleEmoji(){
+    const panel=document.getElementById("emojiPanel");
+    if(panel.style.display==="block"){
+        panel.style.display="none";
+    }else{
+        panel.style.display="block";
+    }
+}
+
+function addEmoji(emoji){
+    const input=document.getElementById("messageInput");
+    input.value+=emoji;
+    input.focus();
+    document.getElementById("emojiPanel").style.display="none";
+}
+
 </script>
 
 </body>

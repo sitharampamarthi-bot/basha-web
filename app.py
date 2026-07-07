@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 from image_translator import make_advanced_translated_image
 import tempfile
 from io import BytesIO
+from audio_translator import register_audio_translator_routes
 load_dotenv()
 
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
@@ -558,7 +559,17 @@ def save_chat_message(sender_id, receiver_mobile, message, file_url="", file_nam
         "timestamp": firestore.SERVER_TIMESTAMP
     })
 
-    return chat_id    
+    return chat_id
+
+register_audio_translator_routes(
+    app,
+    db,
+    storage,
+    firestore,
+    clean_mobile,
+    translate_text,
+    save_chat_message
+)    
     
 @app.route("/send-message", methods=["POST"])
 def send_message():
@@ -1043,7 +1054,18 @@ def group_chat(group_id):
     msg_docs = db.collection("groups").document(group_id).collection("messages").order_by("timestamp").stream()
 
     for m in msg_docs:
-        messages.append(m.to_dict())
+        data = m.to_dict()
+        if data.get("senderMobile") != current_mobile:
+            if data.get("status") == "sent":
+                m.reference.update({
+                    "status": "delivered"
+                })
+                data["status"] = "delivered"
+            m.reference.update({
+                "status": "seen"
+            })
+            data["status"] = "seen"   
+        messages.append(data)
 
     return render_template(
         "group_chat.html",
@@ -1075,19 +1097,15 @@ def send_group_message():
     if message:
 
         group_ref.collection("messages").add({
-
             "senderMobile": sender_mobile,
             "senderName": sender_name,
             "message": message,
-
             "fileUrl": "",
             "fileName": "",
             "fileType": "",
-
+            "status": "sent",
             "timestamp": firestore.SERVER_TIMESTAMP
-
         })
-
         sent_any = True
 
     # multiple files
@@ -1095,33 +1113,32 @@ def send_group_message():
 
         if not file:
             continue
-
+        
         if file.filename == "":
             continue
-
         if not allowed_file(file.filename):
             continue
-
+        
         file_url, file_type, file_name = upload_chat_file_to_firebase(
             file,
             session["user_id"]
         )
-
+        
         group_ref.collection("messages").add({
-
+            
             "senderMobile": sender_mobile,
             "senderName": sender_name,
-
+            
             "message": "",
-
+            
             "fileUrl": file_url,
             "fileName": file_name,
             "fileType": file_type,
-
+            "status": "sent",
             "timestamp": firestore.SERVER_TIMESTAMP
-
+            
         })
-
+        
         sent_any = True
 
     if not sent_any:

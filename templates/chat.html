@@ -662,8 +662,10 @@
                accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx" multiple>
 
         <button type="button" class="file-btn" onclick="toggleEmoji()">😊</button>
-
+        
         <textarea name="message" id="messageInput" placeholder="Type message..."></textarea>
+
+        <button type="button" id="recordBtn">🎙</button>
 
         <button id="sendBtn" type="submit">Send</button>
     </form>
@@ -1005,7 +1007,7 @@ document.getElementById("messageForm").addEventListener("submit", function(e) {
         }
     }
 
-    document.getElementById("messagesBox").insertAdjacentHTML("beforeend", tempHtml);
+document.getElementById("messagesBox").insertAdjacentHTML("beforeend", tempHtml);
     scrollBottom();
 
     fetch("/send-message", {
@@ -1095,6 +1097,69 @@ function updateZoom(){
     img.style.transform=`scale(${window.zoomScale})`;
     document.getElementById("zoomPercent").innerText=
     Math.round(window.zoomScale*100)+"%";
+}
+let mediaRecorder;
+let audioChunks = [];
+let recording = false;
+
+document.getElementById("recordBtn").addEventListener("click", async function () {
+    const btn = this;
+
+    if (!recording) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+        audioChunks = [];
+        mediaRecorder = new MediaRecorder(stream);
+
+        mediaRecorder.ondataavailable = function (e) {
+            audioChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = function () {
+            sendRecordedAudio();
+        };
+
+        mediaRecorder.start();
+        recording = true;
+        btn.innerText = "⏹";
+        btn.style.background = "#dc3545";
+        return;
+    }
+
+    mediaRecorder.stop();
+    recording = false;
+    btn.innerText = "🎙";
+    btn.style.background = "";
+});
+
+function sendRecordedAudio() {
+    const blob = new Blob(audioChunks, { type: "audio/webm" });
+
+    const formData = new FormData();
+    formData.append("receiver_mobile", receiverMobile);
+    formData.append("audio", blob, "voice.webm");
+
+    document.getElementById("sendBtn").disabled = true;
+
+    fetch("/audio/translate-send", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.success) {
+            alert(data.error || "Audio translation failed");
+            return;
+        }
+
+        loadMessages(true);
+
+        const audio = new Audio(data.audio_url);
+        audio.play();
+    })
+    .finally(() => {
+        document.getElementById("sendBtn").disabled = false;
+    });
 }
 </script>
 

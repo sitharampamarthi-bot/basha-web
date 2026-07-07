@@ -8,6 +8,8 @@
 {% if not ftype and furl %}
     {% if check_url.endswith(".png") or check_url.endswith(".jpg") or check_url.endswith(".jpeg") or check_url.endswith(".gif") or check_url.endswith(".webp") %}
         {% set ftype = "image" %}
+    {% elif check_url.endswith(".mp3") or check_url.endswith(".wav") or check_url.endswith(".m4a") or check_url.endswith(".ogg") %}
+        {% set ftype = "audio" %}
     {% elif check_url.endswith(".mp4") or check_url.endswith(".mov") or check_url.endswith(".avi") or check_url.endswith(".mkv") or check_url.endswith(".webm") %}
         {% set ftype = "video" %}
     {% else %}
@@ -30,7 +32,21 @@
         {% endif %}
 
         {% if furl %}
-        {% if ftype == "image" %}
+        {% if ftype == "audio" %}
+            <div class="mt-2">
+                <audio controls style="width:240px; max-width:100%;">
+                    <source src="{{ furl }}" type="audio/mpeg">
+                </audio>
+
+                <br>
+
+                <a class="convert-btn"
+                   href="/download-file?url={{ furl | urlencode }}&name={{ fname | urlencode }}">
+                    Download Audio
+                </a>
+            </div>
+
+        {% elif ftype == "image" %}
             <img src="{{ furl }}" class="chatImage"
                 onclick='openPreview({{ furl|tojson }}, "image", {{ fname|tojson }})'>
 
