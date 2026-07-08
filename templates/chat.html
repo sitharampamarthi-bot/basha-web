@@ -1024,7 +1024,7 @@ document.getElementById("messagesBox").insertAdjacentHTML("beforeend", tempHtml)
             loadMessages(true);
             setTimeout(scrollBottom, 100);
         } else {
-            alert(data.error || "Send failed");
+            console.log(data.error || "Send failed");
         }
     })
     .finally(() => {
