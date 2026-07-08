@@ -24,20 +24,42 @@ def upload_bytes_to_firebase(storage, data, path, content_type):
     return f"https://firebasestorage.googleapis.com/v0/b/{bucket.name}/o/{encoded_path}?alt=media&token={token}"
 
 
-def speech_to_text(audio_path):
-    uploaded = genai.upload_file(audio_path)
+def speech_to_text(audio_path, target_language_name):
+    import json, re
 
+    uploaded = genai.upload_file(audio_path)
+    
     model = genai.GenerativeModel("gemini-1.5-flash")
+
     response = model.generate_content([
         uploaded,
-        """
-        Convert this voice message to text.
-        Return only the spoken text.
-        Keep punctuation clear.
+        f"""
+        You are an audio transcription and translation engine.
+
+        Detect the spoken language automatically.
+        Transcribe the audio exactly.
+        Translate the transcribed text into this receiver language:
+        {target_language_name}
+
+        Return ONLY valid JSON:
+        {{
+            "original_text": "detected spoken text",
+            "translated_text": "text translated into {target_language_name}"
+        }}
         """
     ])
 
-    return (response.text or "").strip()
+    text = (response.text or "").strip()
+
+    if text.startswith("```"):
+        text = text.replace("```json", "").replace("```", "").strip()
+
+    match = re.search(r"\{.*\}", text, re.DOTALL)
+    if match:
+        text = match.group(0)
+
+    data = json.loads(text)
+    return data.get("original_text", ""), data.get("translated_text", "")
 
 
 def register_audio_translator_routes(app, db, storage, firestore, clean_mobile, translate_text, save_chat_message):
@@ -83,15 +105,21 @@ def register_audio_translator_routes(app, db, storage, firestore, clean_mobile, 
 
                 try:
                     receiver_docs = db.collection("users").where("mobile", "==", receiver_mobile).limit(1).get()
+
                     receiver_lang = "en"
+                    receiver_language_name = "English"
 
                     if receiver_docs:
-                        receiver_lang = receiver_docs[0].to_dict().get("languageCode") or "en"
+                        receiver_data = receiver_docs[0].to_dict()
+                        receiver_lang = receiver_data.get("languageCode") or "en"
+                        receiver_language_name = receiver_data.get("languageName") or "English"
 
-                    original_text = speech_to_text(temp_audio.name)
+                    original_text, translated_text = speech_to_text(
+                        temp_audio.name,
+                        receiver_language_name
+                    )
 
-                    if original_text:
-                        translated_text = translate_text(original_text, receiver_lang)
+                    if original_text and translated_text:
 
                         tts = gTTS(text=translated_text, lang=receiver_lang)
                         temp_mp3 = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
