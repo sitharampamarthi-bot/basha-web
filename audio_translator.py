@@ -1,8 +1,9 @@
-import os, uuid, tempfile, json, re, time
+import os, uuid, tempfile, json, re
 from urllib.parse import quote
 from flask import request, session, jsonify
-import google.generativeai as genai
 from gtts import gTTS
+from google import genai
+from google.genai import types
 
 AUDIO_ALLOWED = {"webm", "mp3", "wav", "m4a", "ogg", "aac"}
 
@@ -29,7 +30,7 @@ def audio_ext(filename):
 def upload_bytes_to_firebase(storage, data, path, content_type):
     bucket = storage.bucket()
     blob = bucket.blob(path)
-    
+
     token = str(uuid.uuid4())
     blob.metadata = {"firebaseStorageDownloadTokens": token}
     blob.upload_from_string(data, content_type=content_type)
@@ -40,6 +41,7 @@ def upload_bytes_to_firebase(storage, data, path, content_type):
 
 def clean_json(text):
     text = (text or "").strip()
+
     if text.startswith("```"):
         text = text.replace("```json", "").replace("```", "").strip()
 
@@ -50,33 +52,17 @@ def clean_json(text):
     return json.loads(text)
 
 
-def wait_for_file(uploaded_file):
-    for _ in range(20):
-        f = genai.get_file(uploaded_file.name)
-        if getattr(f, "state", None) and f.state.name == "ACTIVE":
-            return f
-        if getattr(f, "state", None) and f.state.name == "FAILED":
-            raise Exception("Gemini file processing failed")
-        time.sleep(1)
-    raise Exception("Gemini file processing timeout")
+def speech_translate(audio_bytes, mime_type, target_language_name):
+    api_key = os.getenv("GEMINI_API_KEY", "").strip()
 
+    if not api_key:
+        raise Exception("GEMINI_API_KEY missing in Render Environment")
 
-def speech_translate(audio_path, ext, target_language_name):
-    mime_type = MIME_MAP.get(ext, "audio/webm")
+    client = genai.Client(api_key=api_key)
 
-    uploaded = genai.upload_file(
-        path=audio_path,
-        mime_type=mime_type
-    )
+    prompt = f"""
+You are Basha Messenger Audio Translator.
 
-    uploaded = wait_for_file(uploaded)
-
-    model = genai.GenerativeModel("gemini-1.5-flash")
-
-    response = model.generate_content([
-        uploaded,
-        f"""
-        
 Detect spoken language automatically.
 Transcribe the voice message exactly.
 Translate it into receiver language: {target_language_name}.
@@ -87,7 +73,17 @@ Return ONLY valid JSON:
   "translated_text": "translated text in {target_language_name}"
 }}
 """
-    ])
+
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=[
+            types.Part.from_bytes(
+                data=audio_bytes,
+                mime_type=mime_type
+            ),
+            prompt
+        ]
+    )
 
     data = clean_json(response.text)
     return data.get("original_text", "").strip(), data.get("translated_text", "").strip()
@@ -97,7 +93,6 @@ def register_audio_translator_routes(app, db, storage, firestore, clean_mobile, 
 
     @app.route("/audio/translate-send", methods=["POST"])
     def audio_translate_send():
-        temp_audio_path = None
         temp_mp3_path = None
 
         try:
@@ -118,26 +113,21 @@ def register_audio_translator_routes(app, db, storage, firestore, clean_mobile, 
             if ext not in AUDIO_ALLOWED:
                 return jsonify({"success": False, "error": f"Invalid audio format: {ext}"}), 400
 
-            temp_audio = tempfile.NamedTemporaryFile(delete=False, suffix=f".{ext}")
-            audio.save(temp_audio.name)
-            temp_audio.close()
-            temp_audio_path = temp_audio.name
-
-            with open(temp_audio_path, "rb") as f:
-                raw_audio = f.read()
+            audio_bytes = audio.read()
+            mime_type = MIME_MAP.get(ext, "audio/webm")
 
             original_audio_url = upload_bytes_to_firebase(
                 storage,
-                raw_audio,
+                audio_bytes,
                 f"voice_messages/{session['user_id']}_{uuid.uuid4().hex}.{ext}",
-                MIME_MAP.get(ext, "audio/webm")
+                mime_type
             )
 
             receiver_lang = "en"
             receiver_language_name = "English"
 
             receiver_docs = db.collection("users").where("mobile", "==", receiver_mobile).limit(1).get()
-            
+
             if receiver_docs:
                 receiver_data = receiver_docs[0].to_dict()
                 receiver_lang = receiver_data.get("languageCode") or "en"
@@ -146,8 +136,8 @@ def register_audio_translator_routes(app, db, storage, firestore, clean_mobile, 
             print("AUDIO TARGET:", receiver_mobile, receiver_lang, receiver_language_name)
 
             original_text, translated_text = speech_translate(
-                temp_audio_path,
-                ext,
+                audio_bytes,
+                mime_type,
                 receiver_language_name
             )
 
@@ -192,22 +182,18 @@ def register_audio_translator_routes(app, db, storage, firestore, clean_mobile, 
             return jsonify({
                 "success": True,
                 "audio_url": translated_audio_url,
+                "original_audio_url": original_audio_url,
                 "original_text": original_text,
                 "translated_text": translated_text
             })
 
         except Exception as e:
             print("AUDIO TRANSLATION ERROR:", repr(e))
-
-            return jsonify({
-                "success": False,
-                "error": str(e)
-            }), 500
+            return jsonify({"success": False, "error": str(e)}), 500
 
         finally:
-            for p in [temp_audio_path, temp_mp3_path]:
-                try:
-                    if p and os.path.exists(p):
-                        os.remove(p)
-                except:
-                    pass
+            try:
+                if temp_mp3_path and os.path.exists(temp_mp3_path):
+                    os.remove(temp_mp3_path)
+            except:
+                pass
