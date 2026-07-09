@@ -1,10 +1,25 @@
-import os, uuid, tempfile, json, re
+import os, uuid, tempfile, json, re, time
 from urllib.parse import quote
 from flask import request, session, jsonify
 import google.generativeai as genai
 from gtts import gTTS
 
 AUDIO_ALLOWED = {"webm", "mp3", "wav", "m4a", "ogg", "aac"}
+
+GTTS_LANG = {
+    "te": "te", "hi": "hi", "en": "en", "ta": "ta",
+    "kn": "kn", "ml": "ml", "mr": "mr", "gu": "gu",
+    "bn": "bn", "pa": "pa", "ur": "ur"
+}
+
+MIME_MAP = {
+    "webm": "audio/webm",
+    "mp3": "audio/mpeg",
+    "wav": "audio/wav",
+    "m4a": "audio/mp4",
+    "ogg": "audio/ogg",
+    "aac": "audio/aac"
+}
 
 
 def audio_ext(filename):
@@ -14,7 +29,7 @@ def audio_ext(filename):
 def upload_bytes_to_firebase(storage, data, path, content_type):
     bucket = storage.bucket()
     blob = bucket.blob(path)
-
+    
     token = str(uuid.uuid4())
     blob.metadata = {"firebaseStorageDownloadTokens": token}
     blob.upload_from_string(data, content_type=content_type)
@@ -35,19 +50,36 @@ def clean_json(text):
     return json.loads(text)
 
 
-def speech_translate(audio_path, target_language_name):
-    uploaded = genai.upload_file(audio_path)
+def wait_for_file(uploaded_file):
+    for _ in range(20):
+        f = genai.get_file(uploaded_file.name)
+        if getattr(f, "state", None) and f.state.name == "ACTIVE":
+            return f
+        if getattr(f, "state", None) and f.state.name == "FAILED":
+            raise Exception("Gemini file processing failed")
+        time.sleep(1)
+    raise Exception("Gemini file processing timeout")
+
+
+def speech_translate(audio_path, ext, target_language_name):
+    mime_type = MIME_MAP.get(ext, "audio/webm")
+
+    uploaded = genai.upload_file(
+        path=audio_path,
+        mime_type=mime_type
+    )
+
+    uploaded = wait_for_file(uploaded)
 
     model = genai.GenerativeModel("gemini-1.5-flash")
 
     response = model.generate_content([
         uploaded,
         f"""
-You are Basha Messenger Audio Translator.
-
+        
 Detect spoken language automatically.
-Transcribe the voice message.
-Translate the transcription into receiver language: {target_language_name}.
+Transcribe the voice message exactly.
+Translate it into receiver language: {target_language_name}.
 
 Return ONLY valid JSON:
 {{
@@ -92,20 +124,20 @@ def register_audio_translator_routes(app, db, storage, firestore, clean_mobile, 
             temp_audio_path = temp_audio.name
 
             with open(temp_audio_path, "rb") as f:
-                raw_audio_bytes = f.read()
+                raw_audio = f.read()
 
             original_audio_url = upload_bytes_to_firebase(
                 storage,
-                raw_audio_bytes,
+                raw_audio,
                 f"voice_messages/{session['user_id']}_{uuid.uuid4().hex}.{ext}",
-                audio.content_type or "audio/webm"
+                MIME_MAP.get(ext, "audio/webm")
             )
 
             receiver_lang = "en"
             receiver_language_name = "English"
 
             receiver_docs = db.collection("users").where("mobile", "==", receiver_mobile).limit(1).get()
-
+            
             if receiver_docs:
                 receiver_data = receiver_docs[0].to_dict()
                 receiver_lang = receiver_data.get("languageCode") or "en"
@@ -113,76 +145,64 @@ def register_audio_translator_routes(app, db, storage, firestore, clean_mobile, 
 
             print("AUDIO TARGET:", receiver_mobile, receiver_lang, receiver_language_name)
 
-            original_text = ""
-            translated_text = ""
-            translated_audio_url = ""
+            original_text, translated_text = speech_translate(
+                temp_audio_path,
+                ext,
+                receiver_language_name
+            )
 
-            try:
-                original_text, translated_text = speech_translate(
-                    temp_audio_path,
-                    receiver_language_name
-                )
+            print("AUDIO ORIGINAL:", original_text)
+            print("AUDIO TRANSLATED:", translated_text)
 
-                print("AUDIO ORIGINAL:", original_text)
-                print("AUDIO TRANSLATED:", translated_text)
+            if not translated_text:
+                raise Exception("Translation text empty")
 
-                if translated_text:
-                    temp_mp3 = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
-                    temp_mp3.close()
-                    temp_mp3_path = temp_mp3.name
+            temp_mp3 = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
+            temp_mp3.close()
+            temp_mp3_path = temp_mp3.name
 
-                    tts = gTTS(text=translated_text, lang=receiver_lang)
-                    tts.save(temp_mp3_path)
+            tts_lang = GTTS_LANG.get(receiver_lang, "en")
+            gTTS(text=translated_text, lang=tts_lang).save(temp_mp3_path)
 
-                    with open(temp_mp3_path, "rb") as f:
-                        mp3_bytes = f.read()
+            with open(temp_mp3_path, "rb") as f:
+                mp3_bytes = f.read()
 
-                    translated_audio_url = upload_bytes_to_firebase(
-                        storage,
-                        mp3_bytes,
-                        f"audio_translations/{session['user_id']}_{uuid.uuid4().hex}.mp3",
-                        "audio/mpeg"
-                    )
+            translated_audio_url = upload_bytes_to_firebase(
+                storage,
+                mp3_bytes,
+                f"audio_translations/{session['user_id']}_{uuid.uuid4().hex}.mp3",
+                "audio/mpeg"
+            )
 
-            except Exception as e:
-                print("AUDIO TRANSLATION FAILED:", repr(e))
-
-            # If translation success, send translated audio.
-            # If translation fail, send original audio.
-            final_audio_url = translated_audio_url or original_audio_url
-            final_file_name = "basha-translated-audio.mp3" if translated_audio_url else f"voice-message.{ext}"
-
-            chat_text = "🎙 Voice Message"
-
-            if original_text or translated_text:
-                chat_text = (
-                    "🎙 Voice Translation\n\n"
-                    f"Original:\n{original_text}\n\n"
-                    f"Translated:\n{translated_text or 'Translation failed'}"
-                )
+            chat_text = (
+                "🎙 Voice Translation\n\n"
+                f"Original:\n{original_text}\n\n"
+                f"Translated:\n{translated_text}"
+            )
 
             save_chat_message(
                 session["user_id"],
                 receiver_mobile,
                 chat_text,
-                final_audio_url,
-                final_file_name,
+                translated_audio_url,
+                "basha-translated-audio.mp3",
                 "audio"
             )
 
             return jsonify({
                 "success": True,
+                "audio_url": translated_audio_url,
                 "original_text": original_text,
-                "translated_text": translated_text,
-                "original_audio_url": original_audio_url,
-                "translated_audio_url": translated_audio_url,
-                "audio_url": final_audio_url,
-                "translation_success": bool(translated_audio_url)
+                "translated_text": translated_text
             })
 
         except Exception as e:
-            print("AUDIO SEND ERROR:", repr(e))
-            return jsonify({"success": False, "error": str(e)}), 500
+            print("AUDIO TRANSLATION ERROR:", repr(e))
+
+            return jsonify({
+                "success": False,
+                "error": str(e)
+            }), 500
 
         finally:
             for p in [temp_audio_path, temp_mp3_path]:
