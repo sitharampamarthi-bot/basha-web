@@ -201,8 +201,8 @@ def register_audio_translator_routes(app, db, storage, firestore, clean_mobile, 
                 # receiver ki translated audio
                 "translatedAudioUrl": translated_audio_url,
 
-                "fileUrl": translated_audio_url,
-                "fileName": "basha-translated-audio.mp3",
+                "fileUrl": original_audio_url,
+                "fileName": f"voice-message.{ext}",
                 "fileType": "audio",
 
                 "readBy": [sender_mobile],
