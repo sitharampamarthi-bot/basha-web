@@ -93,8 +93,9 @@ def register_audio_translator_routes(app, db, storage, firestore, clean_mobile, 
 
     @app.route("/audio/translate-send", methods=["POST"])
     def audio_translate_send():
+        
         temp_mp3_path = None
-
+        
         try:
             if "user_id" not in session:
                 return jsonify({"success": False, "error": "Login required"}), 401
@@ -164,20 +165,50 @@ def register_audio_translator_routes(app, db, storage, firestore, clean_mobile, 
                 "audio/mpeg"
             )
 
-            chat_text = (
-                "🎙 Voice Translation\n\n"
-                f"Original:\n{original_text}\n\n"
-                f"Translated:\n{translated_text}"
-            )
+            sender_doc = db.collection("users").document(session["user_id"]).get()
+            sender = sender_doc.to_dict() if sender_doc.exists else {}
 
-            save_chat_message(
-                session["user_id"],
-                receiver_mobile,
-                chat_text,
-                translated_audio_url,
-                "basha-translated-audio.mp3",
-                "audio"
-            )
+            sender_mobile = clean_mobile(sender.get("mobile", ""))
+            sender_lang = sender.get("languageCode") or "en"
+
+            receiver_mobile = clean_mobile(receiver_mobile)
+
+            chat_id = "_".join(sorted([sender_mobile, receiver_mobile]))
+            chat_ref = db.collection("chats").document(chat_id)
+
+            chat_ref.set({
+                "participants": [sender_mobile, receiver_mobile],
+                "lastMessage": "🎙 Voice Message",
+                "lastMessageTime": firestore.SERVER_TIMESTAMP
+            }, merge=True)
+
+            chat_ref.collection("messages").add({
+                "senderMobile": sender_mobile,
+                "receiverMobile": receiver_mobile,
+
+                # sender ki original text
+                "message": original_text,
+
+                # receiver ki translated text
+                "translatedMessage": translated_text,
+
+                "senderLanguage": sender_lang,
+                "receiverLanguage": receiver_lang,
+
+                # sender ki original audio
+                "originalAudioUrl": original_audio_url,
+
+                # receiver ki translated audio
+                "translatedAudioUrl": translated_audio_url,
+
+                "fileUrl": translated_audio_url,
+                "fileName": "basha-translated-audio.mp3",
+                "fileType": "audio",
+
+                "readBy": [sender_mobile],
+                "delivered": False,
+                "timestamp": firestore.SERVER_TIMESTAMP
+            })
 
             return jsonify({
                 "success": True,

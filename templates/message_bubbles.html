@@ -33,15 +33,24 @@
 
         {% if furl %}
         {% if ftype == "audio" %}
+
+            {% set audio_url = furl %}
+
+            {% if msg.senderMobile == current_mobile and msg.originalAudioUrl %}
+                {% set audio_url = msg.originalAudioUrl %}
+            {% elif msg.senderMobile != current_mobile and msg.translatedAudioUrl %}
+                {% set audio_url = msg.translatedAudioUrl %}
+            {% endif %}
+
             <div class="mt-2">
                 <audio controls style="width:240px; max-width:100%;">
-                    <source src="{{ furl }}" type="audio/mpeg">
+                    <source src="{{ audio_url }}">
                 </audio>
 
                 <br>
 
                 <a class="convert-btn"
-                   href="/download-file?url={{ furl | urlencode }}&name={{ fname | urlencode }}">
+                href="/download-file?url={{ audio_url | urlencode }}&name={{ fname | urlencode }}">
                     Download Audio
                 </a>
             </div>
