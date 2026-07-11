@@ -1,4 +1,17 @@
+{% set ns = namespace(last_date="") %}
 {% for msg in messages %}
+{% set msg_date = "" %}
+
+{% if msg.timestamp %}
+    {% set msg_date = msg.timestamp.strftime("%d-%m-%Y") %}
+{% endif %}
+
+{% if msg_date and msg_date != ns.last_date %}
+    <div class="date-divider">
+        {{ msg_date }}
+    </div>
+    {% set ns.last_date = msg_date %}
+{% endif %}
 
 {% set ftype = msg.fileType or "" %}
 {% set fname = msg.fileName or "" %}
