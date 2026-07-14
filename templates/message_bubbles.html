@@ -38,10 +38,47 @@
     <div class="msg-bubble msg-other">
 {% endif %}
 
-        {% set clean_msg = (msg.translatedMessage if msg.senderMobile != current_mobile and msg.translatedMessage else msg.message) %}
+        {% if msg.senderMobile == current_mobile %}
+            {% set clean_msg = msg.message %}
+        {% else %}
+            {% if auto_translate %}
+                {% if msg.translatedMessage %}
+                    {% set clean_msg = msg.translatedMessage %}
+                {% else %}
+                    {% set clean_msg = msg.message %}
+                {% endif %}
+            {% else %}
+                {% set clean_msg = msg.message %}
+            {% endif %}
+        {% endif %}
 
         {% if clean_msg %}
-            <div class="msg-text">{{ clean_msg|trim }}</div>
+            <div class="msg-text">
+                {{ clean_msg|trim }}
+            </div>
+        {% endif %}
+
+        {% if
+            show_original
+            and
+            msg.senderMobile != current_mobile
+            and
+            auto_translate
+            and
+            msg.translatedMessage
+            and
+            msg.message != msg.translatedMessage
+        %}
+
+        <div
+            class="small text-muted mt-1"
+            style="font-style:italic;">
+
+            Original:
+            {{ msg.message }}
+
+        </div>
+
         {% endif %}
 
         {% if furl %}

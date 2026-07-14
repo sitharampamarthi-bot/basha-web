@@ -3,7 +3,6 @@ flask-cors==5.0.0
 firebase-admin==6.6.0
 gunicorn==23.0.0
 deep-translator==1.11.4
-google-generativeai==0.8.5
 python-dotenv==1.0.1
 requests==2.32.3
 Pillow==11.0.0

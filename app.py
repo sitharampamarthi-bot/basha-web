@@ -8,7 +8,7 @@ from urllib.parse import quote, urljoin
 import json
 from deep_translator import GoogleTranslator
 import requests
-import google.generativeai as genai
+#import google.generativeai as genai
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
 from dotenv import load_dotenv
@@ -16,9 +16,10 @@ from image_translator import make_advanced_translated_image
 import tempfile
 from io import BytesIO
 from audio_translator import register_audio_translator_routes
+from settings_module import settings_bp, init_settings_module
 load_dotenv()
 
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+#genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 app = Flask(__name__)
 app.secret_key = "basha_secret_key"
@@ -89,6 +90,9 @@ def clean_mobile(mobile):
         mobile = mobile[2:]
 
     return mobile
+
+init_settings_module(db, clean_mobile)
+app.register_blueprint(settings_bp)
 
 def translate_text(text, target_lang):
     try:
@@ -431,6 +435,11 @@ def home():
         total_unread=total_unread
         
     )
+    
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/")    
 
 @app.route("/users")
 def users():
@@ -464,6 +473,17 @@ def chat(mobile):
 
     current_doc = db.collection("users").document(current_user_id).get()
     current_user = current_doc.to_dict()
+    
+    # Current user's saved chat settings
+    user_settings = current_user.get("settings", {}) or {}
+    chat_settings = user_settings.get("chats", {}) or {}
+
+    chat_theme = chat_settings.get("theme", "system")
+    chat_font_size = chat_settings.get("fontSize", "medium")
+    auto_translate = chat_settings.get("autoTranslate", True)
+    show_original_text = chat_settings.get("showOriginalText", True)
+    enter_to_send = chat_settings.get("enterToSend", False)
+    wallpaper = chat_settings.get("wallpaper", "default")
 
     current_mobile = clean_mobile(current_user.get("mobile", ""))
     receiver_mobile = clean_mobile(mobile)
@@ -509,7 +529,14 @@ def chat(mobile):
         receiver=receiver,
         messages=messages,
         current_mobile=current_mobile,
-        back_url=request.args.get("from", "/home")
+        back_url=request.args.get("from", "/home"),
+
+        chat_theme=chat_theme,
+        chat_font_size=chat_font_size,
+        auto_translate=auto_translate,
+        show_original_text=show_original_text,
+        enter_to_send=enter_to_send,
+        wallpaper=wallpaper
     )
     
 def save_chat_message(sender_id, receiver_mobile, message, file_url="", file_name="", file_type=""):
@@ -643,10 +670,16 @@ def get_messages(receiver_mobile):
     if "user_id" not in session:
         return ""
 
-    current_user_id = session["user_id"]
+    current_user_id = session["user_id"]   
 
     current_doc = db.collection("users").document(current_user_id).get()
     current_user = current_doc.to_dict()
+    
+    user_settings = current_user.get("settings", {}) or {}
+    chat_settings = user_settings.get("chats", {}) or {}
+
+    auto_translate = chat_settings.get("autoTranslate", True)
+    show_original = chat_settings.get("showOriginalText", True)
 
     current_mobile = clean_mobile(current_user.get("mobile", ""))
     receiver_mobile = clean_mobile(receiver_mobile)
@@ -683,7 +716,9 @@ def get_messages(receiver_mobile):
     return render_template(
         "message_bubbles.html",
         messages=messages,
-        current_mobile=current_mobile
+        current_mobile=current_mobile,
+        auto_translate=auto_translate,
+        show_original=show_original
     )
     
 @app.route("/update-presence", methods=["POST"])
@@ -828,106 +863,106 @@ def check_phone_contact():
         "name": name
     })
     
-@app.route("/settings", methods=["GET", "POST"])
-def settings():
-    if "user_id" not in session:
-        return redirect("/")
+# @app.route("/settings", methods=["GET", "POST"])
+# def settings():
+#     if "user_id" not in session:
+#         return redirect("/")
 
-    current_user_id = session["user_id"]
-    message = ""
+#     current_user_id = session["user_id"]
+#     message = ""
 
-    user_ref = db.collection("users").document(current_user_id)
-    user_doc = user_ref.get()
+#     user_ref = db.collection("users").document(current_user_id)
+#     user_doc = user_ref.get()
 
-    if not user_doc.exists:
-        return redirect("/")
+#     if not user_doc.exists:
+#         return redirect("/")
 
-    user = user_doc.to_dict()
+#     user = user_doc.to_dict()
 
-    if request.method == "POST":
-        action = request.form.get("action", "")
+#     if request.method == "POST":
+#         action = request.form.get("action", "")
 
-        if action == "profile":
-            name = request.form.get("name", "").strip()
-            email = request.form.get("email", "").strip().lower()
-            mobile = clean_mobile(request.form.get("mobile", ""))
+#         if action == "profile":
+#             name = request.form.get("name", "").strip()
+#             email = request.form.get("email", "").strip().lower()
+#             mobile = clean_mobile(request.form.get("mobile", ""))
 
-            profile_pic = user.get("profilePic", "")
+#             profile_pic = user.get("profilePic", "")
 
-            file = request.files.get("profile_image")
+#             file = request.files.get("profile_image")
 
-            if file and file.filename:
+#             if file and file.filename:
 
-                upload_folder = os.path.join(
-                    os.path.dirname(os.path.abspath(__file__)),
-                    "static",
-                    "profile_pics"
-                )
+#                 upload_folder = os.path.join(
+#                     os.path.dirname(os.path.abspath(__file__)),
+#                     "static",
+#                     "profile_pics"
+#                 )
 
-                os.makedirs(upload_folder, exist_ok=True)
+#                 os.makedirs(upload_folder, exist_ok=True)
 
-                filename = secure_filename(
-                    f"{current_user_id}_{file.filename}"
-                )
+#                 filename = secure_filename(
+#                     f"{current_user_id}_{file.filename}"
+#                 )
 
-                save_path = os.path.join(
-                    upload_folder,
-                    filename
-                )
+#                 save_path = os.path.join(
+#                     upload_folder,
+#                     filename
+#                 )
 
-                file.save(save_path)
+#                 file.save(save_path)
                 
 
-                profile_pic = f"/static/profile_pics/{filename}"
+#                 profile_pic = f"/static/profile_pics/{filename}"
 
-            user_ref.update({
-                "name": name,
-                "email": email,
-                "mobile": mobile,
-                "profilePic": profile_pic
-            })
+#             user_ref.update({
+#                 "name": name,
+#                 "email": email,
+#                 "mobile": mobile,
+#                 "profilePic": profile_pic
+#             })
 
-            session["user_name"] = name
-            message = "Profile updated successfully"
+#             session["user_name"] = name
+#             message = "Profile updated successfully"
 
-        elif action == "password":
-            old_password = request.form.get("old_password", "").strip()
-            new_password = request.form.get("new_password", "").strip()
-            confirm_password = request.form.get("confirm_password", "").strip()
+#         elif action == "password":
+#             old_password = request.form.get("old_password", "").strip()
+#             new_password = request.form.get("new_password", "").strip()
+#             confirm_password = request.form.get("confirm_password", "").strip()
 
-            db_password = str(user.get("password", "")).strip()
+#             db_password = str(user.get("password", "")).strip()
 
-            if old_password != db_password:
-                message = "Old password is wrong"
-            elif new_password != confirm_password:
-                message = "New passwords do not match"
-            elif len(new_password) < 4:
-                message = "Password must be at least 4 characters"
-            else:
-                user_ref.update({
-                    "password": new_password
-                })
-                message = "Password changed successfully"
+#             if old_password != db_password:
+#                 message = "Old password is wrong"
+#             elif new_password != confirm_password:
+#                 message = "New passwords do not match"
+#             elif len(new_password) < 4:
+#                 message = "Password must be at least 4 characters"
+#             else:
+#                 user_ref.update({
+#                     "password": new_password
+#                 })
+#                 message = "Password changed successfully"
 
-        elif action == "language":
-            language_code = request.form.get("language_code", "en")
-            language_name = request.form.get("language_name", "English")
+#         elif action == "language":
+#             language_code = request.form.get("language_code", "en")
+#             language_name = request.form.get("language_name", "English")
 
-            user_ref.update({
-                "languageCode": language_code,
-                "languageName": language_name
-            })
+#             user_ref.update({
+#                 "languageCode": language_code,
+#                 "languageName": language_name
+#             })
 
-            message = "Language updated successfully"
+#             message = "Language updated successfully"
 
-        user_doc = user_ref.get()
-        user = user_doc.to_dict()
+#         user_doc = user_ref.get()
+#         user = user_doc.to_dict()
 
-    return render_template(
-        "settings.html",
-        user=user,
-        message=message
-    )            
+#     return render_template(
+#         "settings.html",
+#         user=user,
+#         message=message
+#     )            
     
 @app.route("/contacts", methods=["GET", "POST"])
 def contacts():
