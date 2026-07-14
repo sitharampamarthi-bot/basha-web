@@ -1,0 +1,177 @@
+{% extends "settings/settings_base.html" %}
+
+{% block title %}
+Storage and Data
+{% endblock %}
+
+{% block header_title %}
+Storage and Data
+{% endblock %}
+
+{% block content %}
+
+<section class="settings-form-card">
+
+    <form method="POST">
+
+        <label class="form-label fw-bold">
+            Photo Upload Quality
+        </label>
+
+        <select name="photo_quality"
+                class="form-select mb-3">
+
+            <option value="standard"
+                    {% if storage_settings.photoQuality == "standard" %}
+                        selected
+                    {% endif %}>
+
+                Standard
+
+            </option>
+
+            <option value="hd"
+                    {% if storage_settings.photoQuality == "hd" %}
+                        selected
+                    {% endif %}>
+
+                HD
+
+            </option>
+
+            <option value="data_saver"
+                    {% if storage_settings.photoQuality == "data_saver" %}
+                        selected
+                    {% endif %}>
+
+                Data Saver
+
+            </option>
+
+        </select>
+
+
+        <div class="settings-switch-row">
+
+            <div>
+
+                <div class="fw-bold">
+                    Auto-download Photos
+                </div>
+
+                <div class="small text-muted">
+                    Automatically load images in chat
+                </div>
+
+            </div>
+
+            <div class="form-check form-switch">
+
+                <input class="form-check-input"
+                       type="checkbox"
+                       name="auto_download_photos"
+                       {% if storage_settings.autoDownloadPhotos %}
+                           checked
+                       {% endif %}>
+
+            </div>
+
+        </div>
+
+
+        <div class="settings-switch-row">
+
+            <div>
+
+                <div class="fw-bold">
+                    Auto-download Videos
+                </div>
+
+                <div class="small text-muted">
+                    Automatically load videos in chat
+                </div>
+
+            </div>
+
+            <div class="form-check form-switch">
+
+                <input class="form-check-input"
+                       type="checkbox"
+                       name="auto_download_videos"
+                       {% if storage_settings.autoDownloadVideos %}
+                           checked
+                       {% endif %}>
+
+            </div>
+
+        </div>
+
+
+        <div class="settings-switch-row">
+
+            <div>
+
+                <div class="fw-bold">
+                    Auto-download Documents
+                </div>
+
+                <div class="small text-muted">
+                    Automatically load documents
+                </div>
+
+            </div>
+
+            <div class="form-check form-switch">
+
+                <input class="form-check-input"
+                       type="checkbox"
+                       name="auto_download_documents"
+                       {% if storage_settings.autoDownloadDocuments %}
+                           checked
+                       {% endif %}>
+
+            </div>
+
+        </div>
+
+
+        <div class="settings-switch-row mb-4">
+
+            <div>
+
+                <div class="fw-bold">
+                    Data Saver
+                </div>
+
+                <div class="small text-muted">
+                    Reduce automatic media usage
+                </div>
+
+            </div>
+
+            <div class="form-check form-switch">
+
+                <input class="form-check-input"
+                       type="checkbox"
+                       name="data_saver"
+                       {% if storage_settings.dataSaver %}
+                           checked
+                       {% endif %}>
+
+            </div>
+
+        </div>
+
+
+        <button type="submit"
+                class="btn btn-basha w-100">
+
+            Save Storage Settings
+
+        </button>
+
+    </form>
+
+</section>
+
+{% endblock %}

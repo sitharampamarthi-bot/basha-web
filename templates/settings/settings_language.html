@@ -1,0 +1,58 @@
+{% extends "settings/settings_base.html" %}
+
+{% block title %}
+Language Settings
+{% endblock %}
+
+{% block header_title %}
+Language
+{% endblock %}
+
+{% block content %}
+
+<section class="settings-form-card">
+
+    <form method="POST">
+
+        <label class="form-label fw-bold">
+            Preferred Language
+        </label>
+
+        <select name="language_code"
+                class="form-select mb-3"
+                required>
+
+            {% for code, name in languages %}
+
+                <option value="{{ code }}"
+                        {% if user.languageCode == code %}
+                            selected
+                        {% endif %}>
+
+                    {{ name }}
+
+                </option>
+
+            {% endfor %}
+
+        </select>
+
+        <div class="settings-note mb-4">
+
+            Incoming text, OCR image translation
+            and audio translation use this language.
+
+        </div>
+
+        <button type="submit"
+                class="btn btn-basha w-100">
+
+            Update Language
+
+        </button>
+
+    </form>
+
+</section>
+
+{% endblock %}

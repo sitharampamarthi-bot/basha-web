@@ -1,0 +1,93 @@
+{% extends "settings/settings_base.html" %}
+
+{% block title %}
+Profile Settings
+{% endblock %}
+
+{% block header_title %}
+Profile
+{% endblock %}
+
+{% block content %}
+
+<section class="settings-form-card">
+
+    <form method="POST"
+          enctype="multipart/form-data">
+
+        <div class="avatar-preview"
+             id="profileImagePreview">
+
+            {% if user.profilePic %}
+
+                <img src="{{ user.profilePic }}"
+                     alt="{{ user.name }}">
+
+            {% else %}
+
+                {{ (user.name or "U")[:1]|upper }}
+
+            {% endif %}
+
+        </div>
+
+        <label class="form-label fw-bold">
+            Profile Picture
+        </label>
+
+        <input type="file"
+               id="profileImageInput"
+               name="profile_image"
+               accept="image/png,image/jpeg,image/webp"
+               class="form-control mb-3">
+
+
+        <label class="form-label fw-bold">
+            Full Name
+        </label>
+
+        <input type="text"
+               name="name"
+               value="{{ user.name or '' }}"
+               maxlength="80"
+               class="form-control mb-3"
+               required>
+
+
+        <label class="form-label fw-bold">
+            Mobile Number
+        </label>
+
+        <input type="tel"
+               name="mobile"
+               value="{{ user.mobile or '' }}"
+               inputmode="numeric"
+               minlength="10"
+               maxlength="10"
+               class="form-control mb-3"
+               required>
+
+
+        <label class="form-label fw-bold">
+            Email
+        </label>
+
+        <input type="email"
+               name="email"
+               value="{{ user.email or '' }}"
+               maxlength="120"
+               class="form-control mb-4">
+
+
+        <button type="submit"
+                class="btn btn-basha w-100">
+
+            Save Profile
+
+        </button>
+
+    </form>
+
+</section>
+
+{% endblock %}

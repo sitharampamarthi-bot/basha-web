@@ -1,0 +1,223 @@
+{% extends "settings/settings_base.html" %}
+
+{% block title %}
+Chat Settings
+{% endblock %}
+
+{% block header_title %}
+Chats
+{% endblock %}
+
+{% block content %}
+
+<section class="settings-form-card">
+
+    <form method="POST">
+
+        <label class="form-label fw-bold">
+            Theme
+        </label>
+
+        <select name="theme"
+                class="form-select mb-3">
+
+            <option value="system"
+                    {% if chats.theme == "system" %}
+                        selected
+                    {% endif %}>
+
+                System Default
+
+            </option>
+
+            <option value="light"
+                    {% if chats.theme == "light" %}
+                        selected
+                    {% endif %}>
+
+                Light
+
+            </option>
+
+            <option value="dark"
+                    {% if chats.theme == "dark" %}
+                        selected
+                    {% endif %}>
+
+                Dark
+
+            </option>
+
+        </select>
+
+
+        <label class="form-label fw-bold">
+            Chat Font Size
+        </label>
+
+        <select name="font_size"
+                class="form-select mb-3">
+
+            <option value="small"
+                    {% if chats.fontSize == "small" %}
+                        selected
+                    {% endif %}>
+
+                Small
+
+            </option>
+
+            <option value="medium"
+                    {% if chats.fontSize == "medium" %}
+                        selected
+                    {% endif %}>
+
+                Medium
+
+            </option>
+
+            <option value="large"
+                    {% if chats.fontSize == "large" %}
+                        selected
+                    {% endif %}>
+
+                Large
+
+            </option>
+
+        </select>
+
+
+        <label class="form-label fw-bold">
+            Wallpaper
+        </label>
+
+        <select name="wallpaper"
+                class="form-select mb-3">
+
+            <option value="default"
+                    {% if chats.wallpaper == "default" %}
+                        selected
+                    {% endif %}>
+
+                Default
+
+            </option>
+
+            <option value="plain"
+                    {% if chats.wallpaper == "plain" %}
+                        selected
+                    {% endif %}>
+
+                Plain
+
+            </option>
+
+            <option value="purple"
+                    {% if chats.wallpaper == "purple" %}
+                        selected
+                    {% endif %}>
+
+                Purple
+
+            </option>
+
+        </select>
+
+
+        <div class="settings-switch-row">
+
+            <div>
+
+                <div class="fw-bold">
+                    Auto Translate
+                </div>
+
+                <div class="small text-muted">
+                    Translate incoming messages automatically
+                </div>
+
+            </div>
+
+            <div class="form-check form-switch">
+
+                <input class="form-check-input"
+                       type="checkbox"
+                       name="auto_translate"
+                       {% if chats.autoTranslate %}
+                           checked
+                       {% endif %}>
+
+            </div>
+
+        </div>
+
+
+        <div class="settings-switch-row">
+
+            <div>
+
+                <div class="fw-bold">
+                    Show Original Text
+                </div>
+
+                <div class="small text-muted">
+                    Display original message with translation
+                </div>
+
+            </div>
+
+            <div class="form-check form-switch">
+
+                <input class="form-check-input"
+                       type="checkbox"
+                       name="show_original_text"
+                       {% if chats.showOriginalText %}
+                           checked
+                       {% endif %}>
+
+            </div>
+
+        </div>
+
+
+        <div class="settings-switch-row mb-4">
+
+            <div>
+
+                <div class="fw-bold">
+                    Enter to Send
+                </div>
+
+                <div class="small text-muted">
+                    Press Enter to send on desktop
+                </div>
+
+            </div>
+
+            <div class="form-check form-switch">
+
+                <input class="form-check-input"
+                       type="checkbox"
+                       name="enter_to_send"
+                       {% if chats.enterToSend %}
+                           checked
+                       {% endif %}>
+
+            </div>
+
+        </div>
+
+
+        <button type="submit"
+                class="btn btn-basha w-100">
+
+            Save Chat Settings
+
+        </button>
+
+    </form>
+
+</section>
+
+{% endblock %}

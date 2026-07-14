@@ -1,0 +1,168 @@
+{% extends "settings/settings_base.html" %}
+
+{% block title %}
+Notification Settings
+{% endblock %}
+
+{% block header_title %}
+Notifications
+{% endblock %}
+
+{% block content %}
+
+<section class="settings-form-card">
+
+    <form method="POST">
+
+        <div class="settings-switch-row">
+
+            <div>
+
+                <div class="fw-bold">
+                    Notifications
+                </div>
+
+                <div class="small text-muted">
+                    Enable new message notifications
+                </div>
+
+            </div>
+
+            <div class="form-check form-switch">
+
+                <input class="form-check-input"
+                       type="checkbox"
+                       name="notifications"
+                       {% if notifications.enabled %}
+                           checked
+                       {% endif %}>
+
+            </div>
+
+        </div>
+
+
+        <div class="settings-switch-row">
+
+            <div>
+
+                <div class="fw-bold">
+                    Message Preview
+                </div>
+
+                <div class="small text-muted">
+                    Show message text in notification
+                </div>
+
+            </div>
+
+            <div class="form-check form-switch">
+
+                <input class="form-check-input"
+                       type="checkbox"
+                       name="message_preview"
+                       {% if notifications.messagePreview %}
+                           checked
+                       {% endif %}>
+
+            </div>
+
+        </div>
+
+
+        <div class="settings-switch-row">
+
+            <div>
+
+                <div class="fw-bold">
+                    Sound
+                </div>
+
+                <div class="small text-muted">
+                    Play sound for new messages
+                </div>
+
+            </div>
+
+            <div class="form-check form-switch">
+
+                <input class="form-check-input"
+                       type="checkbox"
+                       name="sound"
+                       {% if notifications.sound %}
+                           checked
+                       {% endif %}>
+
+            </div>
+
+        </div>
+
+
+        <div class="settings-switch-row">
+
+            <div>
+
+                <div class="fw-bold">
+                    Vibration
+                </div>
+
+                <div class="small text-muted">
+                    Vibrate on supported mobile devices
+                </div>
+
+            </div>
+
+            <div class="form-check form-switch">
+
+                <input class="form-check-input"
+                       type="checkbox"
+                       name="vibration"
+                       {% if notifications.vibration %}
+                           checked
+                       {% endif %}>
+
+            </div>
+
+        </div>
+
+
+        <div class="settings-switch-row mb-4">
+
+            <div>
+
+                <div class="fw-bold">
+                    Group Notifications
+                </div>
+
+                <div class="small text-muted">
+                    Receive notifications from groups
+                </div>
+
+            </div>
+
+            <div class="form-check form-switch">
+
+                <input class="form-check-input"
+                       type="checkbox"
+                       name="group_notifications"
+                       {% if notifications.groupNotifications %}
+                           checked
+                       {% endif %}>
+
+            </div>
+
+        </div>
+
+
+        <button type="submit"
+                class="btn btn-basha w-100">
+
+            Save Notifications
+
+        </button>
+
+    </form>
+
+</section>
+
+{% endblock %}

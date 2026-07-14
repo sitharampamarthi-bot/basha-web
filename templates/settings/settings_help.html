@@ -1,0 +1,108 @@
+{% extends "settings/settings_base.html" %}
+
+{% block title %}
+Help
+{% endblock %}
+
+{% block header_title %}
+Help
+{% endblock %}
+
+{% block content %}
+
+<section class="settings-list-card">
+
+    <a href="mailto:support@basha.app"
+       class="settings-row">
+
+        <div class="settings-icon">
+
+            <i class="bi bi-envelope-fill"></i>
+
+        </div>
+
+        <div class="settings-row-main">
+
+            <div class="settings-row-title">
+                Contact Support
+            </div>
+
+            <div class="settings-row-description">
+                Email the Basha support team
+            </div>
+
+        </div>
+
+        <i class="bi bi-chevron-right text-muted"></i>
+
+    </a>
+
+
+    <div class="settings-row">
+
+        <div class="settings-icon">
+
+            <i class="bi bi-info-circle-fill"></i>
+
+        </div>
+
+        <div class="settings-row-main">
+
+            <div class="settings-row-title">
+                App Version
+            </div>
+
+            <div class="settings-row-description">
+                Basha Messenger Web 1.0
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<section class="settings-form-card mt-3">
+
+    <h5 class="fw-bold mb-3">
+        Quick Help
+    </h5>
+
+    <p class="text-muted">
+
+        <strong>Language:</strong>
+
+        Select the language used for text,
+        OCR and audio translation.
+
+    </p>
+
+    <p class="text-muted">
+
+        <strong>Image translation:</strong>
+
+        Use Convert below a shared image.
+
+    </p>
+
+    <p class="text-muted">
+
+        <strong>Audio translation:</strong>
+
+        Receiver hears translated audio
+        in their selected language.
+
+    </p>
+
+    <p class="text-muted mb-0">
+
+        <strong>Downloads:</strong>
+
+        Use View or Download below shared files.
+
+    </p>
+
+</section>
+
+{% endblock %}

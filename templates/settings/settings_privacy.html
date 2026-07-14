@@ -1,0 +1,158 @@
+{% extends "settings/settings_base.html" %}
+
+{% block title %}
+Privacy Settings
+{% endblock %}
+
+{% block header_title %}
+Privacy
+{% endblock %}
+
+{% block content %}
+
+<section class="settings-form-card">
+
+    <form method="POST">
+
+        <label class="form-label fw-bold">
+            Who can see my last seen
+        </label>
+
+        <select name="last_seen"
+                class="form-select mb-3">
+
+            <option value="everyone"
+                    {% if privacy.lastSeen == "everyone" %}
+                        selected
+                    {% endif %}>
+
+                Everyone
+
+            </option>
+
+            <option value="contacts"
+                    {% if privacy.lastSeen == "contacts" %}
+                        selected
+                    {% endif %}>
+
+                My Contacts
+
+            </option>
+
+            <option value="nobody"
+                    {% if privacy.lastSeen == "nobody" %}
+                        selected
+                    {% endif %}>
+
+                Nobody
+
+            </option>
+
+        </select>
+
+
+        <label class="form-label fw-bold">
+            Who can see my profile photo
+        </label>
+
+        <select name="profile_photo"
+                class="form-select mb-3">
+
+            <option value="everyone"
+                    {% if privacy.profilePhoto == "everyone" %}
+                        selected
+                    {% endif %}>
+
+                Everyone
+
+            </option>
+
+            <option value="contacts"
+                    {% if privacy.profilePhoto == "contacts" %}
+                        selected
+                    {% endif %}>
+
+                My Contacts
+
+            </option>
+
+            <option value="nobody"
+                    {% if privacy.profilePhoto == "nobody" %}
+                        selected
+                    {% endif %}>
+
+                Nobody
+
+            </option>
+
+        </select>
+
+
+        <div class="settings-switch-row">
+
+            <div>
+
+                <div class="fw-bold">
+                    Online Status
+                </div>
+
+                <div class="small text-muted">
+                    Allow contacts to see when you are online
+                </div>
+
+            </div>
+
+            <div class="form-check form-switch">
+
+                <input class="form-check-input"
+                       type="checkbox"
+                       name="online_status"
+                       {% if privacy.onlineStatus %}
+                           checked
+                       {% endif %}>
+
+            </div>
+
+        </div>
+
+
+        <div class="settings-switch-row mb-4">
+
+            <div>
+
+                <div class="fw-bold">
+                    Read Receipts
+                </div>
+
+                <div class="small text-muted">
+                    Show blue ticks after messages are read
+                </div>
+
+            </div>
+
+            <div class="form-check form-switch">
+
+                <input class="form-check-input"
+                       type="checkbox"
+                       name="read_receipts"
+                       {% if privacy.readReceipts %}
+                           checked
+                       {% endif %}>
+
+            </div>
+
+        </div>
+
+
+        <button type="submit"
+                class="btn btn-basha w-100">
+
+            Save Privacy
+
+        </button>
+
+    </form>
+
+</section>
+
+{% endblock %}

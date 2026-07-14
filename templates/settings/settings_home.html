@@ -1,0 +1,253 @@
+{% extends "settings/settings_base.html" %}
+
+{% block title %}Settings - Basha{% endblock %}
+{% block header_title %}Settings{% endblock %}
+{% block back_url %}/home{% endblock %}
+
+{% block content %}
+
+<a href="/settings/profile"
+   class="settings-profile-card">
+
+    <div class="settings-avatar">
+
+        {% if user.profilePic %}
+            <img src="{{ user.profilePic }}"
+                 alt="{{ user.name }}">
+        {% else %}
+            {{ (user.name or "U")[:1]|upper }}
+        {% endif %}
+
+    </div>
+
+    <div class="settings-profile-main">
+
+        <h2 class="settings-profile-name">
+            {{ user.name or "User" }}
+        </h2>
+
+        <p class="settings-profile-sub">
+            {{ user.mobile or "" }}
+        </p>
+
+        <p class="settings-profile-sub">
+            {{ user.languageName or "English" }}
+        </p>
+
+    </div>
+
+    <i class="bi bi-chevron-right text-muted"></i>
+
+</a>
+
+
+<div class="settings-section-label">
+    Account
+</div>
+
+<section class="settings-list-card">
+
+    <a href="/settings/profile"
+       class="settings-row">
+
+        <div class="settings-icon">
+            <i class="bi bi-person-circle"></i>
+        </div>
+
+        <div class="settings-row-main">
+            <div class="settings-row-title">Profile</div>
+
+            <div class="settings-row-description">
+                Name, mobile, email and profile picture
+            </div>
+        </div>
+
+        <i class="bi bi-chevron-right text-muted"></i>
+
+    </a>
+
+
+    <a href="/settings/language"
+       class="settings-row">
+
+        <div class="settings-icon">
+            <i class="bi bi-translate"></i>
+        </div>
+
+        <div class="settings-row-main">
+            <div class="settings-row-title">Language</div>
+
+            <div class="settings-row-description">
+                {{ user.languageName or "English" }}
+            </div>
+        </div>
+
+        <i class="bi bi-chevron-right text-muted"></i>
+
+    </a>
+
+
+    <a href="/settings/password"
+       class="settings-row">
+
+        <div class="settings-icon">
+            <i class="bi bi-shield-lock-fill"></i>
+        </div>
+
+        <div class="settings-row-main">
+            <div class="settings-row-title">
+                Password and Security
+            </div>
+
+            <div class="settings-row-description">
+                Change password and secure your account
+            </div>
+        </div>
+
+        <i class="bi bi-chevron-right text-muted"></i>
+
+    </a>
+
+</section>
+
+
+<div class="settings-section-label">
+    Preferences
+</div>
+
+<section class="settings-list-card">
+
+    <a href="/settings/privacy"
+       class="settings-row">
+
+        <div class="settings-icon">
+            <i class="bi bi-lock-fill"></i>
+        </div>
+
+        <div class="settings-row-main">
+            <div class="settings-row-title">Privacy</div>
+
+            <div class="settings-row-description">
+                Last seen, online status and read receipts
+            </div>
+        </div>
+
+        <i class="bi bi-chevron-right text-muted"></i>
+
+    </a>
+
+
+    <a href="/settings/chats"
+       class="settings-row">
+
+        <div class="settings-icon">
+            <i class="bi bi-chat-square-text-fill"></i>
+        </div>
+
+        <div class="settings-row-main">
+            <div class="settings-row-title">Chats</div>
+
+            <div class="settings-row-description">
+                Theme, wallpaper, font and translation
+            </div>
+        </div>
+
+        <i class="bi bi-chevron-right text-muted"></i>
+
+    </a>
+
+
+    <a href="/settings/notifications"
+       class="settings-row">
+
+        <div class="settings-icon">
+            <i class="bi bi-bell-fill"></i>
+        </div>
+
+        <div class="settings-row-main">
+            <div class="settings-row-title">
+                Notifications
+            </div>
+
+            <div class="settings-row-description">
+                Message preview, sound and vibration
+            </div>
+        </div>
+
+        <i class="bi bi-chevron-right text-muted"></i>
+
+    </a>
+
+
+    <a href="/settings/storage"
+       class="settings-row">
+
+        <div class="settings-icon">
+            <i class="bi bi-database-fill"></i>
+        </div>
+
+        <div class="settings-row-main">
+            <div class="settings-row-title">
+                Storage and Data
+            </div>
+
+            <div class="settings-row-description">
+                Media quality, auto-download and data saver
+            </div>
+        </div>
+
+        <i class="bi bi-chevron-right text-muted"></i>
+
+    </a>
+
+</section>
+
+
+<div class="settings-section-label">
+    Support
+</div>
+
+<section class="settings-list-card">
+
+    <a href="/settings/help"
+       class="settings-row">
+
+        <div class="settings-icon">
+            <i class="bi bi-question-circle-fill"></i>
+        </div>
+
+        <div class="settings-row-main">
+            <div class="settings-row-title">Help</div>
+
+            <div class="settings-row-description">
+                FAQ, support and application information
+            </div>
+        </div>
+
+        <i class="bi bi-chevron-right text-muted"></i>
+
+    </a>
+
+
+    <a href="/logout"
+       class="settings-row">
+
+        <div class="settings-icon text-danger">
+            <i class="bi bi-box-arrow-right"></i>
+        </div>
+
+        <div class="settings-row-main">
+            <div class="settings-row-title text-danger">
+                Logout
+            </div>
+
+            <div class="settings-row-description">
+                Sign out from this device
+            </div>
+        </div>
+
+    </a>
+
+</section>
+
+{% endblock %}

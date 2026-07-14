@@ -1,0 +1,425 @@
+:root{
+    --primary:#6f42c1;
+    --primary-dark:#5932a3;
+    --background:#f5f2ff;
+    --card:#ffffff;
+    --text:#202020;
+    --muted:#707070;
+    --border:#eee9f7;
+}
+
+*{
+    box-sizing:border-box;
+}
+
+html,
+body{
+    min-height:100%;
+    margin:0;
+}
+
+body{
+    background:linear-gradient(
+        135deg,
+        #f5f2ff,
+        #eee6ff
+    );
+
+    font-family:Arial, sans-serif;
+    color:var(--text);
+}
+
+.settings-topbar{
+    position:sticky;
+    top:0;
+    z-index:1000;
+
+    min-height:64px;
+    padding:10px 16px;
+
+    background:var(--primary);
+    color:white;
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    box-shadow:0 4px 14px rgba(54,31,96,0.22);
+}
+
+.settings-topbar-title{
+    margin:0;
+    font-size:21px;
+    font-weight:800;
+}
+
+.icon-button{
+    width:42px;
+    height:42px;
+    border-radius:50%;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    background:white;
+    color:var(--primary);
+    text-decoration:none;
+
+    font-size:19px;
+}
+
+.settings-shell{
+    max-width:860px;
+    margin:24px auto 50px;
+    padding:0 14px;
+}
+
+.settings-profile-card{
+    background:white;
+    color:inherit;
+    text-decoration:none;
+
+    padding:22px;
+    border-radius:24px;
+
+    display:flex;
+    align-items:center;
+    gap:16px;
+
+    box-shadow:0 16px 38px rgba(70,40,120,0.13);
+}
+
+.settings-avatar{
+    width:74px;
+    height:74px;
+    min-width:74px;
+
+    border-radius:50%;
+    overflow:hidden;
+
+    background:var(--primary);
+    color:white;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:30px;
+    font-weight:bold;
+}
+
+.settings-avatar img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.settings-profile-main{
+    flex:1;
+    min-width:0;
+}
+
+.settings-profile-name{
+    margin:0 0 5px;
+    font-size:23px;
+    font-weight:800;
+
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.settings-profile-sub{
+    margin:2px 0;
+    color:var(--muted);
+    font-size:14px;
+}
+
+.settings-section-label{
+    margin:22px 5px 8px;
+
+    color:#746a82;
+    font-size:12px;
+    font-weight:800;
+
+    text-transform:uppercase;
+    letter-spacing:1px;
+}
+
+.settings-list-card{
+    background:white;
+    overflow:hidden;
+
+    border-radius:24px;
+
+    box-shadow:0 16px 38px rgba(70,40,120,0.13);
+}
+
+.settings-row{
+    min-height:76px;
+    padding:13px 16px;
+
+    display:flex;
+    align-items:center;
+    gap:14px;
+
+    color:inherit;
+    text-decoration:none;
+
+    border-bottom:1px solid var(--border);
+}
+
+.settings-row:last-child{
+    border-bottom:none;
+}
+
+.settings-row:hover{
+    background:#faf8ff;
+}
+
+.settings-icon{
+    width:44px;
+    height:44px;
+    min-width:44px;
+
+    border-radius:14px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    background:#efe8ff;
+    color:var(--primary);
+
+    font-size:21px;
+}
+
+.settings-row-main{
+    flex:1;
+    min-width:0;
+}
+
+.settings-row-title{
+    margin-bottom:3px;
+    font-weight:800;
+}
+
+.settings-row-description{
+    color:var(--muted);
+    font-size:13px;
+
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.settings-form-card{
+    background:white;
+
+    border-radius:24px;
+    padding:22px;
+
+    box-shadow:0 16px 38px rgba(70,40,120,0.13);
+}
+
+.form-control,
+.form-select{
+    min-height:50px;
+    border-radius:14px;
+}
+
+.btn-basha{
+    min-height:48px;
+    border:none;
+    border-radius:14px;
+
+    background:var(--primary);
+    color:white;
+
+    font-weight:bold;
+}
+
+.btn-basha:hover{
+    background:var(--primary-dark);
+    color:white;
+}
+
+.avatar-preview{
+    width:104px;
+    height:104px;
+
+    margin:0 auto 18px;
+
+    border-radius:50%;
+    overflow:hidden;
+
+    background:var(--primary);
+    color:white;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:42px;
+    font-weight:bold;
+}
+
+.avatar-preview img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.settings-switch-row{
+    padding:14px 0;
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:18px;
+
+    border-bottom:1px solid var(--border);
+}
+
+@media(max-width:600px){
+
+    .settings-shell{
+        margin-top:14px;
+        padding:0 10px;
+    }
+
+    .settings-profile-card,
+    .settings-list-card,
+    .settings-form-card{
+        border-radius:20px;
+    }
+
+    .settings-profile-card{
+        padding:18px 15px;
+    }
+
+    .settings-avatar{
+        width:64px;
+        height:64px;
+        min-width:64px;
+    }
+
+    .settings-profile-name{
+        font-size:20px;
+    }
+
+    .settings-row{
+        min-height:72px;
+        padding:12px 14px;
+    }
+}
+@media(max-width:768px){
+
+    body{
+        overflow-x:hidden;
+    }
+
+    .settings-topbar{
+        min-height:58px;
+        padding:8px 10px;
+    }
+
+    .settings-topbar-title{
+        font-size:19px;
+    }
+
+    .icon-button{
+        width:38px;
+        height:38px;
+        font-size:17px;
+    }
+
+    .settings-shell{
+        width:100%;
+        max-width:100%;
+        margin:12px auto 30px;
+        padding:0 10px;
+    }
+
+    .settings-profile-card{
+        padding:16px 14px;
+        gap:12px;
+    }
+
+    .settings-avatar{
+        width:62px;
+        height:62px;
+        min-width:62px;
+        font-size:26px;
+    }
+
+    .settings-profile-name{
+        font-size:19px;
+    }
+
+    .settings-profile-sub{
+        font-size:13px;
+    }
+
+    .settings-list-card{
+        width:100%;
+    }
+
+    .settings-row{
+        min-height:70px;
+        padding:11px 12px;
+        gap:11px;
+    }
+
+    .settings-icon{
+        width:42px;
+        height:42px;
+        min-width:42px;
+        font-size:19px;
+    }
+
+    .settings-row-title{
+        font-size:15px;
+    }
+
+    .settings-row-description{
+        font-size:12px;
+    }
+
+    .settings-form-card{
+        width:100%;
+        padding:18px 14px;
+    }
+
+    .form-control,
+    .form-select{
+        min-height:48px;
+        font-size:16px;
+    }
+
+    .btn-basha{
+        min-height:48px;
+        font-size:16px;
+    }
+
+    .settings-section-label{
+        margin-left:4px;
+        font-size:11px;
+    }
+}
+
+@media(max-width:380px){
+
+    .settings-row-description{
+        max-width:220px;
+    }
+
+    .settings-profile-name{
+        font-size:18px;
+    }
+
+    .settings-row-title{
+        font-size:14px;
+    }
+}
