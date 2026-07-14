@@ -472,7 +472,7 @@ def chat(mobile):
     current_user_id = session["user_id"]
 
     current_doc = db.collection("users").document(current_user_id).get()
-    current_user = current_doc.to_dict()
+    current_user = current_doc.to_dict() or {}
     
     # Current user's saved chat settings
     user_settings = current_user.get("settings", {}) or {}
@@ -541,7 +541,7 @@ def chat(mobile):
     
 def save_chat_message(sender_id, receiver_mobile, message, file_url="", file_name="", file_type=""):
     sender_doc = db.collection("users").document(sender_id).get()
-    sender = sender_doc.to_dict()
+    sender = sender_doc.to_dict() or {}
 
     sender_mobile = clean_mobile(sender.get("mobile", ""))
     receiver_mobile = clean_mobile(receiver_mobile)
@@ -673,7 +673,7 @@ def get_messages(receiver_mobile):
     current_user_id = session["user_id"]   
 
     current_doc = db.collection("users").document(current_user_id).get()
-    current_user = current_doc.to_dict()
+    current_user = current_doc.to_dict() or {}
     
     user_settings = current_user.get("settings", {}) or {}
     chat_settings = user_settings.get("chats", {}) or {}

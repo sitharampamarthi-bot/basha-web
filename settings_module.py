@@ -745,9 +745,3 @@ def settings_help():
         "settings/settings_help.html",
         user=user
     )
-
-
-@settings_bp.route("/logout")
-def settings_logout():
-    session.clear()
-    return redirect("/")

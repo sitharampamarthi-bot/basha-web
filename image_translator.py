@@ -1,13 +1,34 @@
+import base64
 import json
 import mimetypes
 import os
 import re
+
 from google import genai
-from google.genai import types
 from PIL import Image
 
 
 MODEL_NAME = "gemini-3.1-flash-lite"
+
+
+OCR_RESPONSE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "title": {
+            "type": "string"
+        },
+        "translated_text": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        }
+    },
+    "required": [
+        "title",
+        "translated_text"
+    ]
+}
 
 
 def clean_json_text(text):
@@ -17,7 +38,11 @@ def clean_json_text(text):
         text = text.replace("```json", "")
         text = text.replace("```", "").strip()
 
-    match = re.search(r"\{.*\}", text, re.DOTALL)
+    match = re.search(
+        r"\{.*\}",
+        text,
+        re.DOTALL
+    )
 
     if match:
         text = match.group(0)
@@ -26,35 +51,46 @@ def clean_json_text(text):
 
 
 def get_image_mime_type(image_path):
-    mime_type, _ = mimetypes.guess_type(image_path)
+    mime_type, _ = mimetypes.guess_type(
+        image_path
+    )
 
     if mime_type and mime_type.startswith("image/"):
         return mime_type
 
     try:
         with Image.open(image_path) as image:
-            image_format = str(image.format or "").lower()
+            image_format = str(
+                image.format or ""
+            ).lower()
 
-        format_map = {
+        return {
             "jpeg": "image/jpeg",
             "jpg": "image/jpeg",
             "png": "image/png",
             "webp": "image/webp",
             "gif": "image/gif",
-        }
-
-        return format_map.get(image_format, "image/jpeg")
+        }.get(
+            image_format,
+            "image/jpeg"
+        )
 
     except Exception:
         return "image/jpeg"
 
 
-def make_advanced_translated_image(image_path, target_language):
-    api_key = os.getenv("GEMINI_API_KEY", "").strip()
+def make_advanced_translated_image(
+    image_path,
+    target_language
+):
+    api_key = os.getenv(
+        "GEMINI_API_KEY",
+        ""
+    ).strip()
 
     if not api_key:
         raise RuntimeError(
-            "GEMINI_API_KEY is missing. Add it to the .env file."
+            "GEMINI_API_KEY is missing."
         )
 
     if not os.path.exists(image_path):
@@ -62,66 +98,74 @@ def make_advanced_translated_image(image_path, target_language):
             f"Image file not found: {image_path}"
         )
 
-    client = genai.Client(api_key=api_key)
+    client = genai.Client(
+        api_key=api_key
+    )
 
-    mime_type = get_image_mime_type(image_path)
+    mime_type = get_image_mime_type(
+        image_path
+    )
 
     with open(image_path, "rb") as image_file:
-        image_bytes = image_file.read()
+        image_base64 = base64.b64encode(
+            image_file.read()
+        ).decode("utf-8")
 
     prompt = f"""
-You are an OCR and Translator.
+You are the OCR and translation engine for Basha Messenger.
 
-Read EVERY visible text from the provided image.
+Read every clearly visible text from the supplied image.
 Translate all extracted text into {target_language}.
 
-Return only one valid JSON object in this exact structure:
-
-
-{{
-  "title": "Translated Content",
-  "translated_text": [
-    "line 1",
-    "line 2",
-    "line 3"
-  ]
-}}
-
 Rules:
-- Do not return markdown.
-- Do not return explanations.
-- Do not omit visible text.
+- Do not omit readable text.
 - Preserve phone numbers exactly.
 - Preserve email addresses exactly.
 - Preserve URLs exactly.
+- Preserve product codes and reference numbers.
 - Keep brand names unchanged when translation is inappropriate.
-- Return each readable translated sentence or line as a separate list item.
+- Return every readable sentence or line separately.
 - If no readable text exists, return an empty translated_text list.
 """
 
-    response = client.models.generate_content(
+    interaction = client.interactions.create(
         model=MODEL_NAME,
-        contents=[
-            prompt,
-            types.Part.from_bytes(
-                data=image_bytes,
-                mime_type=mime_type
-            )
+
+        input=[
+            {
+                "type": "image",
+                "mime_type": mime_type,
+                "data": image_base64
+            },
+            {
+                "type": "text",
+                "text": prompt
+            }
         ],
-        config=types.GenerateContentConfig(
-            temperature=0.1,
-            response_mime_type="application/json"
-        )
+
+        response_format=[
+            {
+                "type": "text",
+                "mime_type": "application/json",
+                "schema": OCR_RESPONSE_SCHEMA
+            }
+        ],
+
+        store=False
     )
 
-    response_text = response.text or ""
+    response_text = str(
+        interaction.output_text or ""
+    ).strip()
 
-    if not response_text.strip():
+    if not response_text:
         raise RuntimeError(
             "Gemini returned an empty OCR response."
         )
 
-    raw_text = clean_json_text(response_text)
+    raw_text = clean_json_text(
+        response_text
+    )
 
     try:
         data = json.loads(raw_text)
@@ -129,13 +173,20 @@ Rules:
     except json.JSONDecodeError:
         data = {
             "title": "Translated Content",
-            "translated_text": [response_text.strip()]
+            "translated_text": [
+                response_text
+            ]
         }
 
-    translated_text = data.get("translated_text", [])
+    translated_text = data.get(
+        "translated_text",
+        []
+    )
 
     if isinstance(translated_text, str):
-        translated_text = [translated_text]
+        translated_text = [
+            translated_text
+        ]
 
     if not isinstance(translated_text, list):
         translated_text = []
@@ -143,14 +194,19 @@ Rules:
     cleaned_lines = []
 
     for line in translated_text:
-        line = str(line or "").strip()
+        clean_line = str(
+            line or ""
+        ).strip()
 
-        if line:
-            cleaned_lines.append(line)
+        if clean_line:
+            cleaned_lines.append(
+                clean_line
+            )
 
     return {
         "title": str(
-            data.get("title") or "Translated Content"
+            data.get("title")
+            or "Translated Content"
         ).strip(),
 
         "translated_text": cleaned_lines
