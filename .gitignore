@@ -1,2 +1,6 @@
 serviceAccountKey.json
+.env
 __pycache__/
+*.pyc
+static/chat_uploads/
+database.db

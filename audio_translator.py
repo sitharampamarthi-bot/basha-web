@@ -3,6 +3,7 @@ from urllib.parse import quote
 from flask import request, session, jsonify
 from gtts import gTTS
 from google import genai
+from google.genai import types
 
 
 AUDIO_ALLOWED = {"webm", "mp3", "wav", "m4a", "ogg", "aac"}
@@ -52,74 +53,26 @@ def clean_json(text):
     return json.loads(text)
 
 
-def speech_translate(
-    audio_bytes,
-    mime_type,
-    target_language_name
-):
-    api_key = os.getenv(
-        "GEMINI_API_KEY",
-        ""
-    ).strip()
+def speech_translate(audio_bytes, mime_type, target_language_name):
+    api_key = os.getenv("GEMINI_API_KEY", "").strip()
 
     if not api_key:
-        raise RuntimeError(
-            "GEMINI_API_KEY missing."
-        )
+        raise RuntimeError("GEMINI_API_KEY missing.")
 
-    client = genai.Client(
-        api_key=api_key
-    )
+    client = genai.Client(api_key=api_key)
 
-    suffix_map = {
-        "audio/webm": ".webm",
-        "audio/mpeg": ".mp3",
-        "audio/wav": ".wav",
-        "audio/mp4": ".m4a",
-        "audio/ogg": ".ogg",
-        "audio/aac": ".aac",
-    }
-
-    suffix = suffix_map.get(
-        mime_type,
-        ".webm"
-    )
-
-    temp_audio_path = None
-
-    try:
-        temp_audio = tempfile.NamedTemporaryFile(
-            delete=False,
-            suffix=suffix
-        )
-
-        temp_audio.write(
-            audio_bytes
-        )
-
-        temp_audio.close()
-
-        temp_audio_path = temp_audio.name
-
-        uploaded_file = client.files.upload(
-            file=temp_audio_path,
-            config={
-                "mime_type": mime_type
-            }
-        )
-
-        prompt = f"""
+    prompt = f"""
 You are Basha Messenger Audio Translator.
 
-Detect the spoken language automatically.
-Transcribe the voice message accurately.
-Translate the transcription into {target_language_name}.
+Detect spoken language automatically.
+Transcribe the voice message exactly.
+Translate it into receiver language: {target_language_name}.
 
-Return only valid JSON with this format:
+Return ONLY valid JSON:
 
 {{
-  "original_text": "exact spoken text",
-  "translated_text": "translation in {target_language_name}"
+  "original_text": "spoken text",
+  "translated_text": "translated text in {target_language_name}"
 }}
 
 Rules:
@@ -128,85 +81,32 @@ Rules:
 - Preserve names and numbers correctly.
 """
 
-        response_schema = {
-            "type": "object",
-            "properties": {
-                "original_text": {
-                    "type": "string"
-                },
-                "translated_text": {
-                    "type": "string"
-                }
-            },
-            "required": [
-                "original_text",
-                "translated_text"
-            ]
-        }
-
-        interaction = client.interactions.create(
-            model="gemini-3.1-flash-lite",
-
-            input=[
-                {
-                    "type": "audio",
-                    "uri": uploaded_file.uri,
-                    "mime_type": uploaded_file.mime_type
-                },
-                {
-                    "type": "text",
-                    "text": prompt
-                }
-            ],
-
-            response_format=[
-                {
-                    "type": "text",
-                    "mime_type": "application/json",
-                    "schema": response_schema
-                }
-            ],
-
-            store=False
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=[
+            types.Part.from_bytes(
+                data=audio_bytes,
+                mime_type=mime_type
+            ),
+            prompt
+        ],
+        config=types.GenerateContentConfig(
+            temperature=0.1,
+            response_mime_type="application/json"
         )
+    )
 
-        response_text = str(
-            interaction.output_text or ""
-        ).strip()
+    data = clean_json(response.text)
 
-        if not response_text:
-            raise RuntimeError(
-                "Gemini returned empty audio translation."
-            )
+    original_text = str(
+        data.get("original_text", "")
+    ).strip()
 
-        data = clean_json(
-            response_text
-        )
+    translated_text = str(
+        data.get("translated_text", "")
+    ).strip()
 
-        original_text = str(
-            data.get("original_text", "")
-        ).strip()
-
-        translated_text = str(
-            data.get("translated_text", "")
-        ).strip()
-
-        return (
-            original_text,
-            translated_text
-        )
-
-    finally:
-        try:
-            if (
-                temp_audio_path
-                and os.path.exists(temp_audio_path)
-            ):
-                os.remove(
-                    temp_audio_path
-                )
-        except Exception:
-            pass
+    return original_text, translated_text
 
 def register_audio_translator_routes(app, db, storage, firestore, clean_mobile, translate_text, save_chat_message):
 
