@@ -62,7 +62,7 @@
             overflow-y:auto;
             padding:12px;
             background:#f1f1f1;
-            scroll-behavior:smooth;
+            scroll-behavior:auto;
         }
 
         .msg-row {
@@ -689,79 +689,11 @@
 
 <div id="messagesBox">
 
-    {% for msg in messages %}
+    {% set show_original = show_original_text %}
 
-        {% if msg.senderMobile == current_mobile %}
-            <div class="msg-row msg-right">
-                <div class="msg-bubble msg-me">
-        {% else %}
-            <div class="msg-row msg-left">
-                <div class="msg-bubble msg-other">
-        {% endif %}
+    {% include "message_bubbles.html" %}
 
-                    {% set clean_msg = (msg.translatedMessage if msg.senderMobile != current_mobile and msg.translatedMessage else msg.message) %}
-
-                    {% if clean_msg %}
-                        <div class="msg-text">{{ clean_msg|trim }}</div>
-                    {% endif %}
-
-                    {% if msg.fileUrl %}
-                        {% if msg.fileType == "image" %}
-                            <img src="{{ msg.fileUrl }}"
-                                 class="chatImage"
-                                 onclick='openPreview({{ msg.fileUrl|tojson }}, {{ msg.fileType|tojson }}, {{ msg.fileName|tojson }})'>
-
-                            <button type="button"
-                                    class="convert-btn"
-                                    onclick='convertImageText({{ msg.fileUrl|tojson }})'>
-                                🌐 Convert
-                            </button>
-                            <button type="button"
-                                    class="convert-btn"
-                                    onclick='openPreview({{ msg.fileUrl|tojson }}, "image", {{ msg.fileName|tojson }})'>
-                                View
-                            </button>
-
-                        {% elif msg.fileType == "video" %}
-                            <br>
-                            <video controls style="max-width:260px;border-radius:12px;margin-top:8px;">
-                                <source src="{{ msg.fileUrl }}">
-                            </video>
-                        {% else %}
-                            <br>
-                            <div class="doc-card"
-                                onclick='openPreview({{ msg.fileUrl|tojson }}, "document", {{ msg.fileName|tojson }})'>
-                                📄 {{ msg.fileName }}
-                            </div>
-
-                            <button type="button"
-                                    class="convert-btn"
-                                    onclick='openPreview({{ msg.fileUrl|tojson }}, "document", {{ msg.fileName|tojson }})'>
-                                View
-                            </button>
-                        {% endif %}
-                    {% endif %}
-
-                    {% if msg.senderMobile == current_mobile %}
-                        <div class="msg-status">
-                            {% set rb = msg.readBy if msg.readBy else [] %}
-
-                            {% if rb|length > 1 %}
-                                <span class="tick-seen">✓✓</span>
-                            {% elif msg.delivered %}
-                                <span class="tick-normal">✓✓</span>
-                            {% else %}
-                                <span class="tick-normal">✓</span>
-                            {% endif %}
-                        </div>
-                    {% endif %}
-
-                </div>
-            </div>
-    
-        {% endfor %}
-
-</div>
+</div>                    
 
 <div class="emoji-panel" id="emojiPanel">
     <span onclick="addEmoji('😀')">😀</span>
@@ -896,9 +828,17 @@ function clearSelectedFile() {
     document.getElementById("filePreviewPill").style.display = "none";
 }
 
-function scrollBottom(){
+function scrollBottom(smooth = false) {
     const box = document.getElementById("messagesBox");
-    box.scrollTop = box.scrollHeight;
+
+    if (!box) {
+        return;
+    }
+
+    box.scrollTo({
+        top: box.scrollHeight,
+        behavior: smooth ? "smooth" : "auto"
+    });
 }
 
 function isNearBottom() {
@@ -906,7 +846,8 @@ function isNearBottom() {
     return (box.scrollTop + box.clientHeight) >= (box.scrollHeight - 200);
 }
 
-let lastMessagesHtml = "";
+let lastMessagesHtml =
+    document.getElementById("messagesBox").innerHTML;
 
 function loadMessages(forceBottom = false) {
     if (isRefreshing || isSending) return;
@@ -922,7 +863,9 @@ function loadMessages(forceBottom = false) {
                 document.getElementById("messagesBox").innerHTML = html;
 
                 if (forceBottom || stayBottom) {
-                    setTimeout(scrollBottom, 50);
+                    setTimeout(function () {
+                        scrollBottom(true);
+                    }, 50);
                 }
             }
         })
@@ -1172,7 +1115,7 @@ document.getElementById("messageForm").addEventListener("submit", function(e) {
     }
 
 document.getElementById("messagesBox").insertAdjacentHTML("beforeend", tempHtml);
-    scrollBottom();
+    scrollBottom(true);
 
     fetch("/send-message", {
         method: "POST",
@@ -1186,7 +1129,10 @@ document.getElementById("messagesBox").insertAdjacentHTML("beforeend", tempHtml)
             document.getElementById("filePreviewPill").style.display = "none";
             setTypingStatus(false);
             loadMessages(true);
-            setTimeout(scrollBottom, 100);
+
+            setTimeout(function () {
+                scrollBottom(true);
+            }, 100);
         } else {
             console.log(data.error || "Send failed");
         }
@@ -1209,10 +1155,54 @@ document.getElementById("copyTextBtn").addEventListener("click", function () {
     setTimeout(() => this.innerText = "Copy Text", 1200);
 });
 
-window.addEventListener("load", function() {
+function openChatAtBottom() {
+    const box = document.getElementById("messagesBox");
+
+    if (!box) {
+        return;
+    }
+
+    box.style.visibility = "hidden";
+
+    const images = Array.from(
+        box.querySelectorAll("img")
+    );
+
+    const imagePromises = images.map(function (img) {
+        if (img.complete) {
+            return Promise.resolve();
+        }
+
+        return new Promise(function (resolve) {
+            img.addEventListener("load", resolve, { once:true });
+            img.addEventListener("error", resolve, { once:true });
+        });
+    });
+
+    const maximumWait = new Promise(function (resolve) {
+        setTimeout(resolve, 700);
+    });
+
+    Promise.race([
+        Promise.all(imagePromises),
+        maximumWait
+    ]).finally(function () {
+
+        scrollBottom(false);
+
+        requestAnimationFrame(function () {
+            scrollBottom(false);
+            box.style.visibility = "visible";
+        });
+
+    });
+}
+
+
+window.addEventListener("load", function () {
     updatePresence();
     loadChatStatus();
-    setTimeout(scrollBottom, 200);
+    openChatAtBottom();
 });
 
 setInterval(updatePresence, 15000);
@@ -1225,17 +1215,22 @@ if (window.visualViewport) {
     visualViewport.addEventListener("resize", function () {
         const inputBar = document.querySelector(".input-bar");
         inputBar.style.bottom = (window.innerHeight - visualViewport.height) + "px";
-        setTimeout(scrollBottom, 100);
+        setTimeout(function () {
+            scrollBottom(false);
+        }, 100);
     });
 }
 
-document.getElementById("messageInput").addEventListener("focus", function () {
-    setTimeout(scrollBottom, 300);
-});
+document
+    .getElementById("messageInput")
+    .addEventListener("focus", function () {
 
-document.querySelectorAll("img").forEach(function (img) {
-    img.onload = scrollBottom;
-});
+        setTimeout(function () {
+            scrollBottom(false);
+        }, 300);
+
+    });
+
 window.zoomScale=1;
 
 function zoomIn(){
@@ -1318,8 +1313,14 @@ function sendRecordedAudio() {
 
         loadMessages(true);
 
-        const audio = new Audio(data.audio_url);
-        audio.play();
+        const audioUrl =
+            data.original_audio_url || data.audio_url;
+
+        const audio = new Audio(audioUrl);
+
+        audio.play().catch(function () {
+            // Browser autoplay block ayithe ignore.
+        });
     })
     .finally(() => {
         document.getElementById("sendBtn").disabled = false;
