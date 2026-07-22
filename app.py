@@ -17,7 +17,7 @@ import tempfile
 from io import BytesIO
 from audio_translator import register_audio_translator_routes
 from settings_module import settings_bp, init_settings_module
-load_dotenv()
+load_dotenv(override=True)
 
 #genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
@@ -1233,9 +1233,28 @@ def convert_image_text():
         if not result:
             return jsonify({"error": "Image translation failed. Please try again"}), 500
 
-        lines = result.get("translated_text", [])
-        if isinstance(lines, str):
-            lines = [lines]
+        raw_lines = result.get("translated_text", [])
+
+        if isinstance(raw_lines, str):
+            raw_lines = [raw_lines]
+
+        lines = []
+
+        for item in raw_lines:
+            if isinstance(item, dict):
+                translated_value = item.get("translated_text", "")
+
+                if translated_value:
+                    lines.append(str(translated_value).strip())
+            else:
+                clean_line = str(item or "").strip()
+
+                if clean_line:
+                    lines.append(clean_line)
+        if not lines:
+            return jsonify({
+                "error": "No readable translated text found in the image"
+            }), 400            
 
         img = Image.open(image_path).convert("RGB")
         w, h = img.size

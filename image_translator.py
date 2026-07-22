@@ -89,17 +89,30 @@ def make_advanced_translated_image(
     Read every clearly visible text from the supplied image.
     Translate all extracted text into {target_language}.
 
+    Return ONLY valid JSON in this exact format:
+
+    {{
+    "title": "Translated Content",
+    "translated_text": [
+        "translated line 1",
+        "translated line 2"
+    ]
+    }}
+
     Rules:
+    - Do not return original_text.
+    - Do not return objects inside translated_text.
+    - Every translated_text item must be a plain string.
     - Do not omit readable text.
     - Preserve phone numbers exactly.
     - Preserve email addresses exactly.
     - Preserve URLs exactly.
     - Preserve product codes and reference numbers.
-    - Keep brand names unchanged when translation is inappropriate.
-    - Return every readable sentence or line separately.
-    - If no readable text exists, return an empty translated_text list.
+    - Keep brand names unchanged when appropriate.
+    - Do not include markdown.
+    - Do not include explanations.
     """
-
+    
     with open(image_path, "rb") as image_file:
         image_bytes = image_file.read()
 
