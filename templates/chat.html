@@ -53,6 +53,86 @@
             color:#d9ffd9;
         }
 
+        .chat-profile-link{
+            flex:1;
+            min-width:0;
+
+            display:flex;
+            align-items:center;
+            gap:10px;
+
+            color:white;
+            text-decoration:none;
+            cursor:pointer;
+        }
+
+        .chat-profile-link:hover,
+        .chat-profile-link:focus{
+            color:white;
+            text-decoration:none;
+        }
+
+        .chat-header-avatar{
+            width:44px;
+            height:44px;
+            min-width:44px;
+
+            border-radius:50%;
+            overflow:hidden;
+
+            background:white;
+            color:#6f42c1;
+
+            display:flex;
+            align-items:center;
+            justify-content:center;
+
+            font-size:19px;
+            font-weight:bold;
+        }
+
+        .chat-header-avatar img{
+            width:100%;
+            height:100%;
+            object-fit:cover;
+        }
+
+        .chat-header-user-info{
+            flex:1;
+            min-width:0;
+        }
+
+        .chat-header-user-info .chat-title{
+            overflow:hidden;
+            white-space:nowrap;
+            text-overflow:ellipsis;
+        }
+
+        .chat-media-button{
+            width:40px;
+            height:40px;
+            min-width:40px;
+
+            border-radius:50%;
+
+            display:flex;
+            align-items:center;
+            justify-content:center;
+
+            background:white;
+            color:#6f42c1;
+
+            text-decoration:none;
+            font-size:21px;
+            font-weight:bold;
+        }
+
+        .chat-media-button:hover,
+        .chat-media-button:focus{
+            background:#f2ebff;
+            color:#6f42c1;
+        }
+
         #messagesBox{
             position:fixed;
             top:64px;
@@ -380,7 +460,9 @@
                 max-width:230px !important;
             }
         }
+
         @media(max-width:600px){
+
             body.theme-dark .input-bar{
                 background:#202020 !important;
                 border-color:#333 !important;
@@ -401,8 +483,40 @@
                 background:#292929 !important;
                 color:#fff !important;
             }
+
+            .chat-header{
+                gap:8px;
+                padding:7px 8px;
+            }
+
+            .chat-header-avatar{
+                width:40px;
+                height:40px;
+                min-width:40px;
+                font-size:17px;
+            }
+
+            .chat-profile-link{
+                gap:8px;
+            }
+
+            .chat-title{
+                font-size:16px;
+            }
+
+            .chat-status{
+                font-size:11px;
+            }
+
+            .chat-media-button{
+                width:38px;
+                height:38px;
+                min-width:38px;
+                font-size:19px;
+            }
+           
         }
-                .preview-toolbar{
+        .preview-toolbar{
             display:flex;
             gap:10px;
             align-items:center;
@@ -679,12 +793,49 @@
 ">
 
 <div class="chat-header">
-    <a href="{{ back_url if back_url else '/home' }}" class="btn btn-light btn-sm">←</a>
 
-    <div>
-        <div class="chat-title">{{ receiver.name }}</div>
-        <div id="userStatusText" class="chat-status">checking...</div>
-    </div>
+    <a href="{{ back_url if back_url else '/home' }}"
+       class="btn btn-light btn-sm">
+        ←
+    </a>
+
+    <a href="/chat-media/{{ receiver.mobile }}"
+       class="chat-profile-link">
+
+        <div class="chat-header-avatar">
+
+            {% if receiver.profilePic %}
+                <img src="{{ receiver.profilePic }}"
+                     alt="{{ receiver.name or 'User' }}">
+            {% else %}
+                {{ (receiver.name or "U")[:1]|upper }}
+            {% endif %}
+
+        </div>
+
+        <div class="chat-header-user-info">
+
+            <div class="chat-title">
+                {{ receiver.name or "User" }}
+            </div>
+
+            <div id="userStatusText"
+                 class="chat-status">
+                checking...
+            </div>
+
+        </div>
+
+    </a>
+
+    <a href="/chat-media/{{ receiver.mobile }}"
+       class="chat-media-button"
+       aria-label="View shared media">
+
+        <span>🖼️</span>
+
+    </a>
+
 </div>
 
 <div id="messagesBox">

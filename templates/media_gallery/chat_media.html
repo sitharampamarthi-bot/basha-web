@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width,
+                   initial-scale=1,
+                   viewport-fit=cover">
+
+    <title>
+        {{ receiver.name or "Chat" }} Media
+    </title>
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+        rel="stylesheet">
+
+    <link
+        href="{{ url_for('static', filename='css/chat_media.css') }}"
+        rel="stylesheet">
+</head>
+
+<body>
+
+<header class="media-topbar">
+
+    <a href="{{ back_url }}"
+       class="media-icon-button"
+       aria-label="Back to chat">
+
+        <i class="bi bi-arrow-left"></i>
+
+    </a>
+
+    <div class="media-user">
+
+        <div class="media-avatar">
+
+            {% if receiver.profilePic %}
+
+                <img
+                    src="{{ receiver.profilePic }}"
+                    alt="{{ receiver.name or 'User' }}">
+
+            {% else %}
+
+                {{
+                    (
+                        receiver.name
+                        or "U"
+                    )[:1]|upper
+                }}
+
+            {% endif %}
+
+        </div>
+
+        <div class="media-user-details">
+
+            <h1>
+                {{ receiver.name or "User" }}
+            </h1>
+
+            <p>
+                Media, videos and documents
+            </p>
+
+        </div>
+
+    </div>
+
+    <a href="/chat/{{ receiver.mobile }}"
+       class="media-icon-button"
+       aria-label="Open chat">
+
+        <i class="bi bi-chat-dots-fill"></i>
+
+    </a>
+
+</header>
+
+
+<main class="media-shell">
+
+    <section class="media-summary">
+
+        <div class="summary-item">
+            <strong>{{ image_count }}</strong>
+            <span>Photos</span>
+        </div>
+
+        <div class="summary-item">
+            <strong>{{ video_count }}</strong>
+            <span>Videos</span>
+        </div>
+
+        <div class="summary-item">
+            <strong>{{ document_count }}</strong>
+            <span>Documents</span>
+        </div>
+
+    </section>
+
+
+    <nav class="media-tabs"
+         aria-label="Media categories">
+
+        <button
+            type="button"
+            class="media-tab active"
+            data-tab="images">
+
+            <i class="bi bi-images"></i>
+            Photos
+
+            <span>
+                {{ image_count }}
+            </span>
+
+        </button>
+
+        <button
+            type="button"
+            class="media-tab"
+            data-tab="videos">
+
+            <i class="bi bi-camera-video-fill"></i>
+            Videos
+
+            <span>
+                {{ video_count }}
+            </span>
+
+        </button>
+
+        <button
+            type="button"
+            class="media-tab"
+            data-tab="documents">
+
+            <i class="bi bi-file-earmark-text-fill"></i>
+            Documents
+
+            <span>
+                {{ document_count }}
+            </span>
+
+        </button>
+
+    </nav>
+
+
+    <section
+        id="imagesPanel"
+        class="media-panel active"
+        data-panel="images">
+
+        {% if images %}
+
+            <div class="image-grid">
+
+                {% for item in images %}
+
+                    <button
+                        type="button"
+                        class="gallery-image-button"
+                        data-preview-url="{{ item.fileUrl }}"
+                        data-preview-type="image"
+                        data-preview-name="{{ item.fileName }}">
+
+                        <img
+                            src="{{ item.fileUrl }}"
+                            alt="{{ item.fileName }}"
+                            loading="lazy">
+
+                        <span class="gallery-date">
+                            {{ item.formattedTime }}
+                        </span>
+
+                    </button>
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <div class="empty-state">
+
+                <i class="bi bi-images"></i>
+
+                <h2>No photos yet</h2>
+
+                <p>
+                    Photos shared in this chat
+                    will appear here.
+                </p>
+
+            </div>
+
+        {% endif %}
+
+    </section>
+
+
+    <section
+        id="videosPanel"
+        class="media-panel"
+        data-panel="videos">
+
+        {% if videos %}
+
+            <div class="video-grid">
+
+                {% for item in videos %}
+
+                    <article class="video-card">
+
+                        <video
+                            controls
+                            preload="metadata">
+
+                            <source
+                                src="{{ item.fileUrl }}">
+
+                        </video>
+
+                        <div class="media-card-info">
+
+                            <div>
+                                <strong>
+                                    {{ item.fileName }}
+                                </strong>
+
+                                <small>
+                                    {{ item.formattedTime }}
+                                </small>
+                            </div>
+
+                            <a
+                                href="/download-file?url={{ item.fileUrl|urlencode }}&name={{ item.fileName|urlencode }}"
+                                class="download-icon"
+                                aria-label="Download video">
+
+                                <i class="bi bi-download"></i>
+
+                            </a>
+
+                        </div>
+
+                    </article>
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <div class="empty-state">
+
+                <i class="bi bi-camera-video"></i>
+
+                <h2>No videos yet</h2>
+
+                <p>
+                    Videos shared in this chat
+                    will appear here.
+                </p>
+
+            </div>
+
+        {% endif %}
+
+    </section>
+
+
+    <section
+        id="documentsPanel"
+        class="media-panel"
+        data-panel="documents">
+
+        {% if documents %}
+
+            <div class="document-list">
+
+                {% for item in documents %}
+
+                    <article class="document-row">
+
+                        <button
+                            type="button"
+                            class="document-preview-button"
+                            data-preview-url="{{ item.fileUrl }}"
+                            data-preview-type="document"
+                            data-preview-name="{{ item.fileName }}">
+
+                            <span class="document-icon">
+
+                                {% set lower_name =
+                                    item.fileName|lower
+                                %}
+
+                                {% if lower_name.endswith(".pdf") %}
+
+                                    <i class="bi bi-file-earmark-pdf-fill"></i>
+
+                                {% elif
+                                    lower_name.endswith(".doc")
+                                    or
+                                    lower_name.endswith(".docx")
+                                %}
+
+                                    <i class="bi bi-file-earmark-word-fill"></i>
+
+                                {% elif
+                                    lower_name.endswith(".xls")
+                                    or
+                                    lower_name.endswith(".xlsx")
+                                %}
+
+                                    <i class="bi bi-file-earmark-excel-fill"></i>
+
+                                {% else %}
+
+                                    <i class="bi bi-file-earmark-text-fill"></i>
+
+                                {% endif %}
+
+                            </span>
+
+                            <span class="document-details">
+
+                                <strong>
+                                    {{ item.fileName }}
+                                </strong>
+
+                                <small>
+                                    {{ item.formattedTime }}
+                                </small>
+
+                            </span>
+
+                        </button>
+
+                        <a
+                            href="/download-file?url={{ item.fileUrl|urlencode }}&name={{ item.fileName|urlencode }}"
+                            class="download-icon"
+                            aria-label="Download document">
+
+                            <i class="bi bi-download"></i>
+
+                        </a>
+
+                    </article>
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <div class="empty-state">
+
+                <i class="bi bi-file-earmark-text"></i>
+
+                <h2>No documents yet</h2>
+
+                <p>
+                    Documents shared in this chat
+                    will appear here.
+                </p>
+
+            </div>
+
+        {% endif %}
+
+    </section>
+
+</main>
+
+
+<div
+    id="mediaPreviewModal"
+    class="preview-modal"
+    hidden>
+
+    <div class="preview-backdrop"
+         data-close-preview>
+    </div>
+
+    <section
+        class="preview-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="previewTitle">
+
+        <header class="preview-header">
+
+            <h2 id="previewTitle">
+                File Preview
+            </h2>
+
+            <button
+                type="button"
+                class="preview-close"
+                data-close-preview
+                aria-label="Close preview">
+
+                <i class="bi bi-x-lg"></i>
+
+            </button>
+
+        </header>
+
+        <div id="previewBody"
+             class="preview-body">
+        </div>
+
+        <footer class="preview-footer">
+
+            <a
+                id="previewDownload"
+                href="#"
+                class="preview-download">
+
+                <i class="bi bi-download"></i>
+                Download
+
+            </a>
+
+            <button
+                type="button"
+                class="preview-close-button"
+                data-close-preview>
+
+                Close
+
+            </button>
+
+        </footer>
+
+    </section>
+
+</div>
+
+
+<script
+    src="{{ url_for('static', filename='js/chat_media.js') }}">
+</script>
+
+</body>
+</html>

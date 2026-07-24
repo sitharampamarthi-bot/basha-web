@@ -17,6 +17,10 @@ import tempfile
 from io import BytesIO
 from audio_translator import register_audio_translator_routes
 from settings_module import settings_bp, init_settings_module
+from media_gallery_module import (
+    media_gallery_bp,
+    init_media_gallery_module
+)
 load_dotenv(override=True)
 
 #genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
@@ -90,9 +94,6 @@ def clean_mobile(mobile):
         mobile = mobile[2:]
 
     return mobile
-
-init_settings_module(db, clean_mobile)
-app.register_blueprint(settings_bp)
 
 def translate_text(text, target_lang):
     try:
@@ -181,6 +182,19 @@ def wrap_text_by_width(text, font, max_width):
 def get_chat_id(mobile1, mobile2):
     nums = sorted([clean_mobile(mobile1), clean_mobile(mobile2)])
     return nums[0] + "_" + nums[1]
+
+init_settings_module(db, clean_mobile)
+app.register_blueprint(settings_bp)
+
+init_media_gallery_module(
+    db,
+    clean_mobile,
+    get_chat_id
+)
+
+app.register_blueprint(
+    media_gallery_bp
+)
 
 @app.route("/", methods=["GET", "POST"])
 def login():
