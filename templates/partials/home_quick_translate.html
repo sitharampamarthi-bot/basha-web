@@ -1,0 +1,230 @@
+<div class="card quick-translate-card mb-4" id="quickTranslateCard">
+
+    <button type="button"
+            class="qt-toggle"
+            id="qtToggle"
+            aria-expanded="false"
+            aria-controls="qtCollapse">
+
+        <div class="qt-toggle-left">
+            <span class="qt-main-icon">
+                <i class="bi bi-translate"></i>
+            </span>
+
+            <div>
+                <h4 class="qt-title mb-1">Quick Translate</h4>
+                <div class="qt-subtitle">
+                    Instantly translate text into any language
+                </div>
+            </div>
+        </div>
+
+        <i class="bi bi-chevron-down qt-chevron"></i>
+    </button>
+
+    <div class="qt-collapse" id="qtCollapse" hidden>
+
+        <div class="qt-language-row">
+
+            <div class="qt-field">
+                <label for="qtSourceLanguage">From</label>
+
+                <select id="qtSourceLanguage">
+                    <option value="auto">Auto Detect</option>
+                    <option value="en">English</option>
+                    <option value="te">Telugu</option>
+                    <option value="hi">Hindi</option>
+                    <option value="ta">Tamil</option>
+                    <option value="kn">Kannada</option>
+                    <option value="ml">Malayalam</option>
+                    <option value="mr">Marathi</option>
+                    <option value="gu">Gujarati</option>
+                    <option value="bn">Bengali</option>
+                    <option value="pa">Punjabi</option>
+                    <option value="ur">Urdu</option>
+                    <option value="or">Odia</option>
+                    <option value="as">Assamese</option>
+                    <option value="ne">Nepali</option>
+                </select>
+            </div>
+
+            <button type="button"
+                    class="qt-swap-btn"
+                    id="qtSwapBtn"
+                    title="Swap languages">
+                <i class="bi bi-arrow-left-right"></i>
+            </button>
+
+            <div class="qt-field">
+                <label for="qtTargetLanguage">To</label>
+
+                <select id="qtTargetLanguage">
+                    <option value="te">Telugu</option>
+                    <option value="en">English</option>
+                    <option value="hi">Hindi</option>
+                    <option value="ta">Tamil</option>
+                    <option value="kn">Kannada</option>
+                    <option value="ml">Malayalam</option>
+                    <option value="mr">Marathi</option>
+                    <option value="gu">Gujarati</option>
+                    <option value="bn">Bengali</option>
+                    <option value="pa">Punjabi</option>
+                    <option value="ur">Urdu</option>
+                    <option value="or">Odia</option>
+                    <option value="as">Assamese</option>
+                    <option value="ne">Nepali</option>
+                </select>
+            </div>
+
+        </div>
+
+        <div class="qt-input-wrap">
+            <textarea id="qtInput"
+                      maxlength="5000"
+                      placeholder="Type or paste text..."></textarea>
+
+            <div class="qt-input-footer">
+                <span id="qtCharCount">0 / 5000</span>
+
+                <button type="button"
+                        class="qt-clear-btn"
+                        id="qtClearBtn">
+                    Clear
+                </button>
+            </div>
+        </div>
+
+        <button type="button"
+                class="qt-translate-btn"
+                id="qtTranslateBtn">
+            <i class="bi bi-translate"></i>
+            Translate
+        </button>
+
+        <div class="qt-error"
+             id="qtError"
+             hidden>
+        </div>
+
+        <div class="qt-result"
+             id="qtResult"
+             hidden>
+
+            <div class="qt-result-header">
+                <div>
+                    <strong>Translated Text</strong>
+                    <span id="qtResultLanguage"></span>
+                </div>
+
+                <button type="button"
+                        class="qt-copy-icon"
+                        id="qtCopyBtn"
+                        title="Copy translated text">
+                    <i class="bi bi-copy"></i>
+                </button>
+            </div>
+
+            <div class="qt-translated-text"
+                 id="qtTranslatedText">
+            </div>
+
+            <div class="qt-actions">
+                <button type="button"
+                        class="qt-action-btn"
+                        id="qtCopyActionBtn">
+                    <i class="bi bi-copy"></i>
+                    Copy
+                </button>
+
+                <button type="button"
+                        class="qt-action-btn qt-send-btn"
+                        id="qtSendBtn">
+                    <i class="bi bi-send-fill"></i>
+                    Send to Chat
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- QUICK TRANSLATE CONTACT SELECTOR POPUP -->
+<div class="qt-contact-modal"
+     id="qtContactModal"
+     hidden>
+
+    <div class="qt-contact-backdrop"
+         id="qtContactBackdrop">
+    </div>
+
+    <div class="qt-contact-dialog"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="qtContactTitle">
+
+        <div class="qt-contact-header">
+
+            <div>
+                <h5 id="qtContactTitle">
+                    <i class="bi bi-send-fill"></i>
+                    Send to Chat
+                </h5>
+
+                <p>
+                    Select a contact to send translated text
+                </p>
+            </div>
+
+            <button type="button"
+                    class="qt-contact-close"
+                    id="qtContactClose"
+                    aria-label="Close">
+                <i class="bi bi-x-lg"></i>
+            </button>
+
+        </div>
+
+        <div class="qt-contact-search-wrap">
+
+            <i class="bi bi-search"></i>
+
+            <input type="search"
+                   id="qtContactSearch"
+                   placeholder="Search contact..."
+                   autocomplete="off">
+
+        </div>
+
+        <div class="qt-contact-count"
+             id="qtContactCount">
+        </div>
+
+        <div class="qt-contact-loading"
+             id="qtContactLoading">
+
+            <span class="spinner-border spinner-border-sm"></span>
+
+            Loading contacts...
+
+        </div>
+
+        <div class="qt-contact-empty"
+             id="qtContactEmpty"
+             hidden>
+
+            <i class="bi bi-person-x"></i>
+
+            <strong>No contacts found</strong>
+
+        </div>
+
+        <div class="qt-contact-list"
+             id="qtContactList">
+        </div>
+
+    </div>
+
+</div>

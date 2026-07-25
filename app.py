@@ -21,6 +21,14 @@ from media_gallery_module import (
     media_gallery_bp,
     init_media_gallery_module
 )
+from universal_search_module import (
+    universal_search_bp,
+    init_universal_search_module
+)
+from recent_files_module import recent_files_bp, init_recent_files_module
+from pinned_chats_module import pinned_chats_bp, init_pinned_chats_module
+from unread_module import unread_bp, init_unread_module
+from quick_translate_module import quick_translate_bp, init_quick_translate_module
 load_dotenv(override=True)
 
 #genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
@@ -195,6 +203,64 @@ init_media_gallery_module(
 app.register_blueprint(
     media_gallery_bp
 )
+
+init_universal_search_module(
+    db,
+    clean_mobile,
+    get_chat_id
+)
+
+app.register_blueprint(
+    universal_search_bp
+)
+
+
+# ==================================
+# PHASE 1 HOME ADVANCED MODULES
+# ==================================
+
+init_recent_files_module(
+    db,
+    clean_mobile,
+    get_chat_id
+)
+
+app.register_blueprint(
+    recent_files_bp
+)
+
+
+init_pinned_chats_module(
+    db,
+    clean_mobile,
+    get_chat_id
+)
+
+app.register_blueprint(
+    pinned_chats_bp
+)
+
+
+init_unread_module(
+    db,
+    clean_mobile,
+    get_chat_id
+)
+
+app.register_blueprint(
+    unread_bp
+)
+
+
+init_quick_translate_module(
+    db,
+    translate_text
+)
+
+app.register_blueprint(
+    quick_translate_bp
+)
+
 
 @app.route("/", methods=["GET", "POST"])
 def login():

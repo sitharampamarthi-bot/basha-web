@@ -1,0 +1,153 @@
+<div class="card recent-files-card mb-4" id="homeRecentFilesCard">
+
+    <div class="recent-files-header">
+
+        <div>
+            <h4 class="recent-files-title mb-1">
+                <i class="bi bi-clock-history"></i>
+                Recent Files
+            </h4>
+
+            <div class="recent-files-subtitle">
+                Latest shared photos, videos, audio and documents
+            </div>
+        </div>
+
+        <a href="/recent-files"
+           class="recent-files-view-all">
+            View All
+            <i class="bi bi-arrow-right"></i>
+        </a>
+
+    </div>
+
+
+    <div class="recent-files-stats">
+
+        <button type="button"
+                class="recent-stat-card active"
+                data-recent-filter="all">
+
+            <span class="recent-stat-icon">
+                <i class="bi bi-collection-fill"></i>
+            </span>
+
+            <span class="recent-stat-content">
+                <strong id="recentCountAll">0</strong>
+                <small>All Files</small>
+            </span>
+
+        </button>
+
+
+        <button type="button"
+                class="recent-stat-card"
+                data-recent-filter="image">
+
+            <span class="recent-stat-icon">
+                <i class="bi bi-image-fill"></i>
+            </span>
+
+            <span class="recent-stat-content">
+                <strong id="recentCountImages">0</strong>
+                <small>Photos</small>
+            </span>
+
+        </button>
+
+
+        <button type="button"
+                class="recent-stat-card"
+                data-recent-filter="video">
+
+            <span class="recent-stat-icon">
+                <i class="bi bi-camera-video-fill"></i>
+            </span>
+
+            <span class="recent-stat-content">
+                <strong id="recentCountVideos">0</strong>
+                <small>Videos</small>
+            </span>
+
+        </button>
+
+
+        <button type="button"
+                class="recent-stat-card"
+                data-recent-filter="audio">
+
+            <span class="recent-stat-icon">
+                <i class="bi bi-mic-fill"></i>
+            </span>
+
+            <span class="recent-stat-content">
+                <strong id="recentCountAudio">0</strong>
+                <small>Audio</small>
+            </span>
+
+        </button>
+
+
+        <button type="button"
+                class="recent-stat-card"
+                data-recent-filter="document">
+
+            <span class="recent-stat-icon">
+                <i class="bi bi-file-earmark-text-fill"></i>
+            </span>
+
+            <span class="recent-stat-content">
+                <strong id="recentCountDocuments">0</strong>
+                <small>Documents</small>
+            </span>
+
+        </button>
+
+    </div>
+
+
+    <div id="recentFilesLoading"
+         class="recent-files-loading">
+
+        <span class="spinner-border spinner-border-sm"></span>
+
+        Loading recent files...
+
+    </div>
+
+
+    <div id="recentFilesEmpty"
+         class="recent-files-empty"
+         hidden>
+
+        <i class="bi bi-folder2-open"></i>
+
+        <h5>No recent files</h5>
+
+        <p>
+            Shared media and documents will appear here.
+        </p>
+
+    </div>
+
+
+    <div id="recentFilesList"
+         class="recent-files-list">
+    </div>
+
+
+    <div class="recent-files-footer">
+
+        <a id="recentFilesFooterLink"
+           href="/recent-files"
+           class="recent-files-footer-link">
+
+            View all recent files
+
+            <i class="bi bi-chevron-right"></i>
+
+        </a>
+
+    </div>
+
+</div>

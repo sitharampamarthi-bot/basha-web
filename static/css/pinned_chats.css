@@ -1,0 +1,217 @@
+.pinned-card{
+    margin-bottom:24px;
+    padding:22px;
+    border:none;
+    border-radius:26px;
+    background:#fff;
+    box-shadow:0 18px 40px rgba(70,40,120,.13);
+}
+
+.pinned-card .section-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    margin-bottom:15px;
+}
+
+.pinned-card .section-title{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:20px;
+    font-weight:800;
+    color:#222;
+}
+
+.pinned-card .view-all-link{
+    color:#6f42c1;
+    text-decoration:none;
+    font-size:13px;
+    font-weight:700;
+}
+
+#pinnedChatsContainer{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:12px;
+}
+
+.pinned-chat{
+    min-width:0;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:11px;
+    border:1px solid #ece5f7;
+    border-radius:18px;
+    background:#fff;
+    transition:.18s ease;
+}
+
+.pinned-chat:hover{
+    background:#faf7ff;
+    border-color:#d7c4f5;
+    transform:translateY(-1px);
+}
+
+.pinned-chat-open{
+    flex:1;
+    min-width:0;
+    color:#222;
+    text-decoration:none;
+}
+
+.pinned-chat-open:hover{
+    color:#222;
+}
+
+.pin-left{
+    min-width:0;
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.pin-avatar-wrap{
+    width:48px;
+    height:48px;
+    flex-shrink:0;
+    position:relative;
+}
+
+.pin-avatar,
+.pin-avatar-image{
+    width:48px;
+    height:48px;
+    border-radius:50%;
+}
+
+.pin-avatar{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#eee6ff;
+    color:#6f42c1;
+    font-size:20px;
+}
+
+.pin-avatar-image{
+    display:block;
+    object-fit:cover;
+    background:#eee6ff;
+}
+
+.pin-content{
+    flex:1;
+    min-width:0;
+}
+
+.pin-name{
+    font-size:14px;
+    font-weight:800;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.pin-message{
+    margin-top:3px;
+    color:#666;
+    font-size:12px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.pin-time{
+    margin-top:4px;
+    color:#999;
+    font-size:10px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.pin-remove-button{
+    width:38px;
+    height:38px;
+    flex-shrink:0;
+    border:none;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#f1eaff;
+    color:#6f42c1;
+    transition:.18s ease;
+}
+
+.pin-remove-button:hover{
+    background:#6f42c1;
+    color:#fff;
+}
+
+.pin-remove-button:disabled{
+    opacity:.65;
+    cursor:not-allowed;
+}
+
+.loading-state{
+    grid-column:1 / -1;
+    padding:25px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    color:#6f42c1;
+    text-align:center;
+}
+
+.pinned-empty-state{
+    grid-column:1 / -1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:13px;
+    padding:24px 16px;
+    border:1px dashed #d9c9f5;
+    border-radius:18px;
+    background:#faf8ff;
+    color:#666;
+}
+
+.pinned-empty-state > i{
+    color:#6f42c1;
+    font-size:30px;
+}
+
+.pinned-empty-state strong{
+    display:block;
+    color:#333;
+}
+
+.pinned-empty-state p{
+    margin:3px 0 0;
+    font-size:12px;
+}
+
+.pinned-error-state > i{
+    color:#dc3545;
+}
+
+@media(max-width:700px){
+    .pinned-card{
+        padding:16px;
+        border-radius:22px;
+    }
+
+    #pinnedChatsContainer{
+        grid-template-columns:1fr;
+    }
+
+    .pinned-card .section-title{
+        font-size:19px;
+    }
+}

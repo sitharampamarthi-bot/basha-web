@@ -127,6 +127,47 @@
             font-weight:bold;
         }
 
+        .pin-chat-btn{
+            width:40px;
+            height:40px;
+            min-width:40px;
+
+            border:none;
+            border-radius:50%;
+
+            background:#ffc107;
+            color:#222;
+
+            display:flex;
+            align-items:center;
+            justify-content:center;
+
+            cursor:pointer;
+
+            font-size:18px;
+            transition:.2s;
+        }
+
+        .pin-chat-btn.is-pinned{
+            background:#ffffff;
+            color:#6f42c1;
+            box-shadow:0 0 0 3px rgba(255,255,255,.25);
+        }
+
+        .pin-chat-btn.is-pinned:hover{
+            background:#f2ebff;
+        }
+
+        .pin-chat-btn:disabled{
+            cursor:not-allowed;
+            opacity:.75;
+        }
+
+        .pin-chat-btn:hover{
+            transform:scale(1.05);
+            background:#ffca2c;
+        }
+
         .chat-media-button:hover,
         .chat-media-button:focus{
             background:#f2ebff;
@@ -836,6 +877,17 @@
 
     </a>
 
+    <button
+        type="button"
+        id="pinChatBtn"
+        class="pin-chat-btn"
+        title="Pin Chat"
+        aria-label="Pin Chat">
+
+        📌
+
+    </button>
+
 </div>
 
 <div id="messagesBox">
@@ -904,6 +956,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/pin_chat.js') }}"></script>
 
 <script>
 let convertedTextGlobal = "";
