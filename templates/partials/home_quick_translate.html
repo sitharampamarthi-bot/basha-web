@@ -1,4 +1,5 @@
-<div class="card quick-translate-card mb-4" id="quickTranslateCard">
+<div class="card quick-translate-card mb-4"
+     id="quickTranslateCard">
 
     <button type="button"
             class="qt-toggle"
@@ -7,30 +8,47 @@
             aria-controls="qtCollapse">
 
         <div class="qt-toggle-left">
+
             <span class="qt-main-icon">
                 <i class="bi bi-translate"></i>
             </span>
 
             <div>
-                <h4 class="qt-title mb-1">Quick Translate</h4>
+                <h4 class="qt-title mb-1">
+                    Quick Translate
+                </h4>
+
                 <div class="qt-subtitle">
-                    Instantly translate text into any language
+                    Type on the left and translate automatically
                 </div>
             </div>
+
         </div>
 
         <i class="bi bi-chevron-down qt-chevron"></i>
+
     </button>
 
-    <div class="qt-collapse" id="qtCollapse" hidden>
 
+    <div class="qt-collapse"
+         id="qtCollapse"
+         hidden>
+
+        <!-- LANGUAGE SELECTORS -->
         <div class="qt-language-row">
 
             <div class="qt-field">
-                <label for="qtSourceLanguage">From</label>
+
+                <label for="qtSourceLanguage">
+                    From
+                </label>
 
                 <select id="qtSourceLanguage">
-                    <option value="auto">Auto Detect</option>
+
+                    <option value="auto">
+                        Auto Detect
+                    </option>
+
                     <option value="en">English</option>
                     <option value="te">Telugu</option>
                     <option value="hi">Hindi</option>
@@ -45,20 +63,31 @@
                     <option value="or">Odia</option>
                     <option value="as">Assamese</option>
                     <option value="ne">Nepali</option>
+
                 </select>
+
             </div>
+
 
             <button type="button"
                     class="qt-swap-btn"
                     id="qtSwapBtn"
-                    title="Swap languages">
+                    title="Swap languages"
+                    aria-label="Swap languages">
+
                 <i class="bi bi-arrow-left-right"></i>
+
             </button>
 
+
             <div class="qt-field">
-                <label for="qtTargetLanguage">To</label>
+
+                <label for="qtTargetLanguage">
+                    To
+                </label>
 
                 <select id="qtTargetLanguage">
+
                     <option value="te">Telugu</option>
                     <option value="en">English</option>
                     <option value="hi">Hindi</option>
@@ -73,76 +102,176 @@
                     <option value="or">Odia</option>
                     <option value="as">Assamese</option>
                     <option value="ne">Nepali</option>
+
                 </select>
+
             </div>
 
         </div>
 
-        <div class="qt-input-wrap">
-            <textarea id="qtInput"
-                      maxlength="5000"
-                      placeholder="Type or paste text..."></textarea>
 
-            <div class="qt-input-footer">
-                <span id="qtCharCount">0 / 5000</span>
+        <!-- TWO PANEL TRANSLATOR -->
+        <div class="qt-two-panel">
 
-                <button type="button"
-                        class="qt-clear-btn"
-                        id="qtClearBtn">
-                    Clear
-                </button>
+            <!-- LEFT INPUT PANEL -->
+            <div class="qt-text-panel qt-source-panel">
+
+                <div class="qt-panel-header">
+
+                    <div>
+                        <strong>Original Text</strong>
+
+                        <span id="qtSourceLabel">
+                            Start typing below
+                        </span>
+                    </div>
+
+                    <button type="button"
+                            class="qt-small-action"
+                            id="qtClearBtn"
+                            title="Clear text">
+
+                        <i class="bi bi-x-lg"></i>
+
+                    </button>
+
+                </div>
+
+
+                <textarea id="qtInput"
+                          maxlength="5000"
+                          placeholder="Type or paste text..."></textarea>
+
+
+                <div class="qt-panel-footer">
+
+                    <span id="qtCharCount">
+                        0 / 5000
+                    </span>
+
+                    <span class="qt-auto-status"
+                          id="qtAutoStatus">
+
+                        Auto translate
+
+                    </span>
+
+                </div>
+
             </div>
+
+
+            <!-- RIGHT RESULT PANEL -->
+            <div class="qt-text-panel qt-result-panel">
+
+                <div class="qt-panel-header">
+
+                    <div>
+                        <strong>Translated Text</strong>
+
+                        <span id="qtResultLanguage">
+                            Select languages and start typing
+                        </span>
+                    </div>
+
+                    <button type="button"
+                            class="qt-small-action"
+                            id="qtCopyBtn"
+                            title="Copy translated text"
+                            disabled>
+
+                        <i class="bi bi-copy"></i>
+
+                    </button>
+
+                </div>
+
+
+                <div class="qt-output-area">
+
+                    <div class="qt-output-placeholder"
+                         id="qtOutputPlaceholder">
+
+                        <i class="bi bi-translate"></i>
+
+                        <span>
+                            Translation will appear here automatically
+                        </span>
+
+                    </div>
+
+
+                    <div class="qt-loading"
+                         id="qtLoading"
+                         hidden>
+
+                        <span class="spinner-border spinner-border-sm"></span>
+
+                        <span>
+                            Translating...
+                        </span>
+
+                    </div>
+
+
+                    <div class="qt-translated-text"
+                         id="qtTranslatedText"
+                         hidden>
+                    </div>
+
+                </div>
+
+
+                <div class="qt-panel-footer">
+
+                    <span id="qtResultCount">
+                        0 characters
+                    </span>
+
+                    <span class="qt-live-indicator">
+                        <i class="bi bi-lightning-charge-fill"></i>
+                        Live
+                    </span>
+
+                </div>
+
+            </div>
+
         </div>
 
-        <button type="button"
-                class="qt-translate-btn"
-                id="qtTranslateBtn">
-            <i class="bi bi-translate"></i>
-            Translate
-        </button>
 
+        <!-- ERROR -->
         <div class="qt-error"
              id="qtError"
              hidden>
         </div>
 
-        <div class="qt-result"
-             id="qtResult"
-             hidden>
 
-            <div class="qt-result-header">
-                <div>
-                    <strong>Translated Text</strong>
-                    <span id="qtResultLanguage"></span>
-                </div>
+        <!-- ACTION BUTTONS -->
+        <div class="qt-actions">
 
-                <button type="button"
-                        class="qt-copy-icon"
-                        id="qtCopyBtn"
-                        title="Copy translated text">
-                    <i class="bi bi-copy"></i>
-                </button>
-            </div>
+            <button type="button"
+                    class="qt-action-btn"
+                    id="qtCopyActionBtn"
+                    disabled>
 
-            <div class="qt-translated-text"
-                 id="qtTranslatedText">
-            </div>
+                <i class="bi bi-copy"></i>
 
-            <div class="qt-actions">
-                <button type="button"
-                        class="qt-action-btn"
-                        id="qtCopyActionBtn">
-                    <i class="bi bi-copy"></i>
-                    Copy
-                </button>
+                Copy
 
-                <button type="button"
-                        class="qt-action-btn qt-send-btn"
-                        id="qtSendBtn">
-                    <i class="bi bi-send-fill"></i>
-                    Send to Chat
-                </button>
-            </div>
+            </button>
+
+
+            <button type="button"
+                    class="qt-action-btn qt-send-btn"
+                    id="qtSendBtn"
+                    disabled>
+
+                <i class="bi bi-send-fill"></i>
+
+                Send to Chat
+
+            </button>
 
         </div>
 
@@ -160,6 +289,7 @@
          id="qtContactBackdrop">
     </div>
 
+
     <div class="qt-contact-dialog"
          role="dialog"
          aria-modal="true"
@@ -168,24 +298,33 @@
         <div class="qt-contact-header">
 
             <div>
+
                 <h5 id="qtContactTitle">
+
                     <i class="bi bi-send-fill"></i>
+
                     Send to Chat
+
                 </h5>
 
                 <p>
                     Select a contact to send translated text
                 </p>
+
             </div>
+
 
             <button type="button"
                     class="qt-contact-close"
                     id="qtContactClose"
                     aria-label="Close">
+
                 <i class="bi bi-x-lg"></i>
+
             </button>
 
         </div>
+
 
         <div class="qt-contact-search-wrap">
 
@@ -198,9 +337,11 @@
 
         </div>
 
+
         <div class="qt-contact-count"
              id="qtContactCount">
         </div>
+
 
         <div class="qt-contact-loading"
              id="qtContactLoading">
@@ -211,6 +352,7 @@
 
         </div>
 
+
         <div class="qt-contact-empty"
              id="qtContactEmpty"
              hidden>
@@ -220,6 +362,7 @@
             <strong>No contacts found</strong>
 
         </div>
+
 
         <div class="qt-contact-list"
              id="qtContactList">
