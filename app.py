@@ -55,7 +55,7 @@ db = firestore.client()
 
 ALLOWED_EXTENSIONS = {
     "png", "jpg", "jpeg", "gif", "webp",
-    "pdf", "doc", "docx", "xls", "xlsx",
+    "pdf", "doc", "docx", "txt", "xls", "xlsx",
     "mp4", "mov", "avi", "mkv", "webm"
 }
 

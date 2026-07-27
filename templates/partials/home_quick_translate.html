@@ -137,6 +137,96 @@
 
                 </div>
 
+                <!-- CAMERA / IMAGE / DOCUMENT INPUT TOOLS -->
+                <div class="qt-file-tools">
+
+                    <button type="button"
+                            class="qt-file-tool"
+                            id="qtCameraBtn"
+                            title="Take a photo">
+
+                        <i class="bi bi-camera-fill"></i>
+
+                        <span>Camera</span>
+
+                    </button>
+
+
+                    <button type="button"
+                            class="qt-file-tool"
+                            id="qtImageBtn"
+                            title="Select an image">
+
+                        <i class="bi bi-image-fill"></i>
+
+                        <span>Image</span>
+
+                    </button>
+
+
+                    <button type="button"
+                            class="qt-file-tool"
+                            id="qtDocumentBtn"
+                            title="Select a document">
+
+                        <i class="bi bi-file-earmark-text-fill"></i>
+
+                        <span>Document</span>
+
+                    </button>
+
+                </div>
+
+
+                <input type="file"
+                    id="qtCameraInput"
+                    accept="image/*"
+                    capture="environment"
+                    hidden>
+
+
+                <input type="file"
+                    id="qtImageInput"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    hidden>
+
+
+                <input type="file"
+                    id="qtDocumentInput"
+                    accept=".pdf,.docx,.txt,application/pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    hidden>
+
+
+                <div class="qt-selected-file"
+                    id="qtSelectedFile"
+                    hidden>
+
+                    <span class="qt-selected-file-icon">
+                        <i class="bi bi-paperclip"></i>
+                    </span>
+
+                    <div class="qt-selected-file-info">
+
+                        <strong id="qtSelectedFileName">
+                            Selected file
+                        </strong>
+
+                        <span id="qtSelectedFileStatus">
+                            Reading and translating...
+                        </span>
+
+                    </div>
+
+                    <button type="button"
+                            class="qt-selected-file-remove"
+                            id="qtSelectedFileRemove"
+                            title="Remove selected file">
+
+                        <i class="bi bi-x-lg"></i>
+
+                    </button>
+
+                </div>
 
                 <textarea id="qtInput"
                           maxlength="5000"

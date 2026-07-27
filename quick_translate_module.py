@@ -6,6 +6,15 @@ from flask import (
     request,
     session
 )
+import os
+import tempfile
+
+from werkzeug.utils import secure_filename
+
+from quick_file_translator import (
+    ALLOWED_EXTENSIONS,
+    translate_uploaded_file
+)
 
 
 quick_translate_bp = Blueprint(
@@ -64,6 +73,15 @@ def get_language_by_code(code):
             return language
 
     return None
+
+def get_uploaded_extension(filename):
+    safe_name = secure_filename(
+        filename or ""
+    )
+
+    return os.path.splitext(
+        safe_name
+    )[1].lower()
 
 
 def get_current_user():
@@ -209,6 +227,186 @@ def quick_translate_api():
             "success": False,
             "error": str(error)
         }), 500
+        
+@quick_translate_bp.route(
+    "/api/quick-translate/file",
+    methods=["POST"]
+)
+def quick_translate_file_api():
+    if "user_id" not in session:
+        return jsonify({
+            "success": False,
+            "error": "Login required"
+        }), 401
+
+    temp_path = None
+
+    try:
+        uploaded_file = request.files.get(
+            "file"
+        )
+
+        target_language_code = clean_lower(
+            request.form.get(
+                "targetLanguage",
+                "en"
+            )
+        )
+
+        target_info = get_language_by_code(
+            target_language_code
+        )
+
+        if not uploaded_file:
+            return jsonify({
+                "success": False,
+                "error": "Please select a file"
+            }), 400
+
+        if not uploaded_file.filename:
+            return jsonify({
+                "success": False,
+                "error": "Invalid file name"
+            }), 400
+
+        if (
+            not target_info
+            or target_language_code == "auto"
+        ):
+            return jsonify({
+                "success": False,
+                "error": "Invalid target language"
+            }), 400
+
+        extension = get_uploaded_extension(
+            uploaded_file.filename
+        )
+
+        if extension not in ALLOWED_EXTENSIONS:
+            return jsonify({
+                "success": False,
+                "error": (
+                    "Supported files: JPG, PNG, WEBP, "
+                    "GIF, PDF, DOCX and TXT"
+                )
+            }), 400
+
+        uploaded_file.stream.seek(
+            0,
+            os.SEEK_END
+        )
+
+        file_size = uploaded_file.stream.tell()
+
+        uploaded_file.stream.seek(0)
+
+        maximum_size = (
+            15 * 1024 * 1024
+        )
+
+        if file_size > maximum_size:
+            return jsonify({
+                "success": False,
+                "error": (
+                    "File size must be below 15 MB"
+                )
+            }), 400
+
+        temp_file = tempfile.NamedTemporaryFile(
+            delete=False,
+            suffix=extension
+        )
+
+        temp_path = temp_file.name
+
+        uploaded_file.save(
+            temp_path
+        )
+
+        temp_file.close()
+
+        result = translate_uploaded_file(
+            file_path=temp_path,
+            target_language=target_info["name"]
+        )
+
+        detected_language = clean_text(
+            result.get(
+                "detected_language"
+            )
+            or "Auto Detected"
+        )
+
+        original_text = clean_text(
+            result.get(
+                "original_text"
+            )
+        )
+
+        translated_text = clean_text(
+            result.get(
+                "translated_text"
+            )
+        )
+
+        return jsonify({
+            "success": True,
+
+            "inputType":
+                result.get(
+                    "input_type",
+                    "document"
+                ),
+
+            "fileName":
+                secure_filename(
+                    uploaded_file.filename
+                ),
+
+            "original":
+                original_text,
+
+            "translated":
+                translated_text,
+
+            "sourceLanguage":
+                "auto",
+
+            "sourceLanguageName":
+                detected_language,
+
+            "detectedLanguage":
+                detected_language,
+
+            "targetLanguage":
+                target_language_code,
+
+            "targetLanguageName":
+                target_info["name"]
+        })
+
+    except Exception as error:
+        print(
+            "QUICK FILE TRANSLATE ERROR:",
+            str(error)
+        )
+
+        return jsonify({
+            "success": False,
+            "error": str(error)
+        }), 500
+
+    finally:
+        if (
+            temp_path
+            and os.path.exists(temp_path)
+        ):
+            try:
+                os.remove(
+                    temp_path
+                )
+            except OSError:
+                pass        
 
 
 @quick_translate_bp.route(

@@ -69,6 +69,56 @@ document.addEventListener("DOMContentLoaded", () => {
     const sendBtn =
         document.getElementById("qtSendBtn");
 
+    const cameraBtn =
+        document.getElementById(
+            "qtCameraBtn"
+        );
+
+    const imageBtn =
+        document.getElementById(
+            "qtImageBtn"
+        );
+
+    const documentBtn =
+        document.getElementById(
+            "qtDocumentBtn"
+        );
+
+    const cameraInput =
+        document.getElementById(
+            "qtCameraInput"
+        );
+
+    const imageInput =
+        document.getElementById(
+            "qtImageInput"
+        );
+
+    const documentInput =
+        document.getElementById(
+            "qtDocumentInput"
+        );
+
+    const selectedFile =
+        document.getElementById(
+            "qtSelectedFile"
+        );
+
+    const selectedFileName =
+        document.getElementById(
+            "qtSelectedFileName"
+        );
+
+    const selectedFileStatus =
+        document.getElementById(
+            "qtSelectedFileStatus"
+        );
+
+    const selectedFileRemove =
+        document.getElementById(
+            "qtSelectedFileRemove"
+        );    
+
 
     let latestTranslation = "";
     let translationTimer = null;
@@ -226,6 +276,303 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    /* =========================================
+       CAMERA / IMAGE / DOCUMENT TRANSLATION
+    ========================================= */
+
+    function resetFileInputs() {
+        if (cameraInput) {
+            cameraInput.value = "";
+        }
+
+        if (imageInput) {
+            imageInput.value = "";
+        }
+
+        if (documentInput) {
+            documentInput.value = "";
+        }
+
+        if (selectedFile) {
+            selectedFile.hidden = true;
+        }
+
+        if (selectedFileName) {
+            selectedFileName.textContent =
+                "Selected file";
+        }
+
+        if (selectedFileStatus) {
+            selectedFileStatus.textContent =
+                "";
+        }
+    }
+
+
+    function showSelectedFile(
+        file,
+        statusText
+    ) {
+        if (!selectedFile) {
+            return;
+        }
+
+        selectedFile.hidden = false;
+
+        selectedFileName.textContent =
+            file.name || "Selected file";
+
+        selectedFileStatus.textContent =
+            statusText ||
+            "Reading and translating...";
+    }
+
+
+    function setFileToolsDisabled(
+        disabled
+    ) {
+        [
+            cameraBtn,
+            imageBtn,
+            documentBtn
+        ].forEach((button) => {
+            if (button) {
+                button.disabled =
+                    disabled;
+            }
+        });
+    }
+
+
+    async function translateSelectedFile(
+        file
+    ) {
+        if (!file) {
+            return;
+        }
+
+        const maximumSize =
+            15 * 1024 * 1024;
+
+        if (file.size > maximumSize) {
+            showError(
+                "File size must be below 15 MB."
+            );
+
+            resetFileInputs();
+            return;
+        }
+
+        cancelPendingTranslation();
+        hideError();
+
+        showSelectedFile(
+            file,
+            "Detecting language and translating..."
+        );
+
+        showLoadingOutput();
+        setFileToolsDisabled(true);
+
+        source.value = "auto";
+
+        sourceLabel.textContent =
+            "Detecting language...";
+
+        autoStatus.innerHTML = `
+            <span class="spinner-border spinner-border-sm"></span>
+            Reading file
+        `;
+
+        const formData =
+            new FormData();
+
+        formData.append(
+            "file",
+            file
+        );
+
+        formData.append(
+            "targetLanguage",
+            target.value
+        );
+
+        try {
+            const response = await fetch(
+                "/api/quick-translate/file",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Accept":
+                            "application/json"
+                    },
+
+                    body: formData
+                }
+            );
+
+            const data =
+                await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(
+                    data.error ||
+                    "Unable to translate file"
+                );
+            }
+
+            input.value =
+                String(
+                    data.original || ""
+                );
+
+            charCount.textContent =
+                `${input.value.length} / 5000`;
+
+            showTranslatedOutput(
+                data
+            );
+
+            sourceLabel.textContent =
+                data.detectedLanguage ||
+                data.sourceLanguageName ||
+                "Auto Detected";
+
+            selectedFileStatus.textContent =
+                `${
+                    data.detectedLanguage ||
+                    "Language detected"
+                } • Translation completed`;
+
+            autoStatus.innerHTML = `
+                <i class="bi bi-check-circle-fill"></i>
+                File translated
+            `;
+
+        } catch (error) {
+            console.error(
+                "QUICK FILE TRANSLATE ERROR:",
+                error
+            );
+
+            loading.hidden = true;
+            outputPlaceholder.hidden = false;
+
+            autoStatus.textContent =
+                "File translation failed";
+
+            selectedFileStatus.textContent =
+                "Unable to translate this file";
+
+            setActionsEnabled(false);
+
+            showError(
+                error.message ||
+                "Unable to translate the selected file."
+            );
+
+        } finally {
+            setFileToolsDisabled(false);
+        }
+    }
+
+
+    if (
+        cameraBtn &&
+        cameraInput
+    ) {
+        cameraBtn.addEventListener(
+            "click",
+            () => {
+                cameraInput.click();
+            }
+        );
+
+        cameraInput.addEventListener(
+            "change",
+            () => {
+                const file =
+                    cameraInput.files?.[0];
+
+                translateSelectedFile(
+                    file
+                );
+            }
+        );
+    }
+
+
+    if (
+        imageBtn &&
+        imageInput
+    ) {
+        imageBtn.addEventListener(
+            "click",
+            () => {
+                imageInput.click();
+            }
+        );
+
+        imageInput.addEventListener(
+            "change",
+            () => {
+                const file =
+                    imageInput.files?.[0];
+
+                translateSelectedFile(
+                    file
+                );
+            }
+        );
+    }
+
+
+    if (
+        documentBtn &&
+        documentInput
+    ) {
+        documentBtn.addEventListener(
+            "click",
+            () => {
+                documentInput.click();
+            }
+        );
+
+        documentInput.addEventListener(
+            "change",
+            () => {
+                const file =
+                    documentInput.files?.[0];
+
+                translateSelectedFile(
+                    file
+                );
+            }
+        );
+    }
+
+
+    if (selectedFileRemove) {
+        selectedFileRemove.addEventListener(
+            "click",
+            () => {
+                resetFileInputs();
+
+                input.value = "";
+
+                charCount.textContent =
+                    "0 / 5000";
+
+                sourceLabel.textContent =
+                    getLanguageName(source);
+
+                hideError();
+                showEmptyOutput();
+            }
+        );
+    }
+
 
     /* =========================================
        CARD TOGGLE
@@ -373,6 +720,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     target.addEventListener("change", () => {
+        const activeFile =
+            cameraInput?.files?.[0] ||
+            imageInput?.files?.[0] ||
+            documentInput?.files?.[0];
+
+        if (activeFile) {
+            translateSelectedFile(
+                activeFile
+            );
+
+            return;
+        }
+
         scheduleTranslation(150);
     });
 
@@ -383,6 +743,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     clearBtn.addEventListener("click", () => {
         cancelPendingTranslation();
+        resetFileInputs();
 
         input.value = "";
 

@@ -701,3 +701,158 @@
 .qt-error[hidden]{
     display:none !important;
 }
+
+/* ========================================
+   QUICK TRANSLATE FILE INPUT TOOLS
+======================================== */
+
+.qt-file-tools{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:8px;
+    padding:10px 12px;
+    border-bottom:1px solid #eee8f8;
+    background:#fff;
+}
+
+.qt-file-tool{
+    min-width:0;
+    min-height:40px;
+    border:1px solid #ded3f2;
+    border-radius:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+    padding:8px 10px;
+    background:#faf8ff;
+    color:#6f42c1;
+    font-size:12px;
+    font-weight:800;
+    transition:
+        background .2s ease,
+        color .2s ease,
+        border-color .2s ease,
+        transform .2s ease;
+}
+
+.qt-file-tool:hover:not(:disabled){
+    border-color:#6f42c1;
+    background:#6f42c1;
+    color:#fff;
+    transform:translateY(-1px);
+}
+
+.qt-file-tool:disabled{
+    opacity:.55;
+    cursor:not-allowed;
+}
+
+.qt-file-tool i{
+    font-size:15px;
+}
+
+.qt-selected-file{
+    margin:10px 12px 0;
+    padding:10px 11px;
+    border:1px solid #ddd2f2;
+    border-radius:13px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:#f7f2ff;
+}
+
+.qt-selected-file[hidden]{
+    display:none !important;
+}
+
+.qt-selected-file-icon{
+    width:36px;
+    height:36px;
+    min-width:36px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#e8dcff;
+    color:#6f42c1;
+}
+
+.qt-selected-file-info{
+    flex:1;
+    min-width:0;
+}
+
+.qt-selected-file-info strong{
+    display:block;
+    overflow:hidden;
+    color:#222;
+    font-size:12px;
+    font-weight:800;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+}
+
+.qt-selected-file-info span{
+    display:block;
+    margin-top:2px;
+    overflow:hidden;
+    color:#777;
+    font-size:10px;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+}
+
+.qt-selected-file-remove{
+    width:32px;
+    height:32px;
+    min-width:32px;
+    border:none;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#fff;
+    color:#6f42c1;
+}
+
+.qt-selected-file-remove:hover{
+    background:#6f42c1;
+    color:#fff;
+}
+
+@media(max-width:600px){
+    .qt-file-tools{
+        padding:9px 10px;
+        gap:6px;
+    }
+
+    .qt-file-tool{
+        min-height:39px;
+        padding:7px 5px;
+        font-size:11px;
+    }
+
+    .qt-file-tool i{
+        font-size:14px;
+    }
+
+    .qt-selected-file{
+        margin:9px 10px 0;
+    }
+}
+
+@media(max-width:380px){
+    .qt-file-tool span{
+        display:none;
+    }
+
+    .qt-file-tool{
+        font-size:17px;
+    }
+
+    .qt-file-tool i{
+        font-size:17px;
+    }
+}
