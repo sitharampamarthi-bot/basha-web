@@ -1,0 +1,204 @@
+<!-- BASHA AI OPEN BUTTON -->
+<button type="button"
+        class="basha-ai-top-button"
+        id="bashaAiOpenButton"
+        title="Basha AI Assistant"
+        aria-label="Open Basha AI Assistant">
+
+    <span class="basha-ai-top-avatar">
+        <img src="{{ url_for('static', filename='images/basha-ai-assistant.png') }}"
+             alt="Basha AI Assistant">
+    </span>
+
+    <span class="basha-ai-top-label">
+        AI
+    </span>
+
+</button>
+
+
+<!-- BASHA AI PANEL -->
+<div class="basha-ai-shell"
+     id="bashaAiShell"
+     hidden>
+
+    <div class="basha-ai-backdrop"
+         id="bashaAiBackdrop">
+    </div>
+
+    <section class="basha-ai-panel"
+             id="bashaAiPanel"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="bashaAiTitle">
+
+        <!-- HEADER -->
+        <header class="basha-ai-header">
+
+            <div class="basha-ai-header-profile">
+
+                <div class="basha-ai-avatar-wrap">
+
+                    <img src="{{ url_for('static', filename='images/basha-ai-assistant.png') }}"
+                         class="basha-ai-avatar"
+                         alt="Basha AI Assistant">
+
+                    <span class="basha-ai-online-dot"></span>
+
+                </div>
+
+                <div>
+                    <h5 id="bashaAiTitle">
+                        Basha AI Assistant
+                    </h5>
+
+                    <span class="basha-ai-status"
+                          id="bashaAiStatus">
+                        Online
+                    </span>
+                </div>
+
+            </div>
+
+            <div class="basha-ai-header-actions">
+
+                <button type="button"
+                        class="basha-ai-icon-button"
+                        id="bashaAiVoiceToggle"
+                        title="Voice reply on/off"
+                        aria-label="Voice reply on/off">
+
+                    <i class="bi bi-volume-up-fill"></i>
+
+                </button>
+
+                <button type="button"
+                        class="basha-ai-icon-button"
+                        id="bashaAiClearButton"
+                        title="Clear conversation"
+                        aria-label="Clear conversation">
+
+                    <i class="bi bi-trash3"></i>
+
+                </button>
+
+                <button type="button"
+                        class="basha-ai-icon-button"
+                        id="bashaAiCloseButton"
+                        title="Close"
+                        aria-label="Close assistant">
+
+                    <i class="bi bi-x-lg"></i>
+
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <!-- CHARACTER INTRO -->
+        <div class="basha-ai-character-section"
+             id="bashaAiCharacterSection">
+
+            <div class="basha-ai-character-glow"></div>
+
+            <img src="{{ url_for('static', filename='images/basha-ai-assistant.png') }}"
+                 class="basha-ai-character"
+                 id="bashaAiCharacter"
+                 alt="Basha AI Assistant">
+
+            <div class="basha-ai-intro-bubble"
+                 id="bashaAiIntroBubble">
+
+                <span class="basha-ai-intro-loading">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- CHAT MESSAGES -->
+        <div class="basha-ai-messages"
+             id="bashaAiMessages"
+             aria-live="polite">
+        </div>
+
+
+        <!-- TYPING INDICATOR -->
+        <div class="basha-ai-thinking"
+             id="bashaAiThinking"
+             hidden>
+
+            <div class="basha-ai-mini-avatar">
+                <img src="{{ url_for('static', filename='images/basha-ai-assistant.png') }}"
+                     alt="">
+            </div>
+
+            <div class="basha-ai-thinking-bubble">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
+        </div>
+
+
+        <!-- ERROR -->
+        <div class="basha-ai-error"
+             id="bashaAiError"
+             hidden>
+        </div>
+
+
+        <!-- INPUT -->
+        <footer class="basha-ai-input-area">
+
+            <button type="button"
+                    class="basha-ai-mic-button"
+                    id="bashaAiMicButton"
+                    title="Speak"
+                    aria-label="Speak your question">
+
+                <i class="bi bi-mic-fill"></i>
+
+            </button>
+
+            <textarea id="bashaAiInput"
+                      rows="1"
+                      maxlength="5000"
+                      placeholder="Ask Basha AI..."
+                      aria-label="Ask Basha AI"></textarea>
+
+            <button type="button"
+                    class="basha-ai-send-button"
+                    id="bashaAiSendButton"
+                    title="Send"
+                    aria-label="Send message">
+
+                <i class="bi bi-send-fill"></i>
+
+            </button>
+
+        </footer>
+
+        <div class="basha-ai-input-help"
+             id="bashaAiInputHelp">
+
+            <span id="bashaAiVoiceStatus">
+                Type or tap microphone
+            </span>
+
+            <span id="bashaAiCharacterCount">
+                0 / 5000
+            </span>
+
+        </div>
+
+    </section>
+
+</div>
