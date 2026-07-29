@@ -2031,36 +2031,39 @@ and
         bottom: auto;
         z-index: 20;
         background: #ffffff;
+
         padding:
             10px
             12px
-            8px;
-        margin-bottom: 0;
-        border-top: 1px solid rgba(
-            111,
-            66,
-            193,
-            0.14
-        );
+            10px;
+
+        margin-bottom:
+            calc(
+                54px +
+                env(safe-area-inset-bottom)
+            );
+
+        border-top:
+            1px solid
+            rgba(111, 66, 193, 0.14);
     }
 
     .basha-ai-input-help {
-        position: relative;
-        z-index: 20;
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom:
+            calc(
+                8px +
+                env(safe-area-inset-bottom)
+            );
+
+        z-index: 21;
         background: #ffffff;
+
         padding:
             2px
             14px
-            calc(
-                12px +
-                env(
-                    safe-area-inset-bottom
-                )
-            );
-    }
-
-    #bashaAiInput {
-        max-height: 100px;
-        overflow-y: auto;
+            8px;
     }
 }
