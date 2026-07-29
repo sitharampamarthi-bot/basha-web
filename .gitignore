@@ -4,3 +4,5 @@ __pycache__/
 *.pyc
 static/chat_uploads/
 database.db
+credentials/
+*.json

@@ -29,6 +29,15 @@ from recent_files_module import recent_files_bp, init_recent_files_module
 from pinned_chats_module import pinned_chats_bp, init_pinned_chats_module
 from unread_module import unread_bp, init_unread_module
 from quick_translate_module import quick_translate_bp, init_quick_translate_module
+from ai_avatar_module import (
+    ai_avatar_bp,
+    init_ai_avatar_module
+)
+import os
+
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = (
+    r"D:\Anji\basha_web\credentials\basha-ai-tts.json"
+)
 load_dotenv(override=True)
 
 #genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
@@ -259,6 +268,18 @@ init_quick_translate_module(
 
 app.register_blueprint(
     quick_translate_bp
+)
+
+# ==================================
+# BASHA ADVANCED AI AVATAR
+# ==================================
+
+init_ai_avatar_module(
+    db
+)
+
+app.register_blueprint(
+    ai_avatar_bp
 )
 
 

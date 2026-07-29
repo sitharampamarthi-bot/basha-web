@@ -1,2206 +1,2872 @@
+"use strict";
+
 console.log("BASHA ADVANCED AI JS LOADED");
-document.addEventListener(
-    "DOMContentLoaded",
-    function () {
 
-        function getElement(id) {
-            return document.getElementById(id);
-        }
+document.addEventListener("DOMContentLoaded", function () {
+
+    /* =====================================================
+       ELEMENTS
+    ===================================================== */
+
+    function getElement(id) {
+        return document.getElementById(id);
+    }
+
+    const openButton =
+        getElement("bashaAiOpenButton");
+
+    const topAvatar =
+        getElement("bashaAiTopAvatar");
+
+    const flyingAvatar =
+        getElement("bashaAiFlyingAvatar");
+
+    const shell =
+        getElement("bashaAiShell");
+
+    if (
+        !openButton ||
+        !topAvatar ||
+        !flyingAvatar ||
+        !shell
+    ) {
+        console.log(
+            "Basha AI required elements not found."
+        );
+
+        return;
+    }
+
+    const panel =
+        getElement("bashaAiPanel");
+
+    const backdrop =
+        getElement("bashaAiBackdrop");
+
+    const closeButton =
+        getElement("bashaAiCloseButton");
+
+    const clearButton =
+        getElement("bashaAiClearButton");
+
+    const voiceToggle =
+        getElement("bashaAiVoiceToggle");
+
+    const character =
+        getElement("bashaAiCharacter");
+
+    const headerAvatar =
+        getElement("bashaAiHeaderAvatar");
+
+    const thinkingAvatar =
+        getElement("bashaAiThinkingAvatar");
+
+    const characterSection =
+        getElement("bashaAiCharacterSection");
+
+    const introBubble =
+        getElement("bashaAiIntroBubble");
+
+    const messages =
+        getElement("bashaAiMessages");
+
+    const thinking =
+        getElement("bashaAiThinking");
+
+    const errorBox =
+        getElement("bashaAiError");
+
+    const input =
+        getElement("bashaAiInput");
+
+    const micButton =
+        getElement("bashaAiMicButton");
+
+    const sendButton =
+        getElement("bashaAiSendButton");
+
+    const status =
+        getElement("bashaAiStatus");
+
+    const voiceStatus =
+        getElement("bashaAiVoiceStatus");
+
+    const characterCount =
+        getElement("bashaAiCharacterCount");
+
+    const audioPlayer =
+        getElement("bashaAiAudioPlayer");    
 
 
-        const openButton =
-            getElement("bashaAiOpenButton");
+    /* =====================================================
+       AVATAR IMAGE FRAMES
+    ===================================================== */
 
-        const topAvatar =
-            getElement("bashaAiTopAvatar");
+    const avatarFrames = {
 
-        const flyingAvatar =
-            getElement("bashaAiFlyingAvatar");
+        idle: [
+            shell.dataset.idle1,
+            shell.dataset.idle2,
+            shell.dataset.idle3,
+            shell.dataset.idle4
+        ].filter(Boolean),
 
-        const shell =
-            getElement("bashaAiShell");
+        blink: [
+            shell.dataset.blink1,
+            shell.dataset.blink2
+        ].filter(Boolean),
+
+        wave: [
+            shell.dataset.wave1,
+            shell.dataset.wave2,
+            shell.dataset.wave3,
+            shell.dataset.wave4,
+            shell.dataset.wave5
+        ].filter(Boolean),
+
+        thinking: [
+            shell.dataset.thinking1,
+            shell.dataset.thinking2,
+            shell.dataset.thinking3,
+            shell.dataset.thinking4,
+            shell.dataset.thinking5
+        ].filter(Boolean),
+
+        speaking: [
+            shell.dataset.speaking1,
+            shell.dataset.speaking2,
+            shell.dataset.speaking3,
+            shell.dataset.speaking4
+        ].filter(Boolean),
+
+        explaining: [
+            shell.dataset.explaining1,
+            shell.dataset.explaining2,
+            shell.dataset.explaining3,
+            shell.dataset.explaining4,
+            shell.dataset.explaining5
+        ].filter(Boolean),
+
+        fallback:
+            shell.dataset.fallbackSrc ||
+            "/static/images/ai/idle-1.png"
+    };
 
 
-        if (
-            !openButton ||
-            !topAvatar ||
-            !flyingAvatar ||
-            !shell
-        ) {
-            console.log(
-                "Basha AI elements not found."
+    /* =====================================================
+       STATE
+    ===================================================== */
+
+    let initialized = false;
+
+    let isSending = false;
+
+    let isAnimating = false;
+
+    let isListening = false;
+
+    let recognition = null;
+
+    let userLanguageCode = "en";
+
+    let conversationHistory = [];
+
+    let greetingRunId = 0;
+
+    let blinkTimer = null;
+
+    let avatarAnimationTimer = null;
+
+    let avatarState = "idle";
+
+    let avatarFrameIndex = 0;
+
+    let speechKeepAliveTimer = null;
+
+    let pageIsVisible =
+        document.visibilityState === "visible";
+
+    let voiceReplyEnabled =
+        localStorage.getItem(
+            "bashaAiVoiceReply"
+        ) !== "off";
+
+
+    /* =====================================================
+       LANGUAGE MAP
+    ===================================================== */
+
+    const speechLanguageMap = {
+
+        en: "en-IN",
+        te: "te-IN",
+        hi: "hi-IN",
+        ta: "ta-IN",
+        kn: "kn-IN",
+        ml: "ml-IN",
+        mr: "mr-IN",
+        gu: "gu-IN",
+        bn: "bn-IN",
+        pa: "pa-IN",
+        ur: "ur-IN",
+        or: "or-IN",
+        as: "as-IN",
+        ne: "ne-NP",
+
+        ar: "ar-SA",
+        fr: "fr-FR",
+        de: "de-DE",
+        es: "es-ES",
+        pt: "pt-BR",
+        ru: "ru-RU",
+        ja: "ja-JP",
+        ko: "ko-KR",
+        zh: "zh-CN"
+
+    };
+
+
+    /* =====================================================
+       GENERAL HELPERS
+    ===================================================== */
+
+    function wait(milliseconds) {
+
+        return new Promise(function (resolve) {
+
+            window.setTimeout(
+                resolve,
+                milliseconds
             );
 
+        });
+
+    }
+
+
+    function getCurrentTime() {
+
+        return new Intl.DateTimeFormat(
+            [],
+            {
+                hour: "2-digit",
+                minute: "2-digit"
+            }
+        ).format(
+            new Date()
+        );
+
+    }
+
+
+    function showError(message) {
+
+        if (!errorBox) {
             return;
         }
 
+        errorBox.textContent =
+            message ||
+            "Something went wrong.";
 
-        const backdrop =
-            getElement("bashaAiBackdrop");
+        errorBox.hidden = false;
 
-        const closeButton =
-            getElement("bashaAiCloseButton");
-
-        const clearButton =
-            getElement("bashaAiClearButton");
-
-        const voiceToggle =
-            getElement("bashaAiVoiceToggle");
-
-        const character =
-            getElement("bashaAiCharacter");
-
-        const headerAvatar =
-            getElement("bashaAiHeaderAvatar");
-
-        const thinkingAvatar =
-            getElement("bashaAiThinkingAvatar");
-
-        const characterSection =
-            getElement("bashaAiCharacterSection");
-
-        const introBubble =
-            getElement("bashaAiIntroBubble");
-
-        const messages =
-            getElement("bashaAiMessages");
-
-        const thinking =
-            getElement("bashaAiThinking");
-
-        const errorBox =
-            getElement("bashaAiError");
-
-        const input =
-            getElement("bashaAiInput");
-
-        const micButton =
-            getElement("bashaAiMicButton");
-
-        const sendButton =
-            getElement("bashaAiSendButton");
-
-        const status =
-            getElement("bashaAiStatus");
-
-        const voiceStatus =
-            getElement("bashaAiVoiceStatus");
-
-        const characterCount =
-            getElement("bashaAiCharacterCount");
+    }
 
 
-        const avatarFrames = {
+    function hideError() {
 
-            idle: [
-                shell.dataset.idle1,
-                shell.dataset.idle2,
-                shell.dataset.idle3
-            ],
-
-            blink: [
-                shell.dataset.blink1,
-                shell.dataset.blink2
-            ],
-
-            wave: [
-                shell.dataset.wave1,
-                shell.dataset.wave2,
-                shell.dataset.wave3
-            ],
-
-            thinking: [
-                shell.dataset.thinking1,
-                shell.dataset.thinking2,
-                shell.dataset.thinking3
-            ],
-
-            speaking: [
-                shell.dataset.speaking1,
-                shell.dataset.speaking2,
-                shell.dataset.speaking3,
-                shell.dataset.speaking4
-            ],
-
-            fallback:
-                shell.dataset.fallbackSrc ||
-                "/static/images/basha-ai-assistant.png"
-        };
-
-        let initialized = false;
-        let isSending = false;
-        let isAnimating = false;
-
-        let recognition = null;
-        let isListening = false;
-
-        let userLanguageCode = "en";
-
-        let conversationHistory = [];
-
-        let greetingRunId = 0;
-
-        let blinkTimer = null;
-
-        let avatarAnimationTimer = null;
-
-        let avatarState = "idle";
-
-        let avatarFrameIndex = 0;
-
-
-        let voiceReplyEnabled =
-            localStorage.getItem(
-                "bashaAiVoiceReply"
-            ) !== "off";
-
-
-        const speechLanguageMap = {
-            en: "en-IN",
-            te: "te-IN",
-            hi: "hi-IN",
-            ta: "ta-IN",
-            kn: "kn-IN",
-            ml: "ml-IN",
-            mr: "mr-IN",
-            gu: "gu-IN",
-            bn: "bn-IN",
-            pa: "pa-IN",
-            ur: "ur-IN",
-            or: "or-IN",
-            as: "as-IN",
-            ne: "ne-NP"
-        };
-
-
-        function wait(milliseconds) {
-            return new Promise(
-                function (resolve) {
-                    window.setTimeout(
-                        resolve,
-                        milliseconds
-                    );
-                }
-            );
+        if (!errorBox) {
+            return;
         }
 
+        errorBox.hidden = true;
 
-        function installImageFallbacks() {
-            const images =
-                document.querySelectorAll(
-                    ".basha-ai-shell img," +
-                    ".basha-ai-floating-button img," +
-                    ".basha-ai-flying-avatar img"
-                );
+        errorBox.textContent = "";
+
+    }
 
 
-            images.forEach(
-                function (image) {
+    function scrollMessagesToBottom() {
 
-                    image.addEventListener(
-                        "error",
-                        function () {
-
-                            const fallbackSource =
-                                image.dataset.fallbackSrc ||
-                                avatarFrames.fallback;
-
-
-                            if (!fallbackSource) {
-                                return;
-                            }
-
-
-                            const fallbackUrl =
-                                new URL(
-                                    fallbackSource,
-                                    window.location.href
-                                ).href;
-
-
-                            if (
-                                image.src !== fallbackUrl
-                            ) {
-                                image.src =
-                                    fallbackSource;
-                            }
-
-                        }
-                    );
-
-                }
-            );
+        if (!messages) {
+            return;
         }
 
+        window.requestAnimationFrame(
+            function () {
 
-        function preloadAvatarImages() {
+                messages.scrollTop =
+                    messages.scrollHeight;
 
-            const allFrames = [
-                ...avatarFrames.idle,
-                ...avatarFrames.blink,
-                ...avatarFrames.wave,
-                ...avatarFrames.thinking,
-                ...avatarFrames.speaking
-            ];
-
-
-            allFrames.forEach(
-                function (imageSource) {
-
-                    if (!imageSource) {
-                        return;
-                    }
-
-
-                    const preloadImage =
-                        new Image();
-
-
-                    preloadImage.src =
-                        imageSource;
-
-                }
-            );
-        }
-
-
-        function primeSpeechSynthesis() {
-            if (
-                !(
-                    "speechSynthesis"
-                    in window
-                )
-            ) {
-                return;
             }
+        );
 
-            window.speechSynthesis.resume();
+    }
 
-            window.speechSynthesis.getVoices();
+
+    function resizeInput() {
+
+        if (!input) {
+            return;
         }
 
+        input.style.height =
+            "auto";
 
-        function getCurrentTime() {
-            return new Intl.DateTimeFormat(
-                [],
-                {
-                    hour: "2-digit",
-                    minute: "2-digit"
-                }
-            ).format(
-                new Date()
+        input.style.height =
+            Math.min(
+                input.scrollHeight,
+                130
+            ) + "px";
+
+    }
+
+
+    function updateCharacterCount() {
+
+        if (
+            !characterCount ||
+            !input ||
+            !sendButton
+        ) {
+            return;
+        }
+
+        characterCount.textContent =
+            input.value.length +
+            " / 5000";
+
+        sendButton.disabled =
+            isSending ||
+            !input.value.trim();
+
+    }
+
+
+    /* =====================================================
+       IMAGE FALLBACK
+    ===================================================== */
+
+    function installImageFallbacks() {
+
+        const images =
+            document.querySelectorAll(
+                ".basha-ai-shell img," +
+                ".basha-ai-floating-button img," +
+                ".basha-ai-flying-avatar img"
             );
-        }
 
+        images.forEach(function (image) {
 
-        function showError(message) {
-            errorBox.textContent =
-                message ||
-                "Something went wrong.";
-
-            errorBox.hidden = false;
-        }
-
-
-        function hideError() {
-            errorBox.hidden = true;
-            errorBox.textContent = "";
-        }
-
-
-        function scrollMessagesToBottom() {
-            window.requestAnimationFrame(
+            image.addEventListener(
+                "error",
                 function () {
 
-                    messages.scrollTop =
-                        messages.scrollHeight;
-
-                }
-            );
-        }
-
-
-        function resizeInput() {
-            input.style.height =
-                "auto";
-
-            input.style.height =
-                Math.min(
-                    input.scrollHeight,
-                    130
-                ) + "px";
-        }
-
-
-        function updateCharacterCount() {
-            characterCount.textContent =
-                input.value.length +
-                " / 5000";
-
-            sendButton.disabled =
-                isSending ||
-                !input.value.trim();
-        }
-
-
-        function setMainAvatarFrame(
-            imageSource
-        ) {
-
-            if (!imageSource) {
-                imageSource =
-                    avatarFrames.fallback;
-            }
-
-
-            character.src =
-                imageSource;
-        }
-
-
-        function stopAvatarAnimation() {
-
-            if (avatarAnimationTimer) {
-
-                window.clearInterval(
-                    avatarAnimationTimer
-                );
-
-
-                avatarAnimationTimer =
-                    null;
-            }
-
-
-            avatarFrameIndex =
-                0;
-        }
-
-
-        function removeAvatarClasses() {
-
-            character.classList.remove(
-                "is-speaking",
-                "is-thinking",
-                "is-wave",
-                "is-blinking"
-            );
-        }
-
-
-        function playAvatarFrames(
-            state,
-            options
-        ) {
-
-            const settings =
-                options || {};
-
-
-            const frames =
-                avatarFrames[state];
-
-
-            if (
-                !frames ||
-                !frames.length
-            ) {
-                return;
-            }
-
-
-            stopAvatarAnimation();
-
-            removeAvatarClasses();
-
-
-            avatarState =
-                state;
-
-
-            avatarFrameIndex =
-                0;
-
-
-            const speed =
-                settings.speed || 250;
-
-
-            const loop =
-                settings.loop !== false;
-
-
-            const returnToIdle =
-                settings.returnToIdle !== false;
-
-
-            if (state === "speaking") {
-
-                character.classList.add(
-                    "is-speaking"
-                );
-
-            } else if (
-                state === "thinking"
-            ) {
-
-                character.classList.add(
-                    "is-thinking"
-                );
-
-            } else if (
-                state === "wave"
-            ) {
-
-                character.classList.add(
-                    "is-wave"
-                );
-
-            } else if (
-                state === "blink"
-            ) {
-
-                character.classList.add(
-                    "is-blinking"
-                );
-            }
-
-
-            setMainAvatarFrame(
-                frames[0]
-            );
-
-
-            avatarAnimationTimer =
-                window.setInterval(
-                    function () {
-
-                        avatarFrameIndex++;
-
-
-                        if (
-                            avatarFrameIndex >=
-                            frames.length
-                        ) {
-
-                            if (loop) {
-
-                                avatarFrameIndex =
-                                    0;
-
-                            } else {
-
-                                stopAvatarAnimation();
-
-
-                                if (
-                                    returnToIdle
-                                ) {
-
-                                    playAvatarFrames(
-                                        "idle",
-                                        {
-                                            speed: 650,
-                                            loop: true,
-                                            returnToIdle: false
-                                        }
-                                    );
-
-                                }
-
-
-                                return;
-                            }
-                        }
-
-
-                        setMainAvatarFrame(
-                            frames[
-                                avatarFrameIndex
-                            ]
-                        );
-
-                    },
-                    speed
-                );
-        }
-
-
-        function setAvatarState(
-            state
-        ) {
-
-            if (state === "idle") {
-
-                playAvatarFrames(
-                    "idle",
-                    {
-                        speed: 650,
-                        loop: true,
-                        returnToIdle: false
-                    }
-                );
-
-                return;
-            }
-
-
-            if (state === "blink") {
-
-                playAvatarFrames(
-                    "blink",
-                    {
-                        speed: 120,
-                        loop: false,
-                        returnToIdle: true
-                    }
-                );
-
-                return;
-            }
-
-
-            if (state === "wave") {
-
-                playAvatarFrames(
-                    "wave",
-                    {
-                        speed: 260,
-                        loop: false,
-                        returnToIdle: true
-                    }
-                );
-
-                return;
-            }
-
-
-            if (state === "thinking") {
-
-                playAvatarFrames(
-                    "thinking",
-                    {
-                        speed: 300,
-                        loop: true,
-                        returnToIdle: false
-                    }
-                );
-
-                return;
-            }
-
-
-            if (state === "speaking") {
-
-                playAvatarFrames(
-                    "speaking",
-                    {
-                        speed: 145,
-                        loop: true,
-                        returnToIdle: false
-                    }
-                );
-            }
-        }
-
-
-        function resetAssistantVisuals() {
-
-            setAvatarState(
-                "idle"
-            );
-
-
-            status.textContent =
-                "Online";
-        }
-
-
-        function scheduleBlink() {
-
-            window.clearTimeout(
-                blinkTimer
-            );
-
-
-            const nextBlinkTime =
-                3500 +
-                Math.random() * 3000;
-
-
-            blinkTimer =
-                window.setTimeout(
-                    function () {
-
-                        const canBlink =
-                            !shell.hidden &&
-                            !isSending &&
-                            !isListening &&
-                            avatarState === "idle";
-
-
-                        if (canBlink) {
-
-                            setAvatarState(
-                                "blink"
-                            );
-                        }
-
-
-                        scheduleBlink();
-
-                    },
-                    nextBlinkTime
-                );
-        }
-
-
-        function createMessage(
-            role,
-            text
-        ) {
-            const row =
-                document.createElement(
-                    "div"
-                );
-
-
-            row.className =
-                "basha-ai-message-row " +
-                (
-                    role === "user"
-                        ? "is-user"
-                        : "is-assistant"
-                );
-
-
-            const bubble =
-                document.createElement(
-                    "div"
-                );
-
-
-            bubble.className =
-                "basha-ai-message";
-
-
-            const content =
-                document.createElement(
-                    "span"
-                );
-
-
-            const time =
-                document.createElement(
-                    "span"
-                );
-
-
-            time.className =
-                "basha-ai-message-time";
-
-
-            time.textContent =
-                getCurrentTime();
-
-
-            bubble.appendChild(
-                content
-            );
-
-
-            bubble.appendChild(
-                time
-            );
-
-
-            row.appendChild(
-                bubble
-            );
-
-
-            messages.appendChild(
-                row
-            );
-
-
-            conversationHistory.push({
-                role: role,
-                text: text
-            });
-
-
-            if (
-                conversationHistory.length > 20
-            ) {
-                conversationHistory =
-                    conversationHistory.slice(
-                        -20
-                    );
-            }
-
-
-            scrollMessagesToBottom();
-
-
-            return content;
-        }
-
-
-        async function addMessage(
-            role,
-            text,
-            useTypewriter
-        ) {
-            const contentElement =
-                createMessage(
-                    role,
-                    text
-                );
-
-
-            if (!useTypewriter) {
-                contentElement.textContent =
-                    text;
-
-                scrollMessagesToBottom();
-
-                return;
-            }
-
-
-            const fullText =
-                String(text || "");
-
-
-            for (
-                const letter of fullText
-            ) {
-                contentElement.textContent +=
-                    letter;
-
-                scrollMessagesToBottom();
-
-                await wait(12);
-            }
-        }
-
-
-        function chooseSpeechVoice(
-            languageTag
-        ) {
-            const availableVoices =
-                window.speechSynthesis.getVoices();
-
-
-            if (
-                !availableVoices.length
-            ) {
-                return null;
-            }
-
-
-            const normalizedTag =
-                String(
-                    languageTag || ""
-                ).toLowerCase();
-
-
-            const languagePrefix =
-                normalizedTag.split("-")[0];
-
-
-            return (
-                availableVoices.find(
-                    function (voice) {
-                        return (
-                            voice.lang.toLowerCase()
-                            === normalizedTag
-                        );
-                    }
-                )
-
-                ||
-
-                availableVoices.find(
-                    function (voice) {
-                        return voice.lang
-                            .toLowerCase()
-                            .startsWith(
-                                languagePrefix
-                            );
-                    }
-                )
-
-                ||
-
-                availableVoices.find(
-                    function (voice) {
-                        return voice.lang
-                            .toLowerCase()
-                            .startsWith("en");
-                    }
-                )
-
-                ||
-
-                null
-            );
-        }
-
-
-        function speakText(text) {
-            return new Promise(
-                function (resolve) {
-
-                    if (
-                        !voiceReplyEnabled ||
-                        !(
-                            "speechSynthesis"
-                            in window
-                        ) ||
-                        !text
-                    ) {
-                        resetAssistantVisuals();
-
-                        resolve();
-
+                    const fallbackSource =
+                        image.dataset.fallbackSrc ||
+                        avatarFrames.fallback;
+
+                    if (!fallbackSource) {
                         return;
                     }
 
+                    const fallbackUrl =
+                        new URL(
+                            fallbackSource,
+                            window.location.href
+                        ).href;
 
-                    window.speechSynthesis.cancel();
-
-                    window.speechSynthesis.resume();
-
-
-                    const utterance =
-                        new SpeechSynthesisUtterance(
-                            text
-                        );
-
-
-                    utterance.lang =
-                        speechLanguageMap[
-                            userLanguageCode
-                        ]
-                        ||
-                        userLanguageCode
-                        ||
-                        "en-IN";
-
-
-                    utterance.rate = 0.90;
-                    utterance.pitch = 1;
-                    utterance.volume = 1;
-
-
-                    utterance.voice =
-                        chooseSpeechVoice(
-                            utterance.lang
-                        );
-
-
-                    utterance.onstart =
-                        function () {
-
-                            setAvatarState(
-                                "speaking"
-                            );
-
-
-                            status.textContent =
-                                "Laxmi is speaking...";
-
-
-                            voiceStatus.textContent =
-                                "Laxmi is speaking...";
-
-                        };
-
-
-                    utterance.onend =
-                        function () {
-
-                            resetAssistantVisuals();
-
-
-                            voiceStatus.textContent =
-                                "Type or tap microphone";
-
-
-                            resolve();
-
-                        };
-
-
-                    utterance.onerror =
-                        function (event) {
-
-                            console.log(
-                                "Laxmi TTS error:",
-                                event
-                            );
-
-
-                            resetAssistantVisuals();
-
-
-                            voiceStatus.textContent =
-                                "Voice could not play";
-
-
-                            resolve();
-
-                        };
-
-
-                    window.speechSynthesis.speak(
-                        utterance
-                    );
-
-
-                    /*
-                    Chrome long speech pause problem fix.
-                    */
-
-                    const keepAliveInterval =
-                        window.setInterval(
-                            function () {
-
-                                if (
-                                    !window.speechSynthesis
-                                        .speaking
-                                ) {
-                                    window.clearInterval(
-                                        keepAliveInterval
-                                    );
-
-                                    return;
-                                }
-
-
-                                window.speechSynthesis.pause();
-
-                                window.speechSynthesis.resume();
-
-                            },
-                            10000
-                        );
+                    if (
+                        image.src !== fallbackUrl
+                    ) {
+                        image.src =
+                            fallbackSource;
+                    }
 
                 }
             );
-        }
+
+        });
+
+    }
 
 
-        async function typeGreeting(text) {
-            const currentRunId =
-                ++greetingRunId;
+    function preloadAvatarImages() {
 
+        const allFrames = [
 
-            introBubble.textContent =
-                "";
+            ...avatarFrames.idle,
+            ...avatarFrames.blink,
+            ...avatarFrames.wave,
+            ...avatarFrames.thinking,
+            ...avatarFrames.speaking,
+            ...avatarFrames.explaining
 
+        ];
 
-            const greetingText =
-                String(text || "");
+        allFrames.forEach(
+            function (imageSource) {
 
-
-            for (
-                const letter
-                of greetingText
-            ) {
-                if (
-                    currentRunId
-                    !== greetingRunId
-                ) {
+                if (!imageSource) {
                     return;
                 }
 
-
-                introBubble.textContent +=
-                    letter;
-
-
-                await wait(18);
-            }
-        }
-
-
-        async function loadGreeting() {
-            introBubble.classList.add(
-                "show"
-            );
-
-
-            introBubble.innerHTML = `
-                <span class="basha-ai-intro-loading">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </span>
-            `;
-
-
-            try {
-                const response =
-                    await fetch(
-                        "/api/ai-assistant/greeting",
-                        {
-                            method: "GET",
-
-                            credentials:
-                                "same-origin",
-
-                            headers: {
-                                "Accept":
-                                    "application/json"
-                            }
-                        }
-                    );
-
-
-                const data =
-                    await response.json();
-
-
-                if (
-                    !response.ok ||
-                    !data.success
-                ) {
-                    throw new Error(
-                        data.error ||
-                        "Unable to load assistant."
-                    );
-                }
-
-
-                userLanguageCode =
-                    data.languageCode ||
-                    "en";
-
-
-                setupSpeechRecognition();
-
-
-                setAvatarState(
-                    "wave"
-                );
-
-                await wait(900);
-
-                await typeGreeting(
-                    data.greeting
-                );
-
-
-                await wait(220);
-
-
-                await speakText(
-                    data.greeting
-                );
-
-
-                status.textContent =
-                    "Ready";
-
-
-                voiceStatus.textContent =
-                    "Tap microphone or type your question";
-
-            } catch (error) {
-
-                const fallbackGreeting =
-                    "Hi 👋 I am Basha AI Assistant. How can I help you?";
-
-
-                await typeGreeting(
-                    fallbackGreeting
-                );
-
-
-                showError(
-                    error.message
-                );
-            }
-        }
-
-
-        function getTargetCharacterRect() {
-            const sectionRect =
-                characterSection
-                    .getBoundingClientRect();
-
-
-            const isMobile =
-                window.innerWidth <= 600;
-
-
-            const size =
-                isMobile
-                    ? 88
-                    : 102;
-
-
-            return {
-                left:
-                    sectionRect.left +
-                    (
-                        isMobile
-                            ? 27
-                            : 48
-                    ),
-
-                top:
-                    sectionRect.bottom -
-                    size -
-                    (
-                        isMobile
-                            ? 32
-                            : 44
-                    ),
-
-                width:
-                    size,
-
-                height:
-                    size
-            };
-        }
-
-
-        function setFlyingAvatarRect(
-            rectangle
-        ) {
-            flyingAvatar.style.left =
-                rectangle.left + "px";
-
-            flyingAvatar.style.top =
-                rectangle.top + "px";
-
-            flyingAvatar.style.width =
-                rectangle.width + "px";
-
-            flyingAvatar.style.height =
-                rectangle.height + "px";
-        }
-
-
-        async function animateOpen() {
-
-            console.log(
-                "AI OPEN FUNCTION STARTED"
-            );
-
-
-            if (isAnimating) {
-                return;
-            }
-
-
-            isAnimating = true;
-
-
-            primeSpeechSynthesis();
-
-            hideError();
-
-            stopListening();
-
-            const flyingImage =
-                flyingAvatar.querySelector(
-                    "img"
-                );
-
-            if (flyingImage) {
-
-                flyingImage.src =
-                    avatarFrames.idle[0] ||
-                    avatarFrames.fallback;
-            }
-
-            shell.hidden = false;
-
-            shell.classList.remove(
-                "is-open",
-                "character-ready"
-            );
-
-            introBubble.classList.remove(
-                "show"
-            );
-
-            resetAssistantVisuals();
-
-            const startRect =
-                topAvatar.getBoundingClientRect();
-
-            console.log(
-                "AI START RECT:",
-                startRect
-            );
-
-            setFlyingAvatarRect(
-                startRect
-            );
-
-            flyingAvatar.hidden = false;
-
-            openButton.classList.add(
-                "is-hidden"
-            );
-
-            await wait(30);
-
-            shell.classList.add(
-                "is-open"
-            );
-
-            document.body.style.overflow =
-                "hidden";
-
-            await wait(100);
-
-            const destination =
-                getTargetCharacterRect();
-
-            const deltaX =
-                destination.left -
-                startRect.left;
-
-            const deltaY =
-                destination.top -
-                startRect.top;
-
-            const scaleX =
-                destination.width /
-                Math.max(
-                    startRect.width,
-                    1
-                );
-
-            const scaleY =
-                destination.height /
-                Math.max(
-                    startRect.height,
-                    1
-                );
-
-            try {
-
-                if (
-                    typeof flyingAvatar.animate
-                    === "function"
-                ) {
-                    const animation =
-                        flyingAvatar.animate(
-                            [
-                                {
-                                    transform:
-                                        "translate(0px, 0px) scale(1)",
-
-                                    opacity:
-                                        1
-                                },
-
-                                {
-                                    transform:
-                                        "translate(" +
-                                        (deltaX * 0.55) +
-                                        "px, " +
-                                        (deltaY * 0.25) +
-                                        "px) scale(1.32) rotate(-8deg)",
-
-                                    opacity:
-                                        1,
-
-                                    offset:
-                                        0.45
-                                },
-
-                                {
-                                    transform:
-                                        "translate(" +
-                                        deltaX +
-                                        "px, " +
-                                        deltaY +
-                                        "px) scale(" +
-                                        scaleX +
-                                        ", " +
-                                        scaleY +
-                                        ") rotate(0deg)",
-
-                                    opacity:
-                                        1
-                                }
-                            ],
-
-                            {
-                                duration:
-                                    760,
-
-                                easing:
-                                    "cubic-bezier(.18,.84,.32,1)",
-
-                                fill:
-                                    "forwards"
-                            }
-                        );
-
-
-                    await animation.finished;
-
-                } else {
-
-                    console.log(
-                        "Web Animations API unavailable. Opening without fly animation."
-                    );
-
-                    await wait(250);
-                }
-
-            } catch (error) {
-
-                console.log(
-                    "AI open animation error:",
-                    error
-                );
-
-            }
-
-            flyingAvatar.hidden = true;
-
-            shell.classList.add(
-                "character-ready"
-            );
-
-            introBubble.classList.add(
-                "show"
-            );
-
-            isAnimating = false;
-
-            scheduleBlink();
-
-            window.setTimeout(
-                function () {
-                    input.focus();
-                },
-                120
-            );
-
-            if (!initialized) {
-
-                initialized = true;
-
-                loadGreeting();
-
-            }
-
-        }
-
-        async function animateClose() {
-            if (
-                isAnimating ||
-                shell.hidden
-            ) {
-                return;
-            }
-
-            isAnimating = true;
-
-            stopAvatarAnimation();
-
-            greetingRunId++;
-
-            window.clearTimeout(
-                blinkTimer
-            );
-
-            if (
-                "speechSynthesis"
-                in window
-            ) {
-                window.speechSynthesis.cancel();
-            }
-
-            stopListening();
-
-            resetAssistantVisuals();
-
-            const characterRect =
-                character
-                    .getBoundingClientRect();
-
-            const startSize =
-                Math.min(
-                    characterRect.width,
-                    characterRect.height,
-                    105
-                );
-
-            const startRect = {
-                left:
-                    characterRect.left +
-                    (
-                        characterRect.width -
-                        startSize
-                    ) / 2,
-
-                top:
-                    characterRect.top +
-                    (
-                        characterRect.height -
-                        startSize
-                    ) / 2,
-
-                width:
-                    startSize,
-
-                height:
-                    startSize
-            };
-
-
-            const destination =
-                topAvatar
-                    .getBoundingClientRect();
-
-
-            setFlyingAvatarRect(
-                startRect
-            );
-
-            flyingAvatar.hidden =
-                false;
-
-
-            shell.classList.remove(
-                "character-ready"
-            );
-
-            introBubble.classList.remove(
-                "show"
-            );
-
-            await wait(30);
-
-            shell.classList.remove(
-                "is-open"
-            );
-
-            const deltaX =
-                destination.left -
-                startRect.left;
-
-            const deltaY =
-                destination.top -
-                startRect.top;
-
-            const scaleX =
-                destination.width /
-                startRect.width;
-
-            const scaleY =
-                destination.height /
-                startRect.height;
-
-            const animation =
-                flyingAvatar.animate(
-                    [
-                        {
-                            transform:
-                                "translate(0,0) scale(1)",
-
-                            opacity: 1
-                        },
-
-                        {
-                            transform:
-                                `translate(
-                                    ${deltaX * .55}px,
-                                    ${deltaY * .75}px
-                                )
-                                scale(.82)
-                                rotate(7deg)`,
-
-                            opacity: 1,
-
-                            offset: .55
-                        },
-
-                        {
-                            transform:
-                                `translate(
-                                    ${deltaX}px,
-                                    ${deltaY}px
-                                )
-                                scale(
-                                    ${scaleX},
-                                    ${scaleY}
-                                )
-                                rotate(0deg)`,
-
-                            opacity: .96
-                        }
-                    ],
-
-                    {
-                        duration: 620,
-
-                        easing:
-                            "cubic-bezier(.4,0,.2,1)",
-
-                        fill:
-                            "forwards"
-                    }
-                );
-
-            try {
-                await animation.finished;
-            } catch (error) {
-                console.log(
-                    "AI close animation cancelled."
-                );
-            }
-
-            flyingAvatar.hidden =
-                true;
-
-            shell.hidden =
-                true;
-
-            openButton.classList.remove(
-                "is-hidden"
-            );
-
-            document.body.style.overflow =
-                "";
-
-            isAnimating =
-                false;
-        }
-
-        function clearConversation() {
-            conversationHistory = [];
-
-            messages.innerHTML = "";
-
-            input.value = "";
-
-            resizeInput();
-
-            updateCharacterCount();
-
-            hideError();
-
-            greetingRunId++;
-
-            if (
-                "speechSynthesis"
-                in window
-            ) {
-                window.speechSynthesis.cancel();
-            }
-
-            stopAvatarAnimation();
-
-            resetAssistantVisuals();
-
-            loadGreeting();
-        }
-
-        async function sendMessage() {
-            const message =
-                input.value.trim();
-
-            if (
-                !message ||
-                isSending
-            ) {
-                return;
-            }
-
-            hideError();
-
-            await addMessage(
-                "user",
-                message,
-                false
-            );
-
-            input.value = "";
-
-            resizeInput();
-
-            isSending = true;
-
-            updateCharacterCount();
-
-            thinking.hidden = false;
-
-            micButton.disabled = true;
-
-            status.textContent =
-                "Thinking...";
-
-            setAvatarState(
-                "thinking"
-            );
-
-            scrollMessagesToBottom();
-
-            try {
-                const historyForRequest =
-                    conversationHistory.slice(
-                        0,
-                        -1
-                    );
-
-                const response =
-                    await fetch(
-                        "/api/ai-assistant/chat",
-
-                        {
-                            method:
-                                "POST",
-
-                            credentials:
-                                "same-origin",
-
-                            headers: {
-                                "Content-Type":
-                                    "application/json",
-
-                                "Accept":
-                                    "application/json"
-                            },
-
-                            body:
-                                JSON.stringify({
-                                    message:
-                                        message,
-
-                                    history:
-                                        historyForRequest
-                                })
-                        }
-                    );
-
-                const data =
-                    await response.json();
-
-                if (
-                    !response.ok ||
-                    !data.success
-                ) {
-                    throw new Error(
-                        data.error ||
-                        "AI response failed."
-                    );
-                }
-
-                userLanguageCode =
-                    data.languageCode ||
-                    userLanguageCode;
-
-
-                thinking.hidden =
-                    true;
-
-
-                await addMessage(
-                    "assistant",
-                    data.reply,
-                    true
-                );
-
-
-                await speakText(
-                    data.reply
-                );
-
-            } catch (error) {
-
-                showError(
-                    error.message ||
-                    "Unable to get AI response."
-                );
-
-            } finally {
-
-                isSending =
-                    false;
-
-
-                thinking.hidden =
-                    true;
-
-
-                micButton.disabled =
-                    false;
-
-
-                if (
-                    !character.classList.contains(
-                        "is-speaking"
-                    )
-                ) {
-                    resetAssistantVisuals();
-                }
-
-
-                updateCharacterCount();
-            }
-        }
-
-
-        function setupSpeechRecognition() {
-            const SpeechRecognition =
-                window.SpeechRecognition ||
-                window.webkitSpeechRecognition;
-
-
-            if (!SpeechRecognition) {
-                micButton.disabled =
-                    true;
-
-
-                voiceStatus.textContent =
-                    "Voice input is not supported in this browser";
-
-
-                return;
-            }
-
-
-            recognition =
-                new SpeechRecognition();
-
-
-            recognition.continuous =
-                false;
-
-
-            recognition.interimResults =
-                true;
-
-
-            recognition.lang =
-                speechLanguageMap[
-                    userLanguageCode
-                ]
-                ||
-                "en-IN";
-
-
-            recognition.onstart =
-                function () {
-
-                    isListening = true;
-
-
-                    micButton.classList.add(
-                        "is-listening"
-                    );
-
-
-                    micButton.innerHTML =
-                        '<i class="bi bi-stop-fill"></i>';
-
-
-                    voiceStatus.textContent =
-                        "Listening...";
-
-
-                    status.textContent =
-                        "Listening...";
-
-                };
-
-
-            recognition.onresult =
-                function (event) {
-
-                    let finalText =
-                        "";
-
-                    let interimText =
-                        "";
-
-
-                    for (
-                        let index =
-                            event.resultIndex;
-
-                        index <
-                            event.results.length;
-
-                        index++
-                    ) {
-                        const transcript =
-                            event.results[
-                                index
-                            ][0].transcript;
-
-
-                        if (
-                            event.results[
-                                index
-                            ].isFinal
-                        ) {
-                            finalText +=
-                                transcript;
-                        } else {
-                            interimText +=
-                                transcript;
-                        }
-                    }
-
-
-                    const spokenText =
-                        finalText ||
-                        interimText;
-
-
-                    if (spokenText) {
-                        input.value =
-                            spokenText;
-
-
-                        resizeInput();
-
-                        updateCharacterCount();
-                    }
-
-                };
-
-
-            recognition.onerror =
-                function (event) {
-
-                    stopListening();
-
-
-                    if (
-                        event.error !==
-                        "no-speech"
-                    ) {
-                        showError(
-                            "Voice input error: " +
-                            event.error
-                        );
-                    }
-
-                };
-
-
-            recognition.onend =
-                function () {
-
-                    const shouldSend =
-                        isListening &&
-                        input.value.trim();
-
-
-                    stopListening();
-
-
-                    if (shouldSend) {
-                        window.setTimeout(
-                            sendMessage,
-                            180
-                        );
-                    }
-
-                };
-        }
-
-
-        function startListening() {
-            if (!recognition) {
-                setupSpeechRecognition();
-            }
-
-
-            if (!recognition) {
-                return;
-            }
-
-
-            if (
-                "speechSynthesis"
-                in window
-            ) {
-                window.speechSynthesis.cancel();
-            }
-
-
-            setAvatarState(
-                "idle"
-            );
-
-
-            recognition.lang =
-                speechLanguageMap[
-                    userLanguageCode
-                ]
-                ||
-                "en-IN";
-
-
-            try {
-                recognition.start();
-            } catch (error) {
-                console.log(
-                    "Speech recognition already active."
-                );
-            }
-        }
-
-
-        function stopListening() {
-            if (
-                recognition &&
-                isListening
-            ) {
-                try {
-                    recognition.stop();
-                } catch (error) {
-                    console.log(error);
-                }
-            }
-
-
-            isListening =
-                false;
-
-
-            micButton.classList.remove(
-                "is-listening"
-            );
-
-
-            micButton.innerHTML =
-                '<i class="bi bi-mic-fill"></i>';
-
-
-            voiceStatus.textContent =
-                "Type or tap microphone";
-
-
-            if (!isSending) {
-                status.textContent =
-                    "Online";
-            }
-        }
-
-
-        openButton.addEventListener(
-            "click",
-            animateOpen
-        );
-
-
-        closeButton.addEventListener(
-            "click",
-            animateClose
-        );
-
-
-        backdrop.addEventListener(
-            "click",
-            animateClose
-        );
-
-
-        clearButton.addEventListener(
-            "click",
-            clearConversation
-        );
-
-
-        voiceToggle.addEventListener(
-            "click",
-            function () {
-
-                voiceReplyEnabled =
-                    !voiceReplyEnabled;
-
-
-                localStorage.setItem(
-                    "bashaAiVoiceReply",
-
-                    voiceReplyEnabled
-                        ? "on"
-                        : "off"
-                );
-
-
-                voiceToggle.classList.toggle(
-                    "is-muted",
-                    !voiceReplyEnabled
-                );
-
-
-                voiceToggle.innerHTML =
-                    voiceReplyEnabled
-
-                        ? '<i class="bi bi-volume-up-fill"></i>'
-
-                        : '<i class="bi bi-volume-mute-fill"></i>';
-
-
-                if (
-                    !voiceReplyEnabled &&
-                    "speechSynthesis"
-                    in window
-                ) {
-                    window.speechSynthesis.cancel();
-
-                    resetAssistantVisuals();
-                } else {
-                    primeSpeechSynthesis();
-                }
+                const image =
+                    new Image();
+
+                image.src =
+                    imageSource;
 
             }
         );
 
-
-        micButton.addEventListener(
-            "click",
-            function () {
-
-                if (isListening) {
-                    stopListening();
-                } else {
-                    startListening();
-                }
-
-            }
-        );
+    }
 
 
-        sendButton.addEventListener(
-            "click",
-            sendMessage
-        );
+    /* =====================================================
+       AVATAR ANIMATION
+    ===================================================== */
 
+    function setMainAvatarFrame(
+        imageSource
+    ) {
 
-        input.addEventListener(
-            "input",
-            function () {
-
-                resizeInput();
-
-                updateCharacterCount();
-
-            }
-        );
-
-
-        input.addEventListener(
-            "keydown",
-            function (event) {
-
-                if (
-                    event.key === "Enter" &&
-                    !event.shiftKey
-                ) {
-                    event.preventDefault();
-
-                    sendMessage();
-                }
-
-            }
-        );
-
-
-        document.addEventListener(
-            "keydown",
-            function (event) {
-
-                if (
-                    event.key === "Escape" &&
-                    !shell.hidden
-                ) {
-                    animateClose();
-                }
-
-            }
-        );
-
-
-        window.addEventListener(
-            "beforeunload",
-            function () {
-
-                if (
-                    "speechSynthesis"
-                    in window
-                ) {
-                    window.speechSynthesis.cancel();
-                }
-
-            }
-        );
-
-
-        if (
-            "speechSynthesis"
-            in window
-        ) {
-            window.speechSynthesis.onvoiceschanged =
-                function () {
-
-                    window.speechSynthesis.getVoices();
-
-                };
+        if (!character) {
+            return;
         }
 
+        character.src =
+            imageSource ||
+            avatarFrames.fallback;
 
-        installImageFallbacks();
+    }
 
-        preloadAvatarImages();
 
+    function setHeaderAvatarFrame(
+        imageSource
+    ) {
+
+        if (!headerAvatar) {
+            return;
+        }
 
         headerAvatar.src =
-            avatarFrames.idle[0] ||
+            imageSource ||
             avatarFrames.fallback;
 
-
-        thinkingAvatar.src =
-            avatarFrames.thinking[0] ||
-            avatarFrames.fallback;
+    }
 
 
-        setMainAvatarFrame(
-            avatarFrames.idle[0] ||
-            avatarFrames.fallback
+    function stopAvatarAnimation() {
+
+        if (avatarAnimationTimer) {
+
+            window.clearInterval(
+                avatarAnimationTimer
+            );
+
+            avatarAnimationTimer =
+                null;
+
+        }
+
+        avatarFrameIndex = 0;
+
+    }
+
+
+    function removeAvatarClasses() {
+
+        if (!character) {
+            return;
+        }
+
+        character.classList.remove(
+            "is-idle",
+            "is-speaking",
+            "is-thinking",
+            "is-explaining",
+            "is-wave",
+            "is-blinking"
         );
 
+    }
+
+
+    function playAvatarFrames(
+        state,
+        options
+    ) {
+
+        const settings =
+            options || {};
+
+        const frames =
+            avatarFrames[state];
+
+        if (
+            !frames ||
+            frames.length === 0
+        ) {
+
+            setMainAvatarFrame(
+                avatarFrames.fallback
+            );
+
+            return;
+
+        }
+
+        stopAvatarAnimation();
+
+        removeAvatarClasses();
+
+        avatarState = state;
+
+        avatarFrameIndex = 0;
+
+        const speed =
+            Number(settings.speed) ||
+            250;
+
+        const loop =
+            settings.loop !== false;
+
+        const returnToIdle =
+            settings.returnToIdle !== false;
+
+        character.classList.add(
+            "is-" + state
+        );
+
+        setMainAvatarFrame(
+            frames[0]
+        );
+
+        if (
+            state === "thinking" &&
+            thinkingAvatar
+        ) {
+
+            thinkingAvatar.src =
+                frames[0];
+
+        }
+
+        avatarAnimationTimer =
+            window.setInterval(
+                function () {
+
+                    if (
+                        !pageIsVisible &&
+                        state !== "speaking"
+                    ) {
+                        return;
+                    }
+
+                    avatarFrameIndex++;
+
+                    if (
+                        avatarFrameIndex >=
+                        frames.length
+                    ) {
+
+                        if (loop) {
+
+                            avatarFrameIndex = 0;
+
+                        } else {
+
+                            stopAvatarAnimation();
+
+                            if (returnToIdle) {
+
+                                setAvatarState(
+                                    "idle"
+                                );
+
+                            }
+
+                            return;
+
+                        }
+
+                    }
+
+                    const frame =
+                        frames[
+                            avatarFrameIndex
+                        ];
+
+                    setMainAvatarFrame(
+                        frame
+                    );
+
+                    if (
+                        state === "thinking" &&
+                        thinkingAvatar
+                    ) {
+
+                        thinkingAvatar.src =
+                            frame;
+
+                    }
+
+                },
+                speed
+            );
+
+    }
+
+
+    function setAvatarState(
+        state
+    ) {
+
+        if (state === "idle") {
+
+            playAvatarFrames(
+                "idle",
+                {
+                    speed: 620,
+                    loop: true,
+                    returnToIdle: false
+                }
+            );
+
+            return;
+
+        }
+
+        if (state === "blink") {
+
+            playAvatarFrames(
+                "blink",
+                {
+                    speed: 115,
+                    loop: false,
+                    returnToIdle: true
+                }
+            );
+
+            return;
+
+        }
+
+        if (state === "wave") {
+
+            playAvatarFrames(
+                "wave",
+                {
+                    speed: 220,
+                    loop: false,
+                    returnToIdle: true
+                }
+            );
+
+            return;
+
+        }
+
+        if (state === "thinking") {
+
+            playAvatarFrames(
+                "thinking",
+                {
+                    speed: 270,
+                    loop: true,
+                    returnToIdle: false
+                }
+            );
+
+            return;
+
+        }
+
+        if (state === "explaining") {
+
+            playAvatarFrames(
+                "explaining",
+                {
+                    speed: 230,
+                    loop: true,
+                    returnToIdle: false
+                }
+            );
+
+            return;
+
+        }
+
+        if (state === "speaking") {
+
+            playAvatarFrames(
+                "speaking",
+                {
+                    speed: 145,
+                    loop: true,
+                    returnToIdle: false
+                }
+            );
+
+        }
+
+    }
+
+
+    function resetAssistantVisuals() {
 
         setAvatarState(
             "idle"
         );
 
+        if (status) {
+
+            status.textContent =
+                "Online";
+
+        }
+
+    }
+
+
+    function scheduleBlink() {
+
+        if (blinkTimer) {
+
+            window.clearTimeout(
+                blinkTimer
+            );
+
+        }
+
+        const nextBlinkTime =
+            3500 +
+            Math.random() * 3500;
+
+        blinkTimer =
+            window.setTimeout(
+                function () {
+
+                    const canBlink =
+
+                        pageIsVisible &&
+                        !shell.hidden &&
+                        !isSending &&
+                        !isListening &&
+                        avatarState === "idle";
+
+                    if (canBlink) {
+
+                        setAvatarState(
+                            "blink"
+                        );
+
+                    }
+
+                    scheduleBlink();
+
+                },
+                nextBlinkTime
+            );
+
+    }
+
+
+    /* =====================================================
+       CHAT MESSAGES
+    ===================================================== */
+
+    function createMessage(
+        role,
+        text
+    ) {
+
+        const row =
+            document.createElement(
+                "div"
+            );
+
+        row.className =
+            "basha-ai-message-row " +
+            (
+                role === "user"
+                    ? "is-user"
+                    : "is-assistant"
+            );
+
+        const bubble =
+            document.createElement(
+                "div"
+            );
+
+        bubble.className =
+            "basha-ai-message";
+
+        const content =
+            document.createElement(
+                "span"
+            );
+
+        content.className =
+            "basha-ai-message-content";
+
+        const time =
+            document.createElement(
+                "span"
+            );
+
+        time.className =
+            "basha-ai-message-time";
+
+        time.textContent =
+            getCurrentTime();
+
+        bubble.appendChild(
+            content
+        );
+
+        bubble.appendChild(
+            time
+        );
+
+        row.appendChild(
+            bubble
+        );
+
+        messages.appendChild(
+            row
+        );
+
+        conversationHistory.push({
+            role: role,
+            text: text
+        });
+
+        if (
+            conversationHistory.length >
+            20
+        ) {
+
+            conversationHistory =
+                conversationHistory.slice(
+                    -20
+                );
+
+        }
+
+        scrollMessagesToBottom();
+
+        return content;
+
+    }
+
+
+    async function addMessage(
+        role,
+        text,
+        useTypewriter
+    ) {
+
+        const contentElement =
+            createMessage(
+                role,
+                text
+            );
+
+        const fullText =
+            String(text || "");
+
+        if (!useTypewriter) {
+
+            contentElement.textContent =
+                fullText;
+
+            scrollMessagesToBottom();
+
+            return;
+
+        }
+
+        if (role === "assistant") {
+
+            setAvatarState(
+                "explaining"
+            );
+
+            if (status) {
+
+                status.textContent =
+                    "Laxmi is explaining...";
+
+            }
+
+        }
+
+        for (
+            const letter of fullText
+        ) {
+
+            contentElement.textContent +=
+                letter;
+
+            scrollMessagesToBottom();
+
+            await wait(11);
+
+        }
+
+    }
+
+
+    /* =====================================================
+       SPEECH SYNTHESIS / TTS
+    ===================================================== */
+
+    function primeSpeechSynthesis() {
+
+        if (
+            !(
+                "speechSynthesis"
+                in window
+            )
+        ) {
+            return;
+        }
+
+        window.speechSynthesis.resume();
+
+        window.speechSynthesis.getVoices();
+
+    }
+
+
+    function stopSpeechKeepAlive() {
+
+        if (speechKeepAliveTimer) {
+
+            window.clearInterval(
+                speechKeepAliveTimer
+            );
+
+            speechKeepAliveTimer =
+                null;
+
+        }
+
+    }
+
+
+    function chooseSpeechVoice(
+        languageTag
+    ) {
+
+        if (
+            !(
+                "speechSynthesis"
+                in window
+            )
+        ) {
+            return null;
+        }
+
+        const availableVoices =
+            window.speechSynthesis.getVoices();
+
+        if (
+            !availableVoices.length
+        ) {
+            return null;
+        }
+
+        const normalizedTag =
+            String(
+                languageTag || ""
+            ).toLowerCase();
+
+        const languagePrefix =
+            normalizedTag.split("-")[0];
+
+        const exactVoice =
+            availableVoices.find(
+                function (voice) {
+
+                    return (
+                        voice.lang.toLowerCase() ===
+                        normalizedTag
+                    );
+
+                }
+            );
+
+        if (exactVoice) {
+            return exactVoice;
+        }
+
+        const languageVoice =
+            availableVoices.find(
+                function (voice) {
+
+                    return voice.lang
+                        .toLowerCase()
+                        .startsWith(
+                            languagePrefix
+                        );
+
+                }
+            );
+
+        if (languageVoice) {
+            return languageVoice;
+        }
+
+        return (
+            availableVoices.find(
+                function (voice) {
+
+                    return voice.lang
+                        .toLowerCase()
+                        .startsWith("en");
+
+                }
+            ) ||
+            null
+        );
+
+    }
+
+    function splitSpeechText(text) {
+
+        const cleanText =
+            String(text || "")
+                .replace(/\s+/g, " ")
+                .trim();
+
+        if (!cleanText) {
+            return [];
+        }
+
+        const parts =
+            cleanText.match(
+                /[^.!?।॥\n]+[.!?।॥]?/g
+            ) || [cleanText];
+
+        const chunks = [];
+
+        let currentChunk = "";
+
+        parts.forEach(function (part) {
+
+            const nextChunk =
+                currentChunk
+                    ? currentChunk + " " + part.trim()
+                    : part.trim();
+
+            if (
+                nextChunk.length > 220 &&
+                currentChunk
+            ) {
+
+                chunks.push(
+                    currentChunk.trim()
+                );
+
+                currentChunk =
+                    part.trim();
+
+            } else {
+
+                currentChunk =
+                    nextChunk;
+
+            }
+
+        });
+
+        if (currentChunk) {
+
+            chunks.push(
+                currentChunk.trim()
+            );
+
+        }
+
+        return chunks;
+    }
+
+
+    async function speakText(
+        text,
+        liveTextElement
+    ) {
+
+        if (
+            !voiceReplyEnabled ||
+            !text
+        ) {
+
+            if (liveTextElement) {
+                liveTextElement.textContent =
+                    String(text || "");
+            }
+
+            resetAssistantVisuals();
+
+            return;
+        }
+
+        if (!audioPlayer) {
+
+            throw new Error(
+                "AI audio player not found."
+            );
+
+        }
+
+        const fullText =
+            String(text || "").trim();
+
+        if (!fullText) {
+            return;
+        }
+
+        audioPlayer.pause();
+
+        audioPlayer.removeAttribute(
+            "src"
+        );
+
+        audioPlayer.load();
+
+        const response =
+            await fetch(
+                "/api/tts",
+                {
+                    method: "POST",
+
+                    credentials:
+                        "same-origin",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json",
+
+                        "Accept":
+                            "audio/mpeg"
+                    },
+
+                    body:
+                        JSON.stringify({
+                            text:
+                                fullText,
+
+                            languageCode:
+                                userLanguageCode
+                        })
+                }
+            );
+
+        if (!response.ok) {
+
+            let errorMessage =
+                "Unable to generate voice.";
+
+            try {
+
+                const errorData =
+                    await response.json();
+
+                errorMessage =
+                    errorData.error ||
+                    errorMessage;
+
+            } catch (error) {
+                // Audio error response may not be JSON.
+            }
+
+            throw new Error(
+                errorMessage
+            );
+        }
+
+        const audioBlob =
+            await response.blob();
+
+        const audioUrl =
+            URL.createObjectURL(
+                audioBlob
+            );
+
+        audioPlayer.src =
+            audioUrl;
+
+        setAvatarState(
+            "speaking"
+        );
+
+        characterSection.classList.add(
+            "is-speaking"
+        );
+
+        status.textContent =
+            "Laxmi is speaking...";
+
+        voiceStatus.textContent =
+            "Laxmi is speaking...";
+
+        if (liveTextElement) {
+
+            liveTextElement.textContent =
+                "";
+
+        }
+
+        await new Promise(
+            function (
+                resolve,
+                reject
+            ) {
+
+                let wordTimer = null;
+
+                function startTextSync() {
+
+                    if (!liveTextElement) {
+                        return;
+                    }
+
+                    const words =
+                        fullText.split(
+                            /\s+/
+                        );
+
+                    let wordIndex = 0;
+
+                    const audioDuration =
+                        Number(
+                            audioPlayer.duration
+                        );
+
+                    const totalDuration =
+                        Number.isFinite(
+                            audioDuration
+                        ) &&
+                        audioDuration > 0
+
+                            ? audioDuration * 1000
+
+                            : Math.max(
+                                words.length * 430,
+                                1500
+                            );
+
+                    const interval =
+                        Math.max(
+                            120,
+                            totalDuration /
+                            Math.max(
+                                words.length,
+                                1
+                            )
+                        );
+
+                    wordTimer =
+                        window.setInterval(
+                            function () {
+
+                                if (
+                                    wordIndex >=
+                                    words.length
+                                ) {
+
+                                    window.clearInterval(
+                                        wordTimer
+                                    );
+
+                                    wordTimer = null;
+
+                                    liveTextElement.textContent =
+                                        fullText;
+
+                                    return;
+
+                                }
+
+                                liveTextElement.textContent +=
+                                    (
+                                        wordIndex === 0
+                                            ? ""
+                                            : " "
+                                    ) +
+                                    words[wordIndex];
+
+                                wordIndex++;
+
+                                scrollMessagesToBottom();
+
+                            },
+                            interval
+                        );
+
+                }
+
+
+                audioPlayer.onloadedmetadata =
+                    function () {
+
+                        startTextSync();
+
+                    };
+
+
+                audioPlayer.onended =
+                    function () {
+
+                        if (wordTimer) {
+
+                            window.clearInterval(
+                                wordTimer
+                            );
+
+                        }
+
+                        if (liveTextElement) {
+
+                            liveTextElement.textContent =
+                                fullText;
+
+                        }
+
+                        URL.revokeObjectURL(
+                            audioUrl
+                        );
+
+                        characterSection.classList.remove(
+                            "is-speaking"
+                        );
+
+                        resetAssistantVisuals();
+
+                        voiceStatus.textContent =
+                            "Type or tap microphone";
+
+                        resolve();
+
+                    };
+
+
+                audioPlayer.onerror =
+                    function () {
+
+                        if (wordTimer) {
+
+                            window.clearInterval(
+                                wordTimer
+                            );
+
+                        }
+
+                        URL.revokeObjectURL(
+                            audioUrl
+                        );
+
+                        characterSection.classList.remove(
+                            "is-speaking"
+                        );
+
+                        resetAssistantVisuals();
+
+                        reject(
+                            new Error(
+                                "Laxmi audio playback failed."
+                            )
+                        );
+
+                    };
+
+
+                audioPlayer.play().catch(
+                    function (error) {
+
+                        URL.revokeObjectURL(
+                            audioUrl
+                        );
+
+                        reject(
+                            error
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       GREETING
+    ===================================================== */
+
+    async function typeGreeting(text) {
+
+        const currentRunId =
+            ++greetingRunId;
+
+        introBubble.textContent = "";
+
+        const greetingText =
+            String(text || "");
+
+        for (
+            const letter of greetingText
+        ) {
+
+            if (
+                currentRunId !==
+                greetingRunId
+            ) {
+                return;
+            }
+
+            introBubble.textContent +=
+                letter;
+
+            await wait(18);
+
+        }
+
+    }
+
+
+    async function loadGreeting() {
+
+        introBubble.classList.add(
+            "show"
+        );
+
+        introBubble.innerHTML = `
+            <span class="basha-ai-intro-loading">
+                <span></span>
+                <span></span>
+                <span></span>
+            </span>
+        `;
+
+        try {
+
+            const response =
+                await fetch(
+                    "/api/ai-assistant/greeting",
+                    {
+                        method: "GET",
+
+                        credentials:
+                            "same-origin",
+
+                        headers: {
+                            "Accept":
+                                "application/json"
+                        }
+                    }
+                );
+
+            const data =
+                await response.json();
+
+            if (
+                !response.ok ||
+                !data.success
+            ) {
+
+                throw new Error(
+                    data.error ||
+                    "Unable to load assistant."
+                );
+
+            }
+
+            userLanguageCode =
+                data.languageCode ||
+                "en";
+
+            setupSpeechRecognition();
+
+            setAvatarState(
+                "wave"
+            );
+
+            status.textContent =
+                "Welcoming you...";
+
+            await wait(1050);
+
+            introBubble.textContent =
+                "";
+
+            status.textContent =
+                "Laxmi is speaking...";
+
+            voiceStatus.textContent =
+                "Please listen...";
+
+            introBubble.textContent =
+                "";
+
+            await speakText(
+                data.greeting,
+                introBubble
+            );
+
+            status.textContent =
+                "Ready";
+
+            voiceStatus.textContent =
+                "Tap microphone or type your question";
+
+        } catch (error) {
+
+            console.log(
+                "Greeting error:",
+                error
+            );
+
+            const fallbackGreeting =
+                "Hi 👋 I am Laxmi, your Basha AI Assistant. How can I help you?";
+
+            await typeGreeting(
+                fallbackGreeting
+            );
+
+            showError(
+                error.message
+            );
+
+            resetAssistantVisuals();
+
+        }
+
+    }
+
+
+    /* =====================================================
+       OPEN FLY ANIMATION
+    ===================================================== */
+
+    function getTargetCharacterRect() {
+
+        const sectionRect =
+            characterSection
+                .getBoundingClientRect();
+
+        const isMobile =
+            window.innerWidth <= 600;
+
+        const size =
+            isMobile
+                ? 88
+                : 102;
+
+        return {
+
+            left:
+                sectionRect.left +
+                (
+                    isMobile
+                        ? 20
+                        : 46
+                ),
+
+            top:
+                sectionRect.bottom -
+                size -
+                (
+                    isMobile
+                        ? 28
+                        : 42
+                ),
+
+            width: size,
+
+            height: size
+
+        };
+
+    }
+
+
+    function setFlyingAvatarRect(
+        rectangle
+    ) {
+
+        flyingAvatar.style.left =
+            rectangle.left + "px";
+
+        flyingAvatar.style.top =
+            rectangle.top + "px";
+
+        flyingAvatar.style.width =
+            rectangle.width + "px";
+
+        flyingAvatar.style.height =
+            rectangle.height + "px";
+
+    }
+
+
+    function resetFlyingAvatarStyles() {
+
+        flyingAvatar.style.transform = "";
+
+        flyingAvatar.style.opacity = "";
+
+    }
+
+
+    async function animateOpen() {
+
+        if (
+            isAnimating ||
+            !shell.hidden
+        ) {
+            return;
+        }
+
+        isAnimating = true;
+
+        primeSpeechSynthesis();
+
+        hideError();
+
+        stopListening();
+
+        resetFlyingAvatarStyles();
+
+        const flyingImage =
+            flyingAvatar.querySelector(
+                "img"
+            );
+
+        if (flyingImage) {
+
+            flyingImage.src =
+                avatarFrames.idle[0] ||
+                avatarFrames.fallback;
+
+        }
+
+        shell.hidden = false;
+
+        shell.classList.remove(
+            "is-open",
+            "character-ready"
+        );
+
+        introBubble.classList.remove(
+            "show"
+        );
+
+        resetAssistantVisuals();
+
+        const startRect =
+            topAvatar.getBoundingClientRect();
+
+        setFlyingAvatarRect(
+            startRect
+        );
+
+        flyingAvatar.hidden = false;
+
+        openButton.classList.add(
+            "is-hidden"
+        );
+
+        await wait(30);
+
+        shell.classList.add(
+            "is-open"
+        );
+
+        document.body.classList.add(
+            "basha-ai-open"
+        );
+
+        await wait(110);
+
+        const destination =
+            getTargetCharacterRect();
+
+        const deltaX =
+            destination.left -
+            startRect.left;
+
+        const deltaY =
+            destination.top -
+            startRect.top;
+
+        const scaleX =
+            destination.width /
+            Math.max(
+                startRect.width,
+                1
+            );
+
+        const scaleY =
+            destination.height /
+            Math.max(
+                startRect.height,
+                1
+            );
+
+        try {
+
+            if (
+                typeof flyingAvatar.animate ===
+                "function"
+            ) {
+
+                const animation =
+                    flyingAvatar.animate(
+                        [
+                            {
+                                transform:
+                                    "translate3d(0, 0, 0) scale(1)",
+
+                                opacity: 1
+                            },
+
+                            {
+                                transform:
+                                    "translate3d(" +
+                                    (deltaX * 0.52) +
+                                    "px, " +
+                                    (deltaY * 0.24) +
+                                    "px, 0) " +
+                                    "scale(1.30) rotate(-7deg)",
+
+                                opacity: 1,
+
+                                offset: 0.45
+                            },
+
+                            {
+                                transform:
+                                    "translate3d(" +
+                                    deltaX +
+                                    "px, " +
+                                    deltaY +
+                                    "px, 0) " +
+                                    "scale(" +
+                                    scaleX +
+                                    ", " +
+                                    scaleY +
+                                    ") rotate(0deg)",
+
+                                opacity: 1
+                            }
+                        ],
+
+                        {
+                            duration: 760,
+
+                            easing:
+                                "cubic-bezier(.18,.84,.32,1)",
+
+                            fill:
+                                "forwards"
+                        }
+                    );
+
+                await animation.finished;
+
+            } else {
+
+                await wait(400);
+
+            }
+
+        } catch (error) {
+
+            console.log(
+                "AI open animation error:",
+                error
+            );
+
+        }
+
+        flyingAvatar.hidden = true;
+
+        resetFlyingAvatarStyles();
+
+        shell.classList.add(
+            "character-ready"
+        );
+
+        introBubble.classList.add(
+            "show"
+        );
+
+        isAnimating = false;
+
+        scheduleBlink();
+
+        window.setTimeout(
+            function () {
+
+                if (
+                    window.innerWidth >
+                    600
+                ) {
+
+                    input.focus();
+
+                }
+
+            },
+            150
+        );
+
+        if (!initialized) {
+
+            initialized = true;
+
+            loadGreeting();
+
+        }
+
+    }
+
+
+    /* =====================================================
+       REVERSE CLOSE ANIMATION
+    ===================================================== */
+
+    async function animateClose() {
+
+        if (
+            isAnimating ||
+            shell.hidden
+        ) {
+            return;
+        }
+
+        isAnimating = true;
+
+        stopAvatarAnimation();
+
+        stopSpeechKeepAlive();
+
+        greetingRunId++;
+
+        if (blinkTimer) {
+
+            window.clearTimeout(
+                blinkTimer
+            );
+
+        }
+
+        if (
+            "speechSynthesis"
+            in window
+        ) {
+
+            window.speechSynthesis.cancel();
+
+        }
+
+        stopListening();
+
+        const characterRect =
+            character.getBoundingClientRect();
+
+        const startSize =
+            Math.min(
+                characterRect.width,
+                characterRect.height,
+                108
+            );
+
+        const startRect = {
+
+            left:
+                characterRect.left +
+                (
+                    characterRect.width -
+                    startSize
+                ) / 2,
+
+            top:
+                characterRect.top +
+                (
+                    characterRect.height -
+                    startSize
+                ) / 2,
+
+            width: startSize,
+
+            height: startSize
+
+        };
+
+        const destination =
+            topAvatar
+                .getBoundingClientRect();
+
+        setFlyingAvatarRect(
+            startRect
+        );
+
+        const flyingImage =
+            flyingAvatar.querySelector(
+                "img"
+            );
+
+        if (flyingImage) {
+
+            flyingImage.src =
+                character.src ||
+                avatarFrames.idle[0];
+
+        }
+
+        flyingAvatar.hidden = false;
+
+        shell.classList.remove(
+            "character-ready"
+        );
+
+        introBubble.classList.remove(
+            "show"
+        );
+
+        await wait(30);
+
+        shell.classList.remove(
+            "is-open"
+        );
+
+        const deltaX =
+            destination.left -
+            startRect.left;
+
+        const deltaY =
+            destination.top -
+            startRect.top;
+
+        const scaleX =
+            destination.width /
+            Math.max(
+                startRect.width,
+                1
+            );
+
+        const scaleY =
+            destination.height /
+            Math.max(
+                startRect.height,
+                1
+            );
+
+        try {
+
+            if (
+                typeof flyingAvatar.animate ===
+                "function"
+            ) {
+
+                const animation =
+                    flyingAvatar.animate(
+                        [
+                            {
+                                transform:
+                                    "translate3d(0,0,0) scale(1)",
+
+                                opacity: 1
+                            },
+
+                            {
+                                transform:
+                                    "translate3d(" +
+                                    (deltaX * 0.55) +
+                                    "px, " +
+                                    (deltaY * 0.72) +
+                                    "px, 0) " +
+                                    "scale(.82) rotate(7deg)",
+
+                                opacity: 1,
+
+                                offset: 0.55
+                            },
+
+                            {
+                                transform:
+                                    "translate3d(" +
+                                    deltaX +
+                                    "px, " +
+                                    deltaY +
+                                    "px, 0) " +
+                                    "scale(" +
+                                    scaleX +
+                                    ", " +
+                                    scaleY +
+                                    ") rotate(0deg)",
+
+                                opacity: 0.96
+                            }
+                        ],
+
+                        {
+                            duration: 620,
+
+                            easing:
+                                "cubic-bezier(.4,0,.2,1)",
+
+                            fill:
+                                "forwards"
+                        }
+                    );
+
+                await animation.finished;
+
+            } else {
+
+                await wait(300);
+
+            }
+
+        } catch (error) {
+
+            console.log(
+                "AI close animation error:",
+                error
+            );
+
+        }
+
+        flyingAvatar.hidden = true;
+
+        resetFlyingAvatarStyles();
+
+        shell.hidden = true;
+
+        openButton.classList.remove(
+            "is-hidden"
+        );
+
+        document.body.classList.remove(
+            "basha-ai-open"
+        );
+
+        resetAssistantVisuals();
+
+        isAnimating = false;
+
+    }
+
+
+    /* =====================================================
+       CLEAR CONVERSATION
+    ===================================================== */
+
+    function clearConversation() {
+
+        conversationHistory = [];
+
+        messages.innerHTML = "";
+
+        input.value = "";
+
+        resizeInput();
+
+        updateCharacterCount();
+
+        hideError();
+
+        greetingRunId++;
+
+        stopSpeechKeepAlive();
+
+        if (
+            "speechSynthesis"
+            in window
+        ) {
+
+            window.speechSynthesis.cancel();
+
+        }
+
+        stopAvatarAnimation();
+
+        resetAssistantVisuals();
+
+        loadGreeting();
+
+    }
+
+
+    /* =====================================================
+       SEND MESSAGE
+    ===================================================== */
+
+    async function sendMessage() {
+
+        const message =
+            input.value.trim();
+
+        if (
+            !message ||
+            isSending
+        ) {
+            return;
+        }
+
+        hideError();
+
+        await addMessage(
+            "user",
+            message,
+            false
+        );
+
+        input.value = "";
+
+        resizeInput();
+
+        isSending = true;
+
+        updateCharacterCount();
+
+        thinking.hidden = false;
+
+        micButton.disabled = true;
+
+        status.textContent =
+            "Laxmi is thinking...";
+
+        voiceStatus.textContent =
+            "Preparing answer...";
+
+        setAvatarState(
+            "thinking"
+        );
+
+        scrollMessagesToBottom();
+
+        try {
+
+            const historyForRequest =
+                conversationHistory.slice(
+                    0,
+                    -1
+                );
+
+            const response =
+                await fetch(
+                    "/api/ai-assistant/chat",
+                    {
+                        method:
+                            "POST",
+
+                        credentials:
+                            "same-origin",
+
+                        headers: {
+
+                            "Content-Type":
+                                "application/json",
+
+                            "Accept":
+                                "application/json"
+
+                        },
+
+                        body:
+                            JSON.stringify({
+
+                                message:
+                                    message,
+
+                                history:
+                                    historyForRequest
+
+                            })
+                    }
+                );
+
+            const data =
+                await response.json();
+
+            if (
+                !response.ok ||
+                !data.success
+            ) {
+
+                throw new Error(
+                    data.error ||
+                    "AI response failed."
+                );
+
+            }
+
+            userLanguageCode =
+                data.languageCode ||
+                userLanguageCode;
+
+            setupSpeechRecognition();
+
+            thinking.hidden = true;
+
+            status.textContent =
+                "Laxmi is speaking...";
+
+            voiceStatus.textContent =
+                "Please listen...";
+
+            const assistantContent =
+                createMessage(
+                    "assistant",
+                    data.reply
+                );
+
+            await speakText(
+                data.reply,
+                assistantContent
+            );
+
+        } catch (error) {
+
+            console.log(
+                "AI chat error:",
+                error
+            );
+
+            showError(
+                error.message ||
+                "Unable to get AI response."
+            );
+
+            resetAssistantVisuals();
+
+        } finally {
+
+            isSending = false;
+
+            thinking.hidden = true;
+
+            micButton.disabled = false;
+
+            voiceStatus.textContent =
+                "Type or tap microphone";
+
+            if (
+                !character.classList.contains(
+                    "is-speaking"
+                )
+            ) {
+
+                resetAssistantVisuals();
+
+            }
+
+            updateCharacterCount();
+
+        }
+
+    }
+
+
+    /* =====================================================
+       SPEECH RECOGNITION
+    ===================================================== */
+
+    function setupSpeechRecognition() {
+
+        const SpeechRecognition =
+            window.SpeechRecognition ||
+            window.webkitSpeechRecognition;
+
+        if (!SpeechRecognition) {
+
+            micButton.disabled = true;
+
+            voiceStatus.textContent =
+                "Voice input is not supported in this browser";
+
+            return;
+
+        }
+
+        if (recognition) {
+
+            recognition.lang =
+                speechLanguageMap[
+                    userLanguageCode
+                ] ||
+                userLanguageCode ||
+                "en-IN";
+
+            return;
+
+        }
+
+        recognition =
+            new SpeechRecognition();
+
+        recognition.continuous =
+            false;
+
+        recognition.interimResults =
+            true;
+
+        recognition.maxAlternatives =
+            1;
+
+        recognition.lang =
+            speechLanguageMap[
+                userLanguageCode
+            ] ||
+            userLanguageCode ||
+            "en-IN";
+
+        recognition.onstart =
+            function () {
+
+                isListening = true;
+
+                micButton.classList.add(
+                    "is-listening"
+                );
+
+                micButton.innerHTML =
+                    '<i class="bi bi-stop-fill"></i>';
+
+                voiceStatus.textContent =
+                    "Listening...";
+
+                status.textContent =
+                    "Laxmi is listening...";
+
+            };
+
+        recognition.onresult =
+            function (event) {
+
+                let finalText = "";
+
+                let interimText = "";
+
+                for (
+                    let index =
+                        event.resultIndex;
+
+                    index <
+                        event.results.length;
+
+                    index++
+                ) {
+
+                    const transcript =
+                        event.results[
+                            index
+                        ][0].transcript;
+
+                    if (
+                        event.results[
+                            index
+                        ].isFinal
+                    ) {
+
+                        finalText +=
+                            transcript;
+
+                    } else {
+
+                        interimText +=
+                            transcript;
+
+                    }
+
+                }
+
+                const spokenText =
+                    finalText ||
+                    interimText;
+
+                if (spokenText) {
+
+                    input.value =
+                        spokenText.trim();
+
+                    resizeInput();
+
+                    updateCharacterCount();
+
+                }
+
+            };
+
+        recognition.onerror =
+            function (event) {
+
+                console.log(
+                    "Voice recognition error:",
+                    event.error
+                );
+
+                stopListening();
+
+                if (
+                    event.error !==
+                    "no-speech" &&
+                    event.error !==
+                    "aborted"
+                ) {
+
+                    showError(
+                        "Voice input error: " +
+                        event.error
+                    );
+
+                }
+
+            };
+
+        recognition.onend =
+            function () {
+
+                const shouldSend =
+
+                    isListening &&
+                    input.value.trim();
+
+                stopListening();
+
+                if (shouldSend) {
+
+                    window.setTimeout(
+                        sendMessage,
+                        200
+                    );
+
+                }
+
+            };
+
+    }
+
+
+    function startListening() {
+
+        if (isSending) {
+            return;
+        }
+
+        if (!recognition) {
+
+            setupSpeechRecognition();
+
+        }
+
+        if (!recognition) {
+            return;
+        }
+
+        hideError();
+
+        stopSpeechKeepAlive();
+
+        if (
+            "speechSynthesis"
+            in window
+        ) {
+
+            window.speechSynthesis.cancel();
+
+        }
+
+        setAvatarState(
+            "idle"
+        );
+
+        recognition.lang =
+            speechLanguageMap[
+                userLanguageCode
+            ] ||
+            userLanguageCode ||
+            "en-IN";
+
+        try {
+
+            recognition.start();
+
+        } catch (error) {
+
+            console.log(
+                "Speech recognition already active.",
+                error
+            );
+
+        }
+
+    }
+
+
+    function stopListening() {
+
+        if (
+            recognition &&
+            isListening
+        ) {
+
+            try {
+
+                recognition.stop();
+
+            } catch (error) {
+
+                console.log(
+                    "Stop recognition error:",
+                    error
+                );
+
+            }
+
+        }
+
+        isListening = false;
+
+        micButton.classList.remove(
+            "is-listening"
+        );
+
+        micButton.innerHTML =
+            '<i class="bi bi-mic-fill"></i>';
+
+        voiceStatus.textContent =
+            "Type or tap microphone";
+
+        if (!isSending) {
+
+            status.textContent =
+                "Online";
+
+        }
+
+    }
+
+
+    /* =====================================================
+       VOICE TOGGLE
+    ===================================================== */
+
+    function updateVoiceToggleUI() {
 
         voiceToggle.classList.toggle(
             "is-muted",
             !voiceReplyEnabled
         );
 
-
         voiceToggle.innerHTML =
+
             voiceReplyEnabled
 
                 ? '<i class="bi bi-volume-up-fill"></i>'
 
                 : '<i class="bi bi-volume-mute-fill"></i>';
 
-
-        updateCharacterCount();
+        voiceToggle.setAttribute(
+            "aria-pressed",
+            voiceReplyEnabled
+                ? "false"
+                : "true"
+        );
 
     }
-);
+
+
+    /* =====================================================
+       EVENTS
+    ===================================================== */
+
+    openButton.addEventListener(
+        "click",
+        animateOpen
+    );
+
+
+    closeButton.addEventListener(
+        "click",
+        animateClose
+    );
+
+
+    backdrop.addEventListener(
+        "click",
+        animateClose
+    );
+
+
+    clearButton.addEventListener(
+        "click",
+        clearConversation
+    );
+
+
+    voiceToggle.addEventListener(
+        "click",
+        function () {
+
+            voiceReplyEnabled =
+                !voiceReplyEnabled;
+
+            localStorage.setItem(
+                "bashaAiVoiceReply",
+                voiceReplyEnabled
+                    ? "on"
+                    : "off"
+            );
+
+            updateVoiceToggleUI();
+
+            if (!voiceReplyEnabled) {
+
+                stopSpeechKeepAlive();
+
+                if (
+                    "speechSynthesis"
+                    in window
+                ) {
+
+                    window.speechSynthesis.cancel();
+
+                }
+
+                resetAssistantVisuals();
+
+                voiceStatus.textContent =
+                    "Voice reply is off";
+
+            } else {
+
+                primeSpeechSynthesis();
+
+                voiceStatus.textContent =
+                    "Voice reply is on";
+
+            }
+
+        }
+    );
+
+
+    micButton.addEventListener(
+        "click",
+        function () {
+
+            if (isListening) {
+
+                stopListening();
+
+            } else {
+
+                startListening();
+
+            }
+
+        }
+    );
+
+
+    sendButton.addEventListener(
+        "click",
+        sendMessage
+    );
+
+
+    input.addEventListener(
+        "input",
+        function () {
+
+            resizeInput();
+
+            updateCharacterCount();
+
+        }
+    );
+
+
+    input.addEventListener(
+        "keydown",
+        function (event) {
+
+            if (
+                event.key === "Enter" &&
+                !event.shiftKey
+            ) {
+
+                event.preventDefault();
+
+                sendMessage();
+
+            }
+
+        }
+    );
+
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+
+            if (
+                event.key === "Escape" &&
+                !shell.hidden
+            ) {
+
+                animateClose();
+
+            }
+
+        }
+    );
+
+
+    document.addEventListener(
+        "visibilitychange",
+        function () {
+
+            pageIsVisible =
+                document.visibilityState ===
+                "visible";
+
+            if (!pageIsVisible) {
+
+                if (blinkTimer) {
+
+                    window.clearTimeout(
+                        blinkTimer
+                    );
+
+                }
+
+            } else if (!shell.hidden) {
+
+                if (
+                    avatarState !==
+                    "speaking" &&
+                    avatarState !==
+                    "thinking"
+                ) {
+
+                    setAvatarState(
+                        "idle"
+                    );
+
+                }
+
+                scheduleBlink();
+
+            }
+
+        }
+    );
+
+
+    window.addEventListener(
+        "resize",
+        function () {
+
+            if (
+                !shell.hidden &&
+                !isAnimating
+            ) {
+
+                panel.style.height =
+                    window.innerWidth <= 600
+                        ? window.innerHeight + "px"
+                        : "";
+
+            }
+
+        }
+    );
+
+
+    window.addEventListener(
+        "beforeunload",
+        function () {
+
+            stopAvatarAnimation();
+
+            stopSpeechKeepAlive();
+
+            if (
+                "speechSynthesis"
+                in window
+            ) {
+
+                window.speechSynthesis.cancel();
+
+            }
+
+        }
+    );
+
+
+    /* =====================================================
+       SPEECH VOICES LOAD
+    ===================================================== */
+
+    if (
+        "speechSynthesis"
+        in window
+    ) {
+
+        window.speechSynthesis.onvoiceschanged =
+            function () {
+
+                window.speechSynthesis.getVoices();
+
+            };
+
+    }
+
+
+    /* =====================================================
+       INITIAL SETUP
+    ===================================================== */
+
+    installImageFallbacks();
+
+    preloadAvatarImages();
+
+    setHeaderAvatarFrame(
+        avatarFrames.idle[0] ||
+        avatarFrames.fallback
+    );
+
+    if (thinkingAvatar) {
+
+        thinkingAvatar.src =
+            avatarFrames.thinking[0] ||
+            avatarFrames.fallback;
+
+    }
+
+    setMainAvatarFrame(
+        avatarFrames.idle[0] ||
+        avatarFrames.fallback
+    );
+
+    setAvatarState(
+        "idle"
+    );
+
+    updateVoiceToggleUI();
+
+    updateCharacterCount();
+
+});

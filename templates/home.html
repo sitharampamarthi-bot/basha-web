@@ -20,6 +20,9 @@
     <link rel="stylesheet"
         href="{{ url_for('static', filename='css/quick_translate.css') }}?v=8">
 
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/ai_avatar_advanced.css') }}?v=5">    
+
     <style>
         
         body{
@@ -482,6 +485,9 @@
     </div>
 </nav>
 
+<!-- BASHA ADVANCED AI ASSISTANT -->
+{% include "ai_assistant/assistant_widget.html" %}
+
 <div class="container mt-4 mb-5" style="max-width:1050px;">
 
     <div class="card hero-card p-4 mb-4">
@@ -729,6 +735,7 @@
 <script src="{{ url_for('static', filename='js/unread.js') }}"></script>
 <script src="{{ url_for('static', filename='js/recent_files.js') }}"></script>
 <script src="{{ url_for('static', filename='js/quick_translate.js') }}?v=8"></script>
+<script src="{{ url_for('static', filename='js/ai_avatar_advanced.js') }}?v=7"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 

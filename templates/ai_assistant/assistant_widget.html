@@ -5,8 +5,8 @@
 <button type="button"
         class="basha-ai-floating-button"
         id="bashaAiOpenButton"
-        title="Open Basha AI Assistant"
-        aria-label="Open Basha AI Assistant">
+        title="Open Laxmi AI Assistant"
+        aria-label="Open Laxmi AI Assistant">
 
     <span class="basha-ai-floating-glow"></span>
 
@@ -14,8 +14,8 @@
           id="bashaAiTopAvatar">
 
         <img src="{{ url_for('static', filename='images/ai/idle-1.png') }}"
-            data-fallback-src="{{ url_for('static', filename='images/basha-ai-assistant.png') }}"
-            alt="Laxmi AI Assistant">
+             data-fallback-src="{{ url_for('static', filename='images/ai/idle-1.png') }}"
+             alt="Laxmi AI Assistant">
 
     </span>
 
@@ -36,14 +36,14 @@
      aria-hidden="true">
 
     <img src="{{ url_for('static', filename='images/ai/idle-1.png') }}"
-        data-fallback-src="{{ url_for('static', filename='images/basha-ai-assistant.png') }}"
-        alt="Laxmi">
+         data-fallback-src="{{ url_for('static', filename='images/ai/idle-1.png') }}"
+         alt="Laxmi AI Assistant">
 
 </div>
 
 
 <!-- ==========================================
-     AI ASSISTANT SHELL
+     BASHA AI ASSISTANT SHELL
 =========================================== -->
 
 <div class="basha-ai-shell"
@@ -52,6 +52,7 @@
      data-idle-1="{{ url_for('static', filename='images/ai/idle-1.png') }}"
      data-idle-2="{{ url_for('static', filename='images/ai/idle-2.png') }}"
      data-idle-3="{{ url_for('static', filename='images/ai/idle-3.png') }}"
+     data-idle-4="{{ url_for('static', filename='images/ai/idle-4.png') }}"
 
      data-blink-1="{{ url_for('static', filename='images/ai/blink-1.png') }}"
      data-blink-2="{{ url_for('static', filename='images/ai/blink-2.png') }}"
@@ -59,25 +60,41 @@
      data-wave-1="{{ url_for('static', filename='images/ai/wave-1.png') }}"
      data-wave-2="{{ url_for('static', filename='images/ai/wave-2.png') }}"
      data-wave-3="{{ url_for('static', filename='images/ai/wave-3.png') }}"
+     data-wave-4="{{ url_for('static', filename='images/ai/wave-4.png') }}"
+     data-wave-5="{{ url_for('static', filename='images/ai/wave-5.png') }}"
 
      data-thinking-1="{{ url_for('static', filename='images/ai/thinking-1.png') }}"
      data-thinking-2="{{ url_for('static', filename='images/ai/thinking-2.png') }}"
      data-thinking-3="{{ url_for('static', filename='images/ai/thinking-3.png') }}"
+     data-thinking-4="{{ url_for('static', filename='images/ai/thinking-4.png') }}"
+     data-thinking-5="{{ url_for('static', filename='images/ai/thinking-5.png') }}"
 
      data-speaking-1="{{ url_for('static', filename='images/ai/speaking-1.png') }}"
      data-speaking-2="{{ url_for('static', filename='images/ai/speaking-2.png') }}"
      data-speaking-3="{{ url_for('static', filename='images/ai/speaking-3.png') }}"
      data-speaking-4="{{ url_for('static', filename='images/ai/speaking-4.png') }}"
 
-     data-fallback-src="{{ url_for('static', filename='images/basha-ai-assistant.png') }}"
+     data-explaining-1="{{ url_for('static', filename='images/ai/explaining-1.png') }}"
+     data-explaining-2="{{ url_for('static', filename='images/ai/explaining-2.png') }}"
+     data-explaining-3="{{ url_for('static', filename='images/ai/explaining-3.png') }}"
+     data-explaining-4="{{ url_for('static', filename='images/ai/explaining-4.png') }}"
+     data-explaining-5="{{ url_for('static', filename='images/ai/explaining-5.png') }}"
+
+     data-glow-1="{{ url_for('static', filename='images/ai/glow-1.png') }}"
+
+     data-fallback-src="{{ url_for('static', filename='images/ai/idle-1.png') }}"
 
      hidden>
 
+
+    <!-- BACKDROP -->
 
     <div class="basha-ai-backdrop"
          id="bashaAiBackdrop">
     </div>
 
+
+    <!-- AI PANEL -->
 
     <section class="basha-ai-panel"
              id="bashaAiPanel"
@@ -86,7 +103,9 @@
              aria-labelledby="bashaAiTitle">
 
 
-        <!-- HEADER -->
+        <!-- ==========================================
+             HEADER
+        =========================================== -->
 
         <header class="basha-ai-header">
 
@@ -95,10 +114,10 @@
                 <div class="basha-ai-avatar-wrap">
 
                     <img src="{{ url_for('static', filename='images/ai/idle-1.png') }}"
-                        data-fallback-src="{{ url_for('static', filename='images/basha-ai-assistant.png') }}"
-                        class="basha-ai-avatar"
-                        id="bashaAiHeaderAvatar"
-                        alt="Laxmi AI Assistant">
+                         data-fallback-src="{{ url_for('static', filename='images/ai/idle-1.png') }}"
+                         class="basha-ai-avatar"
+                         id="bashaAiHeaderAvatar"
+                         alt="Laxmi AI Assistant">
 
                     <span class="basha-ai-online-dot"></span>
 
@@ -123,6 +142,8 @@
 
             <div class="basha-ai-header-actions">
 
+                <!-- VOICE ON / OFF -->
+
                 <button type="button"
                         class="basha-ai-icon-button"
                         id="bashaAiVoiceToggle"
@@ -134,6 +155,8 @@
                 </button>
 
 
+                <!-- CLEAR CHAT -->
+
                 <button type="button"
                         class="basha-ai-icon-button"
                         id="bashaAiClearButton"
@@ -144,6 +167,8 @@
 
                 </button>
 
+
+                <!-- CLOSE -->
 
                 <button type="button"
                         class="basha-ai-icon-button"
@@ -160,7 +185,9 @@
         </header>
 
 
-        <!-- CHARACTER -->
+        <!-- ==========================================
+             CHARACTER SECTION
+        =========================================== -->
 
         <div class="basha-ai-character-section"
              id="bashaAiCharacterSection">
@@ -171,19 +198,23 @@
 
 
             <img src="{{ url_for('static', filename='images/ai/idle-1.png') }}"
-                data-fallback-src="{{ url_for('static', filename='images/basha-ai-assistant.png') }}"
-                class="basha-ai-character"
-                id="bashaAiCharacter"
-                alt="Laxmi AI Assistant">
+                 data-fallback-src="{{ url_for('static', filename='images/ai/idle-1.png') }}"
+                 class="basha-ai-character"
+                 id="bashaAiCharacter"
+                 alt="Laxmi AI Assistant">
 
+
+            <!-- WELCOME MESSAGE -->
 
             <div class="basha-ai-intro-bubble"
                  id="bashaAiIntroBubble">
 
                 <span class="basha-ai-intro-loading">
+
                     <span></span>
                     <span></span>
                     <span></span>
+
                 </span>
 
             </div>
@@ -191,7 +222,9 @@
         </div>
 
 
-        <!-- CHAT MESSAGES -->
+        <!-- ==========================================
+             CHAT MESSAGES
+        =========================================== -->
 
         <div class="basha-ai-messages"
              id="bashaAiMessages"
@@ -199,7 +232,9 @@
         </div>
 
 
-        <!-- THINKING -->
+        <!-- ==========================================
+             THINKING INDICATOR
+        =========================================== -->
 
         <div class="basha-ai-thinking"
              id="bashaAiThinking"
@@ -208,33 +243,42 @@
             <div class="basha-ai-mini-avatar">
 
                 <img src="{{ url_for('static', filename='images/ai/thinking-1.png') }}"
-                    data-fallback-src="{{ url_for('static', filename='images/basha-ai-assistant.png') }}"
-                    id="bashaAiThinkingAvatar"
-                    alt="Laxmi thinking">
+                     data-fallback-src="{{ url_for('static', filename='images/ai/idle-1.png') }}"
+                     id="bashaAiThinkingAvatar"
+                     alt="Laxmi is thinking">
 
             </div>
 
 
             <div class="basha-ai-thinking-bubble">
+
                 <span></span>
                 <span></span>
                 <span></span>
+
             </div>
 
         </div>
 
 
-        <!-- ERROR -->
+        <!-- ==========================================
+             ERROR MESSAGE
+        =========================================== -->
 
         <div class="basha-ai-error"
              id="bashaAiError"
+             role="alert"
              hidden>
         </div>
 
 
-        <!-- INPUT -->
+        <!-- ==========================================
+             INPUT AREA
+        =========================================== -->
 
         <footer class="basha-ai-input-area">
+
+            <!-- MICROPHONE -->
 
             <button type="button"
                     class="basha-ai-mic-button"
@@ -247,12 +291,16 @@
             </button>
 
 
+            <!-- TEXT INPUT -->
+
             <textarea id="bashaAiInput"
                       rows="1"
                       maxlength="5000"
-                      placeholder="Ask Basha AI..."
-                      aria-label="Ask Basha AI"></textarea>
+                      placeholder="Ask Laxmi AI..."
+                      aria-label="Ask Laxmi AI"></textarea>
 
+
+            <!-- SEND BUTTON -->
 
             <button type="button"
                     class="basha-ai-send-button"
@@ -267,6 +315,8 @@
         </footer>
 
 
+        <!-- INPUT HELP -->
+
         <div class="basha-ai-input-help">
 
             <span id="bashaAiVoiceStatus">
@@ -278,6 +328,16 @@
             </span>
 
         </div>
+
+        <!-- ==========================================
+             GOOGLE CLOUD TTS AUDIO PLAYER
+        =========================================== -->
+
+        <audio id="bashaAiAudioPlayer"
+               preload="auto"
+               playsinline
+               hidden>
+        </audio>
 
     </section>
 

@@ -1,30 +1,60 @@
-<!-- BASHA AI OPEN BUTTON -->
+<!-- ==========================================
+     BASHA AI FLOATING OPEN BUTTON
+=========================================== -->
+
 <button type="button"
-        class="basha-ai-top-button"
+        class="basha-ai-floating-button"
         id="bashaAiOpenButton"
-        title="Basha AI Assistant"
+        title="Open Basha AI Assistant"
         aria-label="Open Basha AI Assistant">
 
-    <span class="basha-ai-top-avatar">
-        <img src="{{ url_for('static', filename='images/basha-ai-assistant.png') }}"
-             alt="Basha AI Assistant">
+    <span class="basha-ai-floating-glow"></span>
+
+    <span class="basha-ai-floating-avatar"
+          id="bashaAiTopAvatar">
+
+        <img src="{{ url_for('static', filename='images/basha-ai-idle.webp') }}"
+             alt="Basha AI Assistant"
+             onerror="this.src='{{ url_for('static', filename='images/basha-ai-assistant.png') }}'">
+
     </span>
 
-    <span class="basha-ai-top-label">
-        AI
+    <span class="basha-ai-floating-label">
+        Ask AI
     </span>
 
 </button>
 
 
-<!-- BASHA AI PANEL -->
+<!-- ==========================================
+     FLYING AVATAR
+=========================================== -->
+
+<div class="basha-ai-flying-avatar"
+     id="bashaAiFlyingAvatar"
+     hidden
+     aria-hidden="true">
+
+    <img src="{{ url_for('static', filename='images/basha-ai-idle.webp') }}"
+         alt="">
+
+</div>
+
+
+<!-- ==========================================
+     BASHA AI ASSISTANT SHELL
+=========================================== -->
+
 <div class="basha-ai-shell"
      id="bashaAiShell"
+     data-idle-src="{{ url_for('static', filename='images/basha-ai-idle.webp') }}"
+     data-speaking-src="{{ url_for('static', filename='images/basha-ai-speaking.webp') }}"
      hidden>
 
     <div class="basha-ai-backdrop"
          id="bashaAiBackdrop">
     </div>
+
 
     <section class="basha-ai-panel"
              id="bashaAiPanel"
@@ -39,15 +69,17 @@
 
                 <div class="basha-ai-avatar-wrap">
 
-                    <img src="{{ url_for('static', filename='images/basha-ai-assistant.png') }}"
+                    <img src="{{ url_for('static', filename='images/basha-ai-idle.webp') }}"
                          class="basha-ai-avatar"
+                         id="bashaAiHeaderAvatar"
                          alt="Basha AI Assistant">
 
                     <span class="basha-ai-online-dot"></span>
 
                 </div>
 
-                <div>
+                <div class="basha-ai-header-text">
+
                     <h5 id="bashaAiTitle">
                         Basha AI Assistant
                     </h5>
@@ -56,17 +88,19 @@
                           id="bashaAiStatus">
                         Online
                     </span>
+
                 </div>
 
             </div>
+
 
             <div class="basha-ai-header-actions">
 
                 <button type="button"
                         class="basha-ai-icon-button"
                         id="bashaAiVoiceToggle"
-                        title="Voice reply on/off"
-                        aria-label="Voice reply on/off">
+                        title="Voice reply on or off"
+                        aria-label="Voice reply on or off">
 
                     <i class="bi bi-volume-up-fill"></i>
 
@@ -101,9 +135,10 @@
         <div class="basha-ai-character-section"
              id="bashaAiCharacterSection">
 
+            <div class="basha-ai-character-orbit"></div>
             <div class="basha-ai-character-glow"></div>
 
-            <img src="{{ url_for('static', filename='images/basha-ai-assistant.png') }}"
+            <img src="{{ url_for('static', filename='images/basha-ai-idle.webp') }}"
                  class="basha-ai-character"
                  id="bashaAiCharacter"
                  alt="Basha AI Assistant">
@@ -129,14 +164,17 @@
         </div>
 
 
-        <!-- TYPING INDICATOR -->
+        <!-- THINKING -->
         <div class="basha-ai-thinking"
              id="bashaAiThinking"
              hidden>
 
             <div class="basha-ai-mini-avatar">
-                <img src="{{ url_for('static', filename='images/basha-ai-assistant.png') }}"
+
+                <img src="{{ url_for('static', filename='images/basha-ai-idle.webp') }}"
+                     id="bashaAiThinkingAvatar"
                      alt="">
+
             </div>
 
             <div class="basha-ai-thinking-bubble">
@@ -186,8 +224,8 @@
 
         </footer>
 
-        <div class="basha-ai-input-help"
-             id="bashaAiInputHelp">
+
+        <div class="basha-ai-input-help">
 
             <span id="bashaAiVoiceStatus">
                 Type or tap microphone
