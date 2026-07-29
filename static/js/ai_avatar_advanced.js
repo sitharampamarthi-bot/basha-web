@@ -159,17 +159,37 @@ document.addEventListener("DOMContentLoaded", function () {
 
     let initialized = false;
 
+    let hasWelcomed = false;
+
+    let currentAudio = null;
+
+    let currentRequest = null;
+
+    let recognition = null;
+
+    let isSpeaking = false;
+
+    let isThinking = false;
+
+    let chatHistory = [];
+
+    let lastVoiceBlob = null;
+
     let isSending = false;
 
     let isAnimating = false;
 
     let isListening = false;
 
-    let recognition = null;
-
     let userLanguageCode = "en";
 
     let conversationHistory = [];
+
+    let currentChatController = null;
+
+    let currentTtsController = null;
+
+    let currentSpeechCancel = null;
 
     let greetingRunId = 0;
 
@@ -187,10 +207,7 @@ document.addEventListener("DOMContentLoaded", function () {
         document.visibilityState === "visible";
 
     let voiceReplyEnabled =
-        localStorage.getItem(
-            "bashaAiVoiceReply"
-        ) !== "off";
-
+        localStorage.getItem("bashaAiVoiceReply") !== "off";
 
     /* =====================================================
        LANGUAGE MAP
@@ -997,6 +1014,128 @@ document.addEventListener("DOMContentLoaded", function () {
 
     }
 
+    function stopCurrentAssistantActivity() {
+
+        /*
+        * Stop current AI chat request.
+        */
+        if (currentChatController) {
+
+            currentChatController.abort();
+
+            currentChatController = null;
+
+        }
+
+        /*
+        * Stop current TTS request.
+        */
+        if (currentTtsController) {
+
+            currentTtsController.abort();
+
+            currentTtsController = null;
+
+        }
+
+        /*
+        * Resolve current speech promise safely.
+        */
+        if (currentSpeechCancel) {
+
+            currentSpeechCancel();
+
+            currentSpeechCancel = null;
+
+        }
+
+        /*
+        * Stop Google Cloud audio.
+        */
+        if (audioPlayer) {
+
+            audioPlayer.pause();
+
+            audioPlayer.currentTime = 0;
+
+            audioPlayer.onloadedmetadata = null;
+
+            audioPlayer.onended = null;
+
+            audioPlayer.onerror = null;
+
+            audioPlayer.removeAttribute(
+                "src"
+            );
+
+            audioPlayer.load();
+
+        }
+
+        /*
+        * Stop browser speech fallback.
+        */
+        stopSpeechKeepAlive();
+
+        if (
+            "speechSynthesis"
+            in window
+        ) {
+
+            window.speechSynthesis.cancel();
+
+        }
+
+        /*
+        * Fully reset microphone recognition.
+        */
+        if (recognition) {
+
+            try {
+
+                recognition.abort();
+
+            } catch (error) {
+
+                console.log(
+                    "Recognition abort error:",
+                    error
+                );
+
+            }
+
+            recognition = null;
+
+        }
+
+        isListening = false;
+
+        isSending = false;
+
+        thinking.hidden = true;
+
+        micButton.disabled = false;
+
+        micButton.classList.remove(
+            "is-listening"
+        );
+
+        micButton.innerHTML =
+            '<i class="bi bi-mic-fill"></i>';
+
+        characterSection.classList.remove(
+            "is-speaking"
+        );
+
+        voiceStatus.textContent =
+            "Type or tap microphone";
+
+        resetAssistantVisuals();
+
+        updateCharacterCount();
+
+    }
+
 
     function chooseSpeechVoice(
         languageTag
@@ -1179,11 +1318,23 @@ document.addEventListener("DOMContentLoaded", function () {
 
         audioPlayer.load();
 
+        if (currentTtsController) {
+
+            currentTtsController.abort();
+
+        }
+
+        currentTtsController =
+            new AbortController();
+
         const response =
             await fetch(
                 "/api/tts",
                 {
                     method: "POST",
+
+                    signal:
+                        currentTtsController.signal,
 
                     credentials:
                         "same-origin",
@@ -1233,6 +1384,32 @@ document.addEventListener("DOMContentLoaded", function () {
         const audioBlob =
             await response.blob();
 
+        currentTtsController = null;
+
+
+        /*
+        * Speaker TTS request madhyalo OFF chesina
+        * audio start kakunda stop chestundi.
+        */
+        if (!voiceReplyEnabled) {
+
+            if (liveTextElement) {
+
+                liveTextElement.textContent =
+                    fullText;
+
+            }
+
+            resetAssistantVisuals();
+
+            voiceStatus.textContent =
+                "Voice is off";
+
+            return;
+
+        }
+
+
         const audioUrl =
             URL.createObjectURL(
                 audioBlob
@@ -1269,6 +1446,30 @@ document.addEventListener("DOMContentLoaded", function () {
             ) {
 
                 let wordTimer = null;
+
+                currentSpeechCancel =
+                    function () {
+
+                        if (wordTimer) {
+
+                            window.clearInterval(
+                                wordTimer
+                            );
+
+                            wordTimer = null;
+
+                        }
+
+                        if (liveTextElement) {
+
+                            liveTextElement.textContent =
+                                fullText;
+
+                        }
+
+                        resolve();
+
+                    };
 
                 function startTextSync() {
 
@@ -1391,6 +1592,8 @@ document.addEventListener("DOMContentLoaded", function () {
                         voiceStatus.textContent =
                             "Type or tap microphone";
 
+                        currentSpeechCancel = null;    
+
                         resolve();
 
                     };
@@ -1416,6 +1619,8 @@ document.addEventListener("DOMContentLoaded", function () {
                         );
 
                         resetAssistantVisuals();
+
+                        currentSpeechCancel = null;
 
                         reject(
                             new Error(
@@ -1555,8 +1760,26 @@ document.addEventListener("DOMContentLoaded", function () {
             introBubble.textContent =
                 "";
 
+            const shortGreeting =
+                String(
+                    data.greeting || ""
+                )
+                    .split(/\r?\n/)
+                    .map(function (line) {
+                        return line.trim();
+                    })
+                    .find(Boolean)
+                ||
+                (
+                    "Welcome, " +
+                    (
+                        data.name ||
+                        "User"
+                    )
+                );
+
             await speakText(
-                data.greeting,
+                shortGreeting,
                 introBubble
             );
 
@@ -1868,11 +2091,33 @@ document.addEventListener("DOMContentLoaded", function () {
             150
         );
 
-        if (!initialized) {
+        if (!hasWelcomed) {
+
+            hasWelcomed = true;
 
             initialized = true;
 
-            loadGreeting();
+            await loadGreeting();
+
+        } else {
+
+            introBubble.classList.remove(
+                "show"
+            );
+
+            status.textContent =
+                "Online";
+
+            voiceStatus.textContent =
+                "Type or tap microphone";
+
+            isSending = false;
+
+            micButton.disabled = false;
+
+            setupSpeechRecognition();
+
+            updateCharacterCount();
 
         }
 
@@ -1894,11 +2139,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
         isAnimating = true;
 
-        stopAvatarAnimation();
-
-        stopSpeechKeepAlive();
-
         greetingRunId++;
+
+        stopCurrentAssistantActivity();
+
+        stopAvatarAnimation();
 
         if (blinkTimer) {
 
@@ -1906,30 +2151,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 blinkTimer
             );
 
-        }
-
-        if (
-            "speechSynthesis"
-            in window
-        ) {
-
-            window.speechSynthesis.cancel();
-
-        }
-
-        if (audioPlayer) {
-
-            audioPlayer.pause();
-
-            audioPlayer.removeAttribute(
-                "src"
-            );
-
-            audioPlayer.load();
-
-        }
-
-        stopListening();
+        }        
 
         const characterRect =
             character.getBoundingClientRect();
@@ -2125,48 +2347,39 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function clearConversation() {
 
+        stopCurrentAssistantActivity();
+
         conversationHistory = [];
 
         messages.innerHTML = "";
 
         input.value = "";
 
-        resizeInput();
+        introBubble.textContent = "";
 
-        updateCharacterCount();
+        introBubble.classList.remove(
+            "show"
+        );
+
+        resizeInput();
 
         hideError();
 
-        greetingRunId++;
+        thinking.hidden = true;
 
-        stopSpeechKeepAlive();
+        isSending = false;
 
-        if (
-            "speechSynthesis"
-            in window
-        ) {
+        micButton.disabled = false;
 
-            window.speechSynthesis.cancel();
+        status.textContent =
+            "Online";
 
-        }
+        voiceStatus.textContent =
+            "Type or tap microphone";
 
-        if (audioPlayer) {
+        setupSpeechRecognition();
 
-            audioPlayer.pause();
-
-            audioPlayer.removeAttribute(
-                "src"
-            );
-
-            audioPlayer.load();
-
-        }
-
-        stopAvatarAnimation();
-
-        resetAssistantVisuals();
-
-        loadGreeting();
+        updateCharacterCount();
 
     }
 
@@ -2227,12 +2440,24 @@ document.addEventListener("DOMContentLoaded", function () {
                     -1
                 );
 
+            if (currentChatController) {
+
+                currentChatController.abort();
+
+            }
+
+            currentChatController =
+                new AbortController();    
+
             const response =
                 await fetch(
                     "/api/ai-assistant/chat",
                     {
                         method:
                             "POST",
+
+                        signal:
+                            currentChatController.signal,    
 
                         credentials:
                             "same-origin",
@@ -2262,6 +2487,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
             const data =
                 await response.json();
+
+            currentChatController = null;    
 
             if (
                 !response.ok ||
@@ -2302,6 +2529,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
         } catch (error) {
 
+            if (
+                error &&
+                error.name ===
+                "AbortError"
+            ) {
+
+                console.log(
+                    "AI request cancelled."
+                );
+
+                return;
+
+            }
+
             console.log(
                 "AI chat error:",
                 error
@@ -2321,6 +2562,10 @@ document.addEventListener("DOMContentLoaded", function () {
             thinking.hidden = true;
 
             micButton.disabled = false;
+
+            currentChatController = null;
+
+            currentTtsController = null;
 
             voiceStatus.textContent =
                 "Type or tap microphone";
@@ -2737,15 +2982,33 @@ document.addEventListener("DOMContentLoaded", function () {
         "click",
         function () {
 
-            voiceReplyEnabled =
-                !voiceReplyEnabled;
+            voiceReplyEnabled = !voiceReplyEnabled;
 
             localStorage.setItem(
                 "bashaAiVoiceReply",
-                voiceReplyEnabled
-                    ? "on"
-                    : "off"
+                voiceReplyEnabled ? "on" : "off"
             );
+
+            if (!voiceReplyEnabled) {
+
+                stopCurrentAssistantActivity();
+
+                if (audioPlayer) {
+                    audioPlayer.pause();
+                    audioPlayer.currentTime = 0;
+                }
+
+                if (window.speechSynthesis) {
+                    window.speechSynthesis.cancel();
+                }
+
+                status.textContent = "Voice Off";
+
+            } else {
+
+                status.textContent = "Online";
+
+            }
 
             updateVoiceToggleUI();
 
@@ -2897,18 +3160,9 @@ document.addEventListener("DOMContentLoaded", function () {
         "beforeunload",
         function () {
 
+            stopCurrentAssistantActivity();
+
             stopAvatarAnimation();
-
-            stopSpeechKeepAlive();
-
-            if (
-                "speechSynthesis"
-                in window
-            ) {
-
-                window.speechSynthesis.cancel();
-
-            }
 
         }
     );
