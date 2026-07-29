@@ -1970,3 +1970,97 @@ and
     }
 
 }
+
+/* ==========================================
+   MOBILE KEYBOARD + SAFE AREA FIX
+=========================================== */
+
+.basha-ai-panel {
+    height: 100dvh;
+    max-height: 100dvh;
+}
+
+.basha-ai-messages {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.basha-ai-input-area,
+.basha-ai-input-help {
+    flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+
+    .basha-ai-shell {
+        height: 100dvh;
+        min-height: 100dvh;
+    }
+
+    .basha-ai-panel {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: var(
+            --basha-ai-visible-height,
+            100dvh
+        );
+        max-height: var(
+            --basha-ai-visible-height,
+            100dvh
+        );
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .basha-ai-character-section {
+        flex-shrink: 0;
+    }
+
+    .basha-ai-messages {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        padding-bottom: 18px;
+    }
+
+    .basha-ai-input-area {
+        position: relative;
+        bottom: auto;
+        z-index: 20;
+        background: #ffffff;
+        padding:
+            10px
+            12px
+            8px;
+        margin-bottom: 0;
+        border-top: 1px solid rgba(
+            111,
+            66,
+            193,
+            0.14
+        );
+    }
+
+    .basha-ai-input-help {
+        position: relative;
+        z-index: 20;
+        background: #ffffff;
+        padding:
+            2px
+            14px
+            calc(
+                12px +
+                env(
+                    safe-area-inset-bottom
+                )
+            );
+    }
+
+    #bashaAiInput {
+        max-height: 100px;
+        overflow-y: auto;
+    }
+}

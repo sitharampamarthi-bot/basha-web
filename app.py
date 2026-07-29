@@ -33,12 +33,112 @@ from ai_avatar_module import (
     ai_avatar_bp,
     init_ai_avatar_module
 )
-import os
-
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = (
-    r"D:\Anji\basha_web\credentials\basha-ai-tts.json"
-)
 load_dotenv(override=True)
+
+
+# ==================================
+# GOOGLE CLOUD TTS CREDENTIALS
+# WINDOWS + RENDER/LINUX SUPPORT
+# ==================================
+
+BASE_DIR = os.path.dirname(
+    os.path.abspath(__file__)
+)
+
+
+def configure_google_tts_credentials():
+    """
+    Local Windows:
+        credentials/basha-ai-tts.json
+
+    Render/Linux:
+        GOOGLE_TTS_CREDENTIALS_JSON environment variable
+    """
+
+    credentials_json = os.getenv(
+        "GOOGLE_TTS_CREDENTIALS_JSON",
+        ""
+    ).strip()
+
+    # Render / Linux environment
+    if credentials_json:
+        try:
+            credentials_data = json.loads(
+                credentials_json
+            )
+
+            credentials_path = os.path.join(
+                tempfile.gettempdir(),
+                "basha-ai-tts.json"
+            )
+
+            with open(
+                credentials_path,
+                "w",
+                encoding="utf-8"
+            ) as credentials_file:
+                json.dump(
+                    credentials_data,
+                    credentials_file
+                )
+
+            os.environ[
+                "GOOGLE_APPLICATION_CREDENTIALS"
+            ] = credentials_path
+
+            print(
+                "GOOGLE TTS CREDENTIALS: Render/Linux environment loaded"
+            )
+
+            return
+
+        except Exception as error:
+            print(
+                "GOOGLE TTS ENVIRONMENT ERROR:",
+                str(error)
+            )
+
+    # Local Windows environment
+    local_credentials_path = os.path.join(
+        BASE_DIR,
+        "credentials",
+        "basha-ai-tts.json"
+    )
+
+    if os.path.exists(
+        local_credentials_path
+    ):
+        os.environ[
+            "GOOGLE_APPLICATION_CREDENTIALS"
+        ] = local_credentials_path
+
+        print(
+            "GOOGLE TTS CREDENTIALS: Local file loaded"
+        )
+
+        return
+
+    # Remove invalid Windows path inherited by Render
+    existing_path = os.getenv(
+        "GOOGLE_APPLICATION_CREDENTIALS",
+        ""
+    ).strip()
+
+    if (
+        existing_path
+        and not os.path.exists(existing_path)
+    ):
+        os.environ.pop(
+            "GOOGLE_APPLICATION_CREDENTIALS",
+            None
+        )
+
+    print(
+        "GOOGLE TTS CREDENTIALS: Not configured"
+    )
+
+
+configure_google_tts_credentials()
 
 #genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 

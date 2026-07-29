@@ -304,6 +304,46 @@ document.addEventListener("DOMContentLoaded", function () {
 
     }
 
+    function updateAiMobileViewport() {
+
+        const viewport =
+            window.visualViewport;
+
+        const visibleHeight =
+            viewport
+                ? viewport.height
+                : window.innerHeight;
+
+        document.documentElement.style.setProperty(
+            "--basha-ai-visible-height",
+            `${Math.round(
+                visibleHeight
+            )}px`
+        );
+
+        if (
+            document.activeElement ===
+            input
+        ) {
+
+            window.setTimeout(
+                function () {
+
+                    scrollMessagesToBottom();
+
+                    input.scrollIntoView({
+                        block: "nearest",
+                        behavior: "smooth"
+                    });
+
+                },
+                120
+            );
+
+        }
+
+    }
+
 
     function resizeInput() {
 
@@ -1877,6 +1917,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
         }
 
+        if (audioPlayer) {
+
+            audioPlayer.pause();
+
+            audioPlayer.removeAttribute(
+                "src"
+            );
+
+            audioPlayer.load();
+
+        }
+
         stopListening();
 
         const characterRect =
@@ -2095,6 +2147,18 @@ document.addEventListener("DOMContentLoaded", function () {
         ) {
 
             window.speechSynthesis.cancel();
+
+        }
+
+        if (audioPlayer) {
+
+            audioPlayer.pause();
+
+            audioPlayer.removeAttribute(
+                "src"
+            );
+
+            audioPlayer.load();
 
         }
 
@@ -2614,6 +2678,60 @@ document.addEventListener("DOMContentLoaded", function () {
         clearConversation
     );
 
+    /* ==========================================
+    MOBILE KEYBOARD VIEWPORT EVENTS
+    =========================================== */
+
+    window.addEventListener(
+        "resize",
+        updateAiMobileViewport
+    );
+
+    window.addEventListener(
+        "orientationchange",
+        updateAiMobileViewport
+    );
+
+    if (window.visualViewport) {
+
+        window.visualViewport.addEventListener(
+            "resize",
+            updateAiMobileViewport
+        );
+
+        window.visualViewport.addEventListener(
+            "scroll",
+            updateAiMobileViewport
+        );
+
+    }
+
+    input.addEventListener(
+        "focus",
+        function () {
+
+            window.setTimeout(
+                updateAiMobileViewport,
+                100
+            );
+
+        }
+    );
+
+    input.addEventListener(
+        "blur",
+        function () {
+
+            window.setTimeout(
+                updateAiMobileViewport,
+                100
+            );
+
+        }
+    );
+
+    updateAiMobileViewport();
+
 
     voiceToggle.addEventListener(
         "click",
@@ -2776,26 +2894,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     window.addEventListener(
-        "resize",
-        function () {
-
-            if (
-                !shell.hidden &&
-                !isAnimating
-            ) {
-
-                panel.style.height =
-                    window.innerWidth <= 600
-                        ? window.innerHeight + "px"
-                        : "";
-
-            }
-
-        }
-    );
-
-
-    window.addEventListener(
         "beforeunload",
         function () {
 
@@ -2868,5 +2966,6 @@ document.addEventListener("DOMContentLoaded", function () {
     updateVoiceToggleUI();
 
     updateCharacterCount();
+        
 
 });
