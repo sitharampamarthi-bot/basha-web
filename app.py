@@ -33,10 +33,10 @@ from ai_avatar_module import (
     ai_avatar_bp,
     init_ai_avatar_module
 )
-from ai_avatar_v3_module import (
-    ai_avatar_v3_bp,
-    init_ai_avatar_v3_module
-)
+#from ai_avatar_v3_module import (
+#    ai_avatar_v3_bp,
+#    init_ai_avatar_v3_module
+#)
 load_dotenv(override=True)
 
 
@@ -390,13 +390,13 @@ app.register_blueprint(
 # LAXMI AI ASSISTANT V3
 # ==================================
 
-init_ai_avatar_v3_module(
-    db
-)
+#init_ai_avatar_v3_module(
+#    db
+#)
 
-app.register_blueprint(
-    ai_avatar_v3_bp
-)
+#app.register_blueprint(
+#    ai_avatar_v3_bp
+#)
 
 
 @app.route("/", methods=["GET", "POST"])
