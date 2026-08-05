@@ -51,22 +51,384 @@
             height:48px;
             font-weight:bold;
         }
+    /* ========================================
+    SETTINGS SEARCH
+    ======================================== */
+
+    .settings-search-topbar{
+        position:sticky;
+        top:0;
+        z-index:1100;
+
+        display:grid !important;
+        grid-template-columns:auto 1fr auto;
+        align-items:center;
+        gap:12px;
+
+        box-shadow:0 5px 18px rgba(48,25,90,.22);
+    }
+
+    .settings-page-title{
+        text-align:center;
+    }
+
+    .settings-top-actions{
+
+        display:flex !important;
+
+        align-items:center;
+
+        justify-content:flex-end;
+
+        gap:8px;
+
+    }
+
+    .settings-top-action{
+
+        width:42px;
+
+        height:42px;
+
+        display:flex !important;
+
+        align-items:center;
+
+        justify-content:center;
+
+    }
+    #settingsSearchToggle{
+
+        display:flex !important;
+
+    }
+    #settingsSearchToggle i{
+
+        font-size:20px;
+
+    }
+
+    .settings-search-panel{
+        position:sticky;
+        top:66px;
+        z-index:1050;
+
+        padding:12px 14px;
+
+        background:rgba(245,242,255,.96);
+
+        border-bottom:1px solid rgba(111,66,193,.13);
+
+        backdrop-filter:blur(10px);
+        -webkit-backdrop-filter:blur(10px);
+
+        animation:settingsSearchOpen .24s ease;
+    }
+
+    .settings-search-panel[hidden]{
+        display:none !important;
+    }
+
+    .settings-search-inner{
+        width:100%;
+        max-width:850px;
+        margin:0 auto;
+    }
+
+    .settings-search-box{
+        min-height:52px;
+
+        display:flex;
+        align-items:center;
+        gap:11px;
+
+        padding:4px 7px 4px 17px;
+
+        border:2px solid transparent;
+        border-radius:18px;
+
+        background:#fff;
+
+        box-shadow:0 10px 25px rgba(70,40,120,.13);
+
+        transition:
+            border-color .2s ease,
+            box-shadow .2s ease;
+    }
+
+    .settings-search-box:focus-within{
+        border-color:#6f42c1;
+
+        box-shadow:
+            0 10px 25px rgba(70,40,120,.13),
+            0 0 0 4px rgba(111,66,193,.10);
+    }
+
+    .settings-search-box > i{
+        color:#6f42c1;
+        font-size:20px;
+        flex-shrink:0;
+    }
+
+    .settings-search-box input{
+        width:100%;
+        min-width:0;
+
+        border:none;
+        outline:none;
+
+        padding:10px 0;
+
+        background:transparent;
+
+        color:#24202b;
+        font-size:16px;
+    }
+
+    .settings-search-box input::placeholder{
+        color:#8b8493;
+    }
+
+    .settings-search-clear{
+        width:40px;
+        height:40px;
+
+        flex-shrink:0;
+
+        border:none;
+        border-radius:50%;
+
+        display:flex;
+        align-items:center;
+        justify-content:center;
+
+        background:#f1eaff;
+        color:#6f42c1;
+    }
+
+    .settings-search-clear:hover{
+        background:#6f42c1;
+        color:#fff;
+    }
+
+    .settings-search-clear[hidden]{
+        display:none !important;
+    }
+
+    .settings-search-help{
+        min-height:20px;
+        margin-top:7px;
+        padding-left:6px;
+
+        color:#746c7e;
+        font-size:12px;
+    }
+
+    .settings-search-item{
+        transition:
+            opacity .18s ease,
+            transform .18s ease;
+    }
+
+    .settings-search-item.settings-search-match{
+        animation:settingsSearchMatch .25s ease;
+    }
+
+    .settings-search-item[hidden]{
+        display:none !important;
+    }
+
+    .settings-search-empty{
+        padding:38px 20px;
+
+        border-radius:24px;
+
+        background:#fff;
+
+        text-align:center;
+
+        box-shadow:0 18px 40px rgba(70,40,120,.13);
+    }
+
+    .settings-search-empty[hidden]{
+        display:none !important;
+    }
+
+    .settings-search-empty-icon{
+        width:64px;
+        height:64px;
+
+        margin:0 auto 14px;
+
+        border-radius:50%;
+
+        display:flex;
+        align-items:center;
+        justify-content:center;
+
+        background:#efe7ff;
+        color:#6f42c1;
+
+        font-size:28px;
+    }
+
+    .settings-search-empty h5{
+        margin-bottom:7px;
+        font-weight:800;
+    }
+
+    .settings-search-empty p{
+        max-width:410px;
+        margin:0 auto;
+
+        color:#777;
+        font-size:14px;
+    }
+
+    @keyframes settingsSearchOpen{
+        from{
+            opacity:0;
+            transform:translateY(-10px);
+        }
+
+        to{
+            opacity:1;
+            transform:translateY(0);
+        }
+    }
+
+    @keyframes settingsSearchMatch{
+        from{
+            opacity:.35;
+            transform:translateY(7px);
+        }
+
+        to{
+            opacity:1;
+            transform:translateY(0);
+        }
+    }
+
+    @media(max-width:600px){
+
+        .topbar{
+            padding:10px;
+        }
+
+        .settings-search-topbar{
+            gap:7px;
+        }
+
+        .settings-page-title{
+            font-size:20px !important;
+        }
+
+        .settings-top-actions{
+            gap:5px;
+        }
+
+        .settings-top-actions .btn{
+            padding-left:9px;
+            padding-right:9px;
+        }
+
+        .settings-search-panel{
+            top:58px;
+            padding:10px;
+        }
+
+        .settings-search-box{
+            min-height:48px;
+            border-radius:16px;
+            padding-left:14px;
+        }
+
+        .settings-search-box input{
+            font-size:16px;
+        }
+    }
     </style>
 </head>
 
 <body>
 
-<nav class="topbar d-flex align-items-center justify-content-between">
-    <a href="/home" class="btn btn-light btn-sm">
+<nav class="topbar settings-search-topbar">
+
+    <a href="/home"
+       class="btn btn-light btn-sm settings-top-action"
+       aria-label="Back to home"
+       title="Back">
         <i class="bi bi-arrow-left"></i>
     </a>
 
-    <div class="fw-bold fs-4">Settings</div>
+    <div class="fw-bold fs-4 settings-page-title">
+        Settings
+    </div>
 
-    <a href="/" class="btn btn-light btn-sm">Logout</a>
+    <div class="settings-top-actions">
+
+        <button type="button"
+                class="btn btn-light btn-sm settings-top-action"
+                id="settingsSearchToggle"
+                aria-label="Search settings"
+                title="Search settings">
+
+            <i class="bi bi-search"
+               id="settingsSearchToggleIcon"></i>
+
+        </button>
+
+        <a href="/"
+           class="btn btn-light btn-sm">
+            Logout
+        </a>
+
+    </div>
+
 </nav>
 
-<div class="container my-4" style="max-width:850px;">
+<!-- SETTINGS SEARCH PANEL -->
+<div class="settings-search-panel"
+     id="settingsSearchPanel"
+     hidden>
+
+    <div class="settings-search-inner">
+
+        <div class="settings-search-box">
+
+            <i class="bi bi-search"></i>
+
+            <input type="search"
+                   id="settingsSearchInput"
+                   placeholder="Search settings..."
+                   autocomplete="off"
+                   aria-label="Search settings">
+
+            <button type="button"
+                    id="settingsSearchClear"
+                    class="settings-search-clear"
+                    title="Clear search"
+                    aria-label="Clear search"
+                    hidden>
+
+                <i class="bi bi-x-lg"></i>
+
+            </button>
+
+        </div>
+
+        <div class="settings-search-help"
+             id="settingsSearchHelp">
+            Search profile, mobile, email, language or password
+        </div>
+
+    </div>
+
+</div>
+
+<div class="container my-4"
+    id="settingsContent"
+    style="max-width:850px;">
 
     {% if message %}
     <div class="alert alert-info">
@@ -74,9 +436,11 @@
     </div>
     {% endif %}
 
-    <div class="card settings-card p-4 mb-4 text-center">
+    <div class="card settings-card p-4 mb-4 text-center settings-search-item"
+        data-settings-search="profile account photo name mobile phone language user details">
         <div class="d-flex justify-content-center mb-3">
-            <div class="profile-circle">
+            <div class="profile-circle"
+                id="profileImagePreview">
                 {% if user.profilePic %}
                     <img src="{{ user.profilePic }}">
                 {% else %}
@@ -90,7 +454,9 @@
         <p class="text-muted">Language: {{ user.languageName }}</p>
     </div>
 
-    <div class="card settings-card p-4 mb-4">
+    <div class="card settings-card p-4 mb-4 settings-search-item"
+        data-settings-search="profile details full name mobile number phone email profile picture photo save profile account">
+        
         <h4 class="fw-bold mb-3">
             <i class="bi bi-person-circle"></i> Profile Details
         </h4>
@@ -114,6 +480,7 @@
             <input
                 type="file"
                 name="profile_image"
+                id="profileImageInput"
                 accept="image/*"
                 class="form-control mb-3">
 
@@ -123,8 +490,10 @@
         </form>
     </div>
 
-    <div class="card settings-card p-4 mb-4">
-        <h4 class="fw-bold mb-3">
+    <div class="card settings-card p-4 mb-4 settings-search-item"
+        data-settings-search="language change select language english telugu hindi tamil kannada malayalam marathi gujarati bengali urdu nepali sinhala burmese thai arabic french spanish german chinese japanese translation">
+                
+            <h4 class="fw-bold mb-3">
             <i class="bi bi-translate"></i> Language Change
         </h4>
 
@@ -169,30 +538,50 @@
         </form>
     </div>
 
-    <div class="card settings-card p-4 mb-4">
+    <div class="card settings-card p-4 mb-4 settings-search-item"
+        data-settings-search="change password security old password new password confirm password account login authentication">
+        
         <h4 class="fw-bold mb-3">
             <i class="bi bi-lock-fill"></i> Change Password
         </h4>
 
-        <form method="POST">
+        <form method="POST"
+            id="passwordForm">
             <input type="hidden" name="action" value="password">
 
             <label class="form-label">Old Password</label>
             <input type="password" name="old_password" class="form-control mb-3" required>
 
             <label class="form-label">New Password</label>
-            <input type="password" name="new_password" class="form-control mb-3" required>
+            <input type="password" name="new_password" id="newPassword" class="form-control mb-3" required>
 
             <label class="form-label">Confirm Password</label>
-            <input type="password" name="confirm_password" class="form-control mb-3" required>
+            <input type="password" name="confirm_password" id="confirmPassword" class="form-control mb-3" required>
 
             <button class="btn btn-danger w-100" style="height:48px;border-radius:14px;font-weight:bold;">
                 Change Password
             </button>
         </form>
     </div>
+    <div class="settings-search-empty"
+        id="settingsSearchEmpty"
+        hidden>
+
+        <div class="settings-search-empty-icon">
+            <i class="bi bi-search"></i>
+        </div>
+
+        <h5>No settings found</h5>
+
+        <p>
+            Try searching for profile, language,
+            email, mobile or password.
+        </p>
+
+    </div>
 
 </div>
+<script src="{{ url_for('static', filename='js/settings.js') }}?v=2"></script>
 
 </body>
 </html>

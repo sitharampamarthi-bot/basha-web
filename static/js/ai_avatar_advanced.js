@@ -167,6 +167,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
     let recognition = null;
 
+    let voiceSilenceTimer = null;
+
+    let accumulatedVoiceText = "";
+
+    let recognitionShouldRestart = false;
+
     let isSpeaking = false;
 
     let isThinking = false;
@@ -208,6 +214,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
     let voiceReplyEnabled =
         localStorage.getItem("bashaAiVoiceReply") !== "off";
+
+    const VOICE_SILENCE_DELAY = 3000;
+
+    const AI_REPLY_DELAY = 2000;    
 
     /* =====================================================
        LANGUAGE MAP
@@ -1089,6 +1099,13 @@ document.addEventListener("DOMContentLoaded", function () {
         /*
         * Fully reset microphone recognition.
         */
+
+        recognitionShouldRestart = false;
+
+        clearVoiceSilenceTimer();
+
+        accumulatedVoiceText = "";
+
         if (recognition) {
 
             try {
@@ -2334,6 +2351,40 @@ document.addEventListener("DOMContentLoaded", function () {
             "basha-ai-open"
         );
 
+        /*
+        * Backdrop మరియు GPU compositing cleanup.
+        */
+        if (backdrop) {
+
+            backdrop.style.backdropFilter =
+                "";
+
+            backdrop.style.webkitBackdropFilter =
+                "";
+
+            backdrop.style.opacity =
+                "";
+
+            backdrop.style.transform =
+                "";
+
+        }
+
+        shell.style.transform = "";
+        shell.style.opacity = "";
+
+        document.body.style.transform =
+            "translateZ(0)";
+
+        window.requestAnimationFrame(
+            function () {
+
+                document.body.style.transform =
+                    "";
+
+            }
+        );
+
         resetAssistantVisuals();
 
         isAnimating = false;
@@ -2433,6 +2484,25 @@ document.addEventListener("DOMContentLoaded", function () {
         scrollMessagesToBottom();
 
         try {
+
+            /*
+            * User message కనిపించిన తర్వాత
+            * 3 seconds wait చేసి request పంపుతుంది.
+            */
+            await wait(
+                AI_REPLY_DELAY
+            );
+
+            /*
+            * ఈ 3 secondsలో panel close చేసినా
+            * లేదా request cancel చేసినా API call పంపదు.
+            */
+            if (
+                !isSending ||
+                shell.hidden
+            ) {
+                return;
+            }
 
             const historyForRequest =
                 conversationHistory.slice(
@@ -2586,6 +2656,71 @@ document.addEventListener("DOMContentLoaded", function () {
 
     }
 
+    function clearVoiceSilenceTimer() {
+
+        if (voiceSilenceTimer) {
+
+            window.clearTimeout(
+                voiceSilenceTimer
+            );
+
+            voiceSilenceTimer = null;
+
+        }
+
+    }
+
+
+    function scheduleVoiceMessageSend() {
+
+        clearVoiceSilenceTimer();
+
+        if (
+            !accumulatedVoiceText.trim()
+        ) {
+            return;
+        }
+
+        voiceStatus.textContent =
+            "Waiting for more speech...";
+
+        voiceSilenceTimer =
+            window.setTimeout(
+                function () {
+
+                    const finalVoiceText =
+                        accumulatedVoiceText.trim();
+
+                    accumulatedVoiceText = "";
+
+                    recognitionShouldRestart = false;
+
+                    voiceSilenceTimer = null;
+
+                    if (!finalVoiceText) {
+                        return;
+                    }
+
+                    input.value =
+                        finalVoiceText;
+
+                    resizeInput();
+
+                    updateCharacterCount();
+
+                    stopListening(true);
+
+                    voiceStatus.textContent =
+                        "Sending voice message...";
+
+                    sendMessage();
+
+                },
+                VOICE_SILENCE_DELAY
+            );
+
+    }
+
 
     /* =====================================================
        SPEECH RECOGNITION
@@ -2625,7 +2760,7 @@ document.addEventListener("DOMContentLoaded", function () {
             new SpeechRecognition();
 
         recognition.continuous =
-            false;
+            true;
 
         recognition.interimResults =
             true;
@@ -2644,6 +2779,8 @@ document.addEventListener("DOMContentLoaded", function () {
             function () {
 
                 isListening = true;
+
+                recognitionShouldRestart = true;
 
                 micButton.classList.add(
                     "is-listening"
@@ -2678,40 +2815,116 @@ document.addEventListener("DOMContentLoaded", function () {
                 ) {
 
                     const transcript =
-                        event.results[
-                            index
-                        ][0].transcript;
+                        String(
+                            event.results[index][0]
+                                .transcript || ""
+                        ).trim();
+
+                    if (!transcript) {
+                        continue;
+                    }
 
                     if (
-                        event.results[
-                            index
-                        ].isFinal
+                        event.results[index]
+                            .isFinal
                     ) {
 
                         finalText +=
+                            (
+                                finalText
+                                    ? " "
+                                    : ""
+                            ) +
                             transcript;
 
                     } else {
 
                         interimText +=
+                            (
+                                interimText
+                                    ? " "
+                                    : ""
+                            ) +
                             transcript;
 
                     }
 
                 }
 
-                const spokenText =
-                    finalText ||
-                    interimText;
+                /*
+                * Final result వచ్చినప్పుడు మాత్రమే
+                * permanent voice textలో కలుపుతుంది.
+                */
+                if (finalText) {
 
-                if (spokenText) {
+                    accumulatedVoiceText =
+                        (
+                            accumulatedVoiceText +
+                            " " +
+                            finalText
+                        )
+                            .replace(
+                                /\s+/g,
+                                " "
+                            )
+                            .trim();
+
+                    /*
+                    * ప్రతి కొత్త final speech వచ్చినప్పుడు
+                    * 5 seconds timer మళ్లీ మొదలవుతుంది.
+                    */
+                    scheduleVoiceMessageSend();
+
+                }
+
+                /*
+                * Interim result అంటే user ఇంకా
+                * మాట్లాడుతున్నాడని అర్థం.
+                * కాబట్టి send timer cancel అవుతుంది.
+                */
+                if (interimText) {
+
+                    clearVoiceSilenceTimer();
+
+                }
+
+                const visibleText =
+                    (
+                        accumulatedVoiceText +
+                        " " +
+                        interimText
+                    )
+                        .replace(
+                            /\s+/g,
+                            " "
+                        )
+                        .trim();
+
+                if (visibleText) {
 
                     input.value =
-                        spokenText.trim();
+                        visibleText;
 
                     resizeInput();
 
                     updateCharacterCount();
+
+                }
+
+                if (interimText) {
+
+                    voiceStatus.textContent =
+                        "Listening...";
+
+                    status.textContent =
+                        "Laxmi is listening...";
+
+                } else if (
+                    accumulatedVoiceText
+                ) {
+
+                    voiceStatus.textContent =
+                        "Waiting 5 seconds...";
 
                 }
 
@@ -2725,13 +2938,20 @@ document.addEventListener("DOMContentLoaded", function () {
                     event.error
                 );
 
+                if (
+                    event.error === "no-speech" &&
+                    recognitionShouldRestart
+                ) {
+
+                    return;
+
+                }
+
                 stopListening();
 
                 if (
-                    event.error !==
-                    "no-speech" &&
-                    event.error !==
-                    "aborted"
+                    event.error !== "no-speech" &&
+                    event.error !== "aborted"
                 ) {
 
                     showError(
@@ -2746,32 +2966,80 @@ document.addEventListener("DOMContentLoaded", function () {
         recognition.onend =
             function () {
 
-                const shouldSend =
-
+                /*
+                * Chrome ఒక చిన్న pause వచ్చినా
+                * recognition session close చేయవచ్చు.
+                *
+                * Mic ఇంకా activeగా ఉంటే
+                * recognition మళ్లీ start అవుతుంది.
+                */
+                if (
                     isListening &&
-                    input.value.trim();
-
-                stopListening();
-
-                if (shouldSend) {
+                    recognitionShouldRestart &&
+                    !isSending
+                ) {
 
                     window.setTimeout(
-                        sendMessage,
-                        200
+                        function () {
+
+                            if (
+                                !isListening ||
+                                !recognitionShouldRestart ||
+                                isSending ||
+                                !recognition
+                            ) {
+                                return;
+                            }
+
+                            try {
+
+                                recognition.start();
+
+                            } catch (error) {
+
+                                console.log(
+                                    "Voice recognition restart:",
+                                    error
+                                );
+
+                            }
+
+                        },
+                        300
                     );
+
+                    return;
+
+                }
+
+                micButton.classList.remove(
+                    "is-listening"
+                );
+
+                micButton.innerHTML =
+                    '<i class="bi bi-mic-fill"></i>';
+
+                if (!isSending) {
+
+                    status.textContent =
+                        "Online";
 
                 }
 
             };
-
-    }
-
+    }    
 
     function startListening() {
 
         if (isSending) {
             return;
         }
+
+        clearVoiceSilenceTimer();
+
+        accumulatedVoiceText = "";
+
+        recognitionShouldRestart = true;
 
         if (!recognition) {
 
@@ -2785,6 +3053,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
         hideError();
 
+        /*
+        * Laxmi voice play అవుతుంటే
+        * microphone start చేసినప్పుడు stop చేయాలి.
+        */
+        if (audioPlayer) {
+
+            audioPlayer.pause();
+
+            audioPlayer.currentTime = 0;
+
+        }
+
         stopSpeechKeepAlive();
 
         if (
@@ -2795,6 +3075,12 @@ document.addEventListener("DOMContentLoaded", function () {
             window.speechSynthesis.cancel();
 
         }
+
+        input.value = "";
+
+        resizeInput();
+
+        updateCharacterCount();
 
         setAvatarState(
             "idle"
@@ -2807,6 +3093,12 @@ document.addEventListener("DOMContentLoaded", function () {
             userLanguageCode ||
             "en-IN";
 
+        voiceStatus.textContent =
+            "Listening...";
+
+        status.textContent =
+            "Laxmi is listening...";
+
         try {
 
             recognition.start();
@@ -2814,7 +3106,7 @@ document.addEventListener("DOMContentLoaded", function () {
         } catch (error) {
 
             console.log(
-                "Speech recognition already active.",
+                "Speech recognition already active:",
                 error
             );
 
@@ -2823,7 +3115,22 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 
-    function stopListening() {
+    function stopListening(
+        keepSilenceTimer
+    ) {
+
+        recognitionShouldRestart = false;
+
+        /*
+        * Silence timer నుంచే stopListening
+        * call అయితే timerని మళ్లీ clear చేయాల్సిన
+        * అవసరం లేదు.
+        */
+        if (!keepSilenceTimer) {
+
+            clearVoiceSilenceTimer();
+
+        }
 
         if (
             recognition &&
@@ -2854,10 +3161,10 @@ document.addEventListener("DOMContentLoaded", function () {
         micButton.innerHTML =
             '<i class="bi bi-mic-fill"></i>';
 
-        voiceStatus.textContent =
-            "Type or tap microphone";
-
         if (!isSending) {
+
+            voiceStatus.textContent =
+                "Type or tap microphone";
 
             status.textContent =
                 "Online";
@@ -3049,7 +3356,40 @@ document.addEventListener("DOMContentLoaded", function () {
 
             if (isListening) {
 
+                const spokenText =
+                    (
+                        accumulatedVoiceText ||
+                        input.value ||
+                        ""
+                    ).trim();
+
+                recognitionShouldRestart = false;
+
+                clearVoiceSilenceTimer();
+
                 stopListening();
+
+                /*
+                * User manually stop button press చేస్తే
+                * ఉన్న voice text వెంటనే send అవుతుంది.
+                */
+                if (spokenText) {
+
+                    accumulatedVoiceText = "";
+
+                    input.value =
+                        spokenText;
+
+                    resizeInput();
+
+                    updateCharacterCount();
+
+                    voiceStatus.textContent =
+                        "Sending voice message...";
+
+                    sendMessage();
+
+                }
 
             } else {
 

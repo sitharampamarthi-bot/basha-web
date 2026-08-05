@@ -9,3 +9,4 @@ Pillow==11.0.0
 gTTS==2.5.4
 google-genai
 google-cloud-texttospeech
+yfinance==1.5.2

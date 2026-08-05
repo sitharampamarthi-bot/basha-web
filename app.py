@@ -33,6 +33,10 @@ from ai_avatar_module import (
     ai_avatar_bp,
     init_ai_avatar_module
 )
+from ai_avatar_v3_module import (
+    ai_avatar_v3_bp,
+    init_ai_avatar_v3_module
+)
 load_dotenv(override=True)
 
 
@@ -380,6 +384,18 @@ init_ai_avatar_module(
 
 app.register_blueprint(
     ai_avatar_bp
+)
+
+# ==================================
+# LAXMI AI ASSISTANT V3
+# ==================================
+
+init_ai_avatar_v3_module(
+    db
+)
+
+app.register_blueprint(
+    ai_avatar_v3_bp
 )
 
 

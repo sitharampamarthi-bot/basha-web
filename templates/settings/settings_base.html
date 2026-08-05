@@ -32,11 +32,28 @@
         {% block header_title %}Settings{% endblock %}
     </h1>
 
-    <a href="/home"
-       class="icon-button"
-       aria-label="Home">
-        <i class="bi bi-house-door-fill"></i>
-    </a>
+    <div class="settings-topbar-actions">
+
+        <button
+            type="button"
+            id="settingsSearchToggle"
+            class="icon-button"
+            aria-label="Search Settings"
+            title="Search">
+
+            <i class="bi bi-search"></i>
+
+        </button>
+
+        <a href="/home"
+        class="icon-button"
+        aria-label="Home">
+
+            <i class="bi bi-house-door-fill"></i>
+
+        </a>
+
+    </div>
 
 </nav>
 

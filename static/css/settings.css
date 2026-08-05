@@ -423,3 +423,12 @@ body{
         font-size:14px;
     }
 }
+.settings-topbar-actions{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+}
