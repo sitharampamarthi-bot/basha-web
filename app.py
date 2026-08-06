@@ -386,6 +386,10 @@ app.register_blueprint(
     ai_avatar_bp
 )
 
+app.config[
+    "MAX_CONTENT_LENGTH"
+] = 20 * 1024 * 1024
+
 # ==================================
 # LAXMI AI ASSISTANT V3
 # ==================================

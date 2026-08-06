@@ -1,4 +1,7 @@
-import os, re
+import os
+import re
+import tempfile
+from pathlib import Path
 from flask import Blueprint, jsonify, request, session
 from google import genai
 from google.genai import types
@@ -1024,4 +1027,224 @@ def tts():
         return jsonify({
             "success": False,
             "error": str(error)
-        }), 500        
+        }), 500  
+        
+@ai_avatar_bp.route(
+    "/api/ai-assistant/transcribe",
+    methods=["POST"],
+)
+def transcribe_ai_voice():
+
+    if "user_id" not in session:
+
+        return jsonify({
+            "success": False,
+            "error": "Login required",
+        }), 401
+
+    uploaded_audio = request.files.get(
+        "audio"
+    )
+
+    if (
+        uploaded_audio is None or
+        not uploaded_audio.filename
+    ):
+
+        return jsonify({
+            "success": False,
+            "error": "Audio file is required",
+        }), 400
+
+    language_code = clean_text(
+        request.form.get(
+            "languageCode"
+        )
+    ) or "en"
+
+    uploaded_audio.seek(
+        0,
+        os.SEEK_END
+    )
+
+    audio_size = uploaded_audio.tell()
+
+    uploaded_audio.seek(
+        0
+    )
+
+    if audio_size <= 0:
+
+        return jsonify({
+            "success": False,
+            "error": "Audio file is empty",
+        }), 400
+
+    maximum_audio_size = (
+        15 * 1024 * 1024
+    )
+
+    if audio_size > maximum_audio_size:
+
+        return jsonify({
+            "success": False,
+            "error": (
+                "Audio recording is too large. "
+                "Please keep it under 60 seconds."
+            ),
+        }), 413
+
+    original_suffix = (
+        Path(
+            uploaded_audio.filename
+        ).suffix.lower()
+    )
+
+    allowed_suffixes = {
+        ".webm",
+        ".m4a",
+        ".mp4",
+        ".ogg",
+        ".wav",
+        ".aac",
+        ".mp3",
+    }
+
+    if (
+        original_suffix not in
+        allowed_suffixes
+    ):
+
+        content_type = clean_text(
+            uploaded_audio.content_type
+        ).lower()
+
+        if "mp4" in content_type:
+
+            original_suffix = ".m4a"
+
+        elif "ogg" in content_type:
+
+            original_suffix = ".ogg"
+
+        elif "wav" in content_type:
+
+            original_suffix = ".wav"
+
+        else:
+
+            original_suffix = ".webm"
+
+    temporary_path = None
+
+    try:
+
+        with tempfile.NamedTemporaryFile(
+            suffix=original_suffix,
+            delete=False,
+        ) as temporary_file:
+
+            temporary_path = (
+                temporary_file.name
+            )
+
+            uploaded_audio.save(
+                temporary_path
+            )
+
+        client = get_gemini_client()
+
+        uploaded_file = (
+            client.files.upload(
+                file=temporary_path
+            )
+        )
+
+        language_name = (
+            LANGUAGE_NAMES.get(
+                language_code,
+                language_code
+            )
+        )
+
+        response = (
+            client.models.generate_content(
+                model=MODEL_NAME,
+                contents=[
+                    uploaded_file,
+                    (
+                        "Transcribe this audio accurately. "
+                        f"The expected spoken language is "
+                        f"{language_name}. "
+                        "Return only the spoken words. "
+                        "Do not add explanations, labels, "
+                        "quotation marks or markdown. "
+                        "Preserve names, numbers and stock "
+                        "symbols carefully."
+                    ),
+                ],
+                config=
+                    types.GenerateContentConfig(
+                        temperature=0.0,
+                        max_output_tokens=1200,
+                    ),
+            )
+        )
+
+        transcript = clean_text(
+            getattr(
+                response,
+                "text",
+                "",
+            )
+        )
+
+        if not transcript:
+
+            return jsonify({
+                "success": False,
+                "error": (
+                    "No speech was detected "
+                    "in the recording."
+                ),
+            }), 422
+
+        return jsonify({
+            "success": True,
+            "transcript": transcript,
+            "languageCode": language_code,
+        })
+
+    except Exception as error:
+
+        print(
+            "AI VOICE TRANSCRIPTION ERROR:",
+            str(error),
+        )
+
+        return jsonify({
+            "success": False,
+            "error": (
+                "Voice transcription failed: "
+                f"{error}"
+            ),
+        }), 500
+
+    finally:
+
+        if (
+            temporary_path and
+            os.path.exists(
+                temporary_path
+            )
+        ):
+
+            try:
+
+                os.remove(
+                    temporary_path
+                )
+
+            except OSError:
+
+                pass              

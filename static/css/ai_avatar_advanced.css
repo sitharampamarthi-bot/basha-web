@@ -6,7 +6,6 @@ body.basha-ai-open{
     overflow:hidden;
 }
 
-
 /* =====================================================
    FLOATING AI BUTTON
 ===================================================== */
@@ -64,7 +63,6 @@ body.basha-ai-open{
     -webkit-tap-highlight-color:transparent;
 }
 
-
 .basha-ai-floating-button:hover{
     transform:
         translateY(-4px)
@@ -75,17 +73,14 @@ body.basha-ai-open{
         0 0 0 8px rgba(111,66,193,.10);
 }
 
-
 .basha-ai-floating-button:active{
     transform:scale(.96);
 }
-
 
 .basha-ai-floating-button:focus-visible{
     outline:3px solid rgba(111,66,193,.30);
     outline-offset:4px;
 }
-
 
 .basha-ai-floating-button.is-hidden{
     opacity:0;
@@ -94,7 +89,6 @@ body.basha-ai-open{
 
     transform:scale(.72);
 }
-
 
 .basha-ai-floating-glow{
     position:absolute;
@@ -115,7 +109,6 @@ body.basha-ai-open{
         infinite;
 }
 
-
 .basha-ai-floating-avatar{
     width:48px;
     height:48px;
@@ -133,7 +126,6 @@ body.basha-ai-open{
     background:#eee6ff;
 }
 
-
 .basha-ai-floating-avatar img{
     width:100%;
     height:100%;
@@ -146,11 +138,9 @@ body.basha-ai-open{
     pointer-events:none;
 }
 
-
 .basha-ai-floating-label{
     white-space:nowrap;
 }
-
 
 @keyframes bashaAiButtonFloat{
 
@@ -164,7 +154,6 @@ body.basha-ai-open{
     }
 
 }
-
 
 @keyframes bashaAiButtonGlow{
 
@@ -180,7 +169,6 @@ body.basha-ai-open{
     }
 
 }
-
 
 /* =====================================================
    FLYING AVATAR
@@ -218,11 +206,9 @@ body.basha-ai-open{
     transform:translateZ(0);
 }
 
-
 .basha-ai-flying-avatar[hidden]{
     display:none !important;
 }
-
 
 .basha-ai-flying-avatar img{
     width:100%;
@@ -233,7 +219,6 @@ body.basha-ai-open{
     object-fit:cover;
     object-position:top center;
 }
-
 
 /* =====================================================
    AI SHELL
@@ -253,16 +238,13 @@ body.basha-ai-open{
         sans-serif;
 }
 
-
 .basha-ai-shell[hidden]{
     display:none !important;
 }
 
-
 .basha-ai-shell.is-open{
     pointer-events:auto;
 }
-
 
 /* =====================================================
    BACKDROP
@@ -284,12 +266,10 @@ body.basha-ai-open{
         opacity .42s ease;
 }
 
-
 .basha-ai-shell.is-open
 .basha-ai-backdrop{
     opacity:1;
 }
-
 
 /* =====================================================
    PANEL
@@ -342,7 +322,6 @@ body.basha-ai-open{
     backface-visibility:hidden;
 }
 
-
 .basha-ai-shell.is-open
 .basha-ai-panel{
     opacity:1;
@@ -351,7 +330,6 @@ body.basha-ai-open{
         translate3d(0,0,0)
         scale(1);
 }
-
 
 /* =====================================================
    HEADER
@@ -385,7 +363,6 @@ body.basha-ai-open{
     z-index:5;
 }
 
-
 .basha-ai-header-profile{
     min-width:0;
 
@@ -393,7 +370,6 @@ body.basha-ai-open{
     align-items:center;
     gap:10px;
 }
-
 
 .basha-ai-avatar-wrap{
     position:relative;
@@ -413,7 +389,6 @@ body.basha-ai-open{
     background:#ffffff;
 }
 
-
 .basha-ai-avatar{
     width:100%;
     height:100%;
@@ -423,7 +398,6 @@ body.basha-ai-open{
     object-fit:cover;
     object-position:top center;
 }
-
 
 .basha-ai-online-dot{
     position:absolute;
@@ -444,11 +418,9 @@ body.basha-ai-open{
         rgba(34,197,94,.80);
 }
 
-
 .basha-ai-header-text{
     min-width:0;
 }
-
 
 .basha-ai-header h5{
     margin:0;
@@ -461,7 +433,6 @@ body.basha-ai-open{
     text-overflow:ellipsis;
 }
 
-
 .basha-ai-status{
     display:block;
 
@@ -472,7 +443,6 @@ body.basha-ai-open{
     font-size:12px;
 }
 
-
 .basha-ai-header-actions{
     flex-shrink:0;
 
@@ -480,7 +450,6 @@ body.basha-ai-open{
     align-items:center;
     gap:4px;
 }
-
 
 .basha-ai-icon-button{
     width:38px;
@@ -510,7 +479,6 @@ body.basha-ai-open{
     -webkit-tap-highlight-color:transparent;
 }
 
-
 .basha-ai-icon-button:hover{
     background:#ffffff;
     color:#6f42c1;
@@ -518,11 +486,9 @@ body.basha-ai-open{
     transform:translateY(-2px);
 }
 
-
 .basha-ai-icon-button:active{
     transform:scale(.94);
 }
-
 
 .basha-ai-icon-button:focus-visible{
     outline:
@@ -532,12 +498,10 @@ body.basha-ai-open{
     outline-offset:2px;
 }
 
-
 .basha-ai-icon-button.is-muted{
     background:#ffffff;
     color:#d92d20;
 }
-
 
 /* =====================================================
    CHARACTER SECTION
@@ -575,7 +539,6 @@ body.basha-ai-open{
         1px solid #e5daf7;
 }
 
-
 /* =====================================================
    CHARACTER ORBIT
 ===================================================== */
@@ -604,7 +567,6 @@ body.basha-ai-open{
     pointer-events:none;
 }
 
-
 .basha-ai-character-orbit::before,
 .basha-ai-character-orbit::after{
     content:"";
@@ -623,18 +585,15 @@ body.basha-ai-open{
         rgba(111,66,193,.80);
 }
 
-
 .basha-ai-character-orbit::before{
     top:18px;
     left:36px;
 }
 
-
 .basha-ai-character-orbit::after{
     right:18px;
     bottom:45px;
 }
-
 
 @keyframes bashaAiOrbit{
 
@@ -643,7 +602,6 @@ body.basha-ai-open{
     }
 
 }
-
 
 /* =====================================================
    CHARACTER GLOW
@@ -679,7 +637,6 @@ body.basha-ai-open{
     pointer-events:none;
 }
 
-
 .basha-ai-character-section.is-speaking
 .basha-ai-character-glow{
     background:
@@ -697,7 +654,6 @@ body.basha-ai-open{
         infinite;
 }
 
-
 @keyframes bashaAiCharacterGlow{
 
     0%,
@@ -713,7 +669,6 @@ body.basha-ai-open{
 
 }
 
-
 @keyframes bashaAiStrongGlow{
 
     0%,
@@ -728,7 +683,6 @@ body.basha-ai-open{
     }
 
 }
-
 
 /* =====================================================
    MAIN CHARACTER
@@ -767,12 +721,10 @@ body.basha-ai-open{
     pointer-events:none;
 }
 
-
 .basha-ai-shell.character-ready
 .basha-ai-character{
     opacity:1;
 }
-
 
 /* =====================================================
    IDLE / BREATHING
@@ -785,7 +737,6 @@ body.basha-ai-open{
         ease-in-out
         infinite;
 }
-
 
 @keyframes bashaAiBreathing{
 
@@ -804,7 +755,6 @@ body.basha-ai-open{
 
 }
 
-
 /* =====================================================
    BLINK
 ===================================================== */
@@ -817,7 +767,6 @@ body.basha-ai-open{
         ease-in-out
         1;
 }
-
 
 @keyframes bashaAiBlink{
 
@@ -836,7 +785,6 @@ body.basha-ai-open{
 
 }
 
-
 /* =====================================================
    WAVE
 ===================================================== */
@@ -848,7 +796,6 @@ body.basha-ai-open{
         ease-in-out
         infinite;
 }
-
 
 @keyframes bashaAiWave{
 
@@ -873,7 +820,6 @@ body.basha-ai-open{
 
 }
 
-
 /* =====================================================
    THINKING
 ===================================================== */
@@ -885,7 +831,6 @@ body.basha-ai-open{
         ease-in-out
         infinite;
 }
-
 
 @keyframes bashaAiThinkingMove{
 
@@ -904,7 +849,6 @@ body.basha-ai-open{
 
 }
 
-
 /* =====================================================
    EXPLAINING
 ===================================================== */
@@ -916,7 +860,6 @@ body.basha-ai-open{
         ease-in-out
         infinite;
 }
-
 
 @keyframes bashaAiExplainingMove{
 
@@ -944,7 +887,6 @@ body.basha-ai-open{
 
 }
 
-
 /* =====================================================
    SPEAKING
 ===================================================== */
@@ -961,7 +903,6 @@ body.basha-ai-open{
         ease-in-out
         infinite;
 }
-
 
 @keyframes bashaAiTalking{
 
@@ -981,7 +922,6 @@ body.basha-ai-open{
     }
 
 }
-
 
 @keyframes bashaAiSpeakingGlow{
 
@@ -1003,7 +943,6 @@ body.basha-ai-open{
     }
 
 }
-
 
 /* =====================================================
    INTRO BUBBLE
@@ -1060,7 +999,6 @@ body.basha-ai-open{
         transform .35s ease;
 }
 
-
 .basha-ai-intro-bubble.show{
     opacity:1;
 
@@ -1068,7 +1006,6 @@ body.basha-ai-open{
         translate3d(0,0,0)
         scale(1);
 }
-
 
 .basha-ai-intro-bubble::before{
     content:"";
@@ -1087,7 +1024,6 @@ body.basha-ai-open{
     border-bottom:
         3px solid transparent;
 }
-
 
 /* =====================================================
    CHAT MESSAGES AREA
@@ -1114,22 +1050,18 @@ body.basha-ai-open{
         transparent;
 }
 
-
 .basha-ai-messages::-webkit-scrollbar{
     width:7px;
 }
-
 
 .basha-ai-messages::-webkit-scrollbar-track{
     background:transparent;
 }
 
-
 .basha-ai-messages::-webkit-scrollbar-thumb{
     border-radius:20px;
     background:#cbb7ee;
 }
-
 
 .basha-ai-message-row{
     display:flex;
@@ -1142,16 +1074,13 @@ body.basha-ai-open{
         ease;
 }
 
-
 .basha-ai-message-row.is-user{
     justify-content:flex-end;
 }
 
-
 .basha-ai-message-row.is-assistant{
     justify-content:flex-start;
 }
-
 
 .basha-ai-message{
     display:inline-block;
@@ -1176,11 +1105,9 @@ body.basha-ai-open{
     font-size:14px;
 }
 
-
 .basha-ai-message-content{
     display:inline;
 }
-
 
 .basha-ai-message-row.is-user
 .basha-ai-message{
@@ -1199,7 +1126,6 @@ body.basha-ai-open{
 
     color:#ffffff;
 }
-
 
 .basha-ai-message-row.is-assistant
 .basha-ai-message{
@@ -1220,7 +1146,6 @@ body.basha-ai-open{
         rgba(70,40,120,.08);
 }
 
-
 .basha-ai-message-time{
     display:block;
 
@@ -1232,7 +1157,6 @@ body.basha-ai-open{
 
     font-size:9px;
 }
-
 
 @keyframes bashaAiMessageIn{
 
@@ -1254,7 +1178,6 @@ body.basha-ai-open{
 
 }
 
-
 /* =====================================================
    THINKING INDICATOR
 ===================================================== */
@@ -1270,11 +1193,9 @@ body.basha-ai-open{
     gap:8px;
 }
 
-
 .basha-ai-thinking[hidden]{
     display:none !important;
 }
-
 
 .basha-ai-mini-avatar{
     width:34px;
@@ -1288,7 +1209,6 @@ body.basha-ai-open{
     background:#eee6ff;
 }
 
-
 .basha-ai-mini-avatar img{
     width:100%;
     height:100%;
@@ -1299,14 +1219,12 @@ body.basha-ai-open{
     object-position:top center;
 }
 
-
 .basha-ai-thinking-bubble,
 .basha-ai-intro-loading{
     display:flex;
     align-items:center;
     gap:5px;
 }
-
 
 .basha-ai-thinking-bubble{
     padding:
@@ -1326,7 +1244,6 @@ body.basha-ai-open{
         rgba(70,40,120,.08);
 }
 
-
 .basha-ai-thinking-bubble span,
 .basha-ai-intro-loading span{
     width:7px;
@@ -1343,18 +1260,15 @@ body.basha-ai-open{
         ease-in-out;
 }
 
-
 .basha-ai-thinking-bubble span:nth-child(2),
 .basha-ai-intro-loading span:nth-child(2){
     animation-delay:.15s;
 }
 
-
 .basha-ai-thinking-bubble span:nth-child(3),
 .basha-ai-intro-loading span:nth-child(3){
     animation-delay:.30s;
 }
-
 
 @keyframes bashaAiDot{
 
@@ -1371,7 +1285,6 @@ body.basha-ai-open{
     }
 
 }
-
 
 /* =====================================================
    ERROR MESSAGE
@@ -1400,11 +1313,9 @@ body.basha-ai-open{
     overflow-wrap:anywhere;
 }
 
-
 .basha-ai-error[hidden]{
     display:none !important;
 }
-
 
 /* =====================================================
    INPUT AREA
@@ -1425,7 +1336,6 @@ body.basha-ai-open{
 
     background:#ffffff;
 }
-
 
 .basha-ai-input-area textarea{
     flex:1;
@@ -1455,11 +1365,9 @@ body.basha-ai-open{
     font-family:inherit;
 }
 
-
 .basha-ai-input-area textarea::placeholder{
     color:#8d8596;
 }
-
 
 .basha-ai-input-area textarea:focus{
     border-color:#6f42c1;
@@ -1470,7 +1378,6 @@ body.basha-ai-open{
         0 0 0 3px
         rgba(111,66,193,.10);
 }
-
 
 .basha-ai-mic-button,
 .basha-ai-send-button{
@@ -1498,12 +1405,10 @@ body.basha-ai-open{
     -webkit-tap-highlight-color:transparent;
 }
 
-
 .basha-ai-mic-button{
     background:#eee6ff;
     color:#6f42c1;
 }
-
 
 .basha-ai-send-button{
     background:
@@ -1520,18 +1425,15 @@ body.basha-ai-open{
         rgba(25,135,84,.22);
 }
 
-
 .basha-ai-mic-button:hover,
 .basha-ai-send-button:hover{
     transform:translateY(-2px);
 }
 
-
 .basha-ai-mic-button:active,
 .basha-ai-send-button:active{
     transform:scale(.94);
 }
-
 
 .basha-ai-mic-button:focus-visible,
 .basha-ai-send-button:focus-visible{
@@ -1541,7 +1443,6 @@ body.basha-ai-open{
 
     outline-offset:2px;
 }
-
 
 .basha-ai-mic-button.is-listening{
     background:#dc2626;
@@ -1553,15 +1454,17 @@ body.basha-ai-open{
         infinite;
 }
 
-
-.basha-ai-send-button:disabled,
-.basha-ai-mic-button:disabled{
+.basha-ai-send-button:disabled{
     opacity:.50;
     cursor:not-allowed;
-
     transform:none;
 }
 
+.basha-ai-mic-button:disabled{
+    opacity:.65;
+    cursor:not-allowed;
+    transform:none;
+}
 
 .basha-ai-input-help{
     padding:
@@ -1622,7 +1525,6 @@ and
 
 }
 
-
 /* =====================================================
    MOBILE
 ===================================================== */
@@ -1647,17 +1549,14 @@ and
         justify-content:center;
     }
 
-
     .basha-ai-floating-avatar{
         width:48px;
         height:48px;
     }
 
-
     .basha-ai-floating-label{
         display:none;
     }
-
 
     .basha-ai-panel{
         top:0;
@@ -1677,14 +1576,12 @@ and
         transform-origin:center bottom;
     }
 
-
     .basha-ai-shell.is-open
     .basha-ai-panel{
         transform:
             translate3d(0,0,0)
             scale(1);
     }
-
 
     .basha-ai-header{
         min-height:68px;
@@ -1698,12 +1595,10 @@ and
             8px;
     }
 
-
     .basha-ai-avatar-wrap{
         width:44px;
         height:44px;
     }
-
 
     .basha-ai-header h5{
         max-width:145px;
@@ -1711,16 +1606,13 @@ and
         font-size:15px;
     }
 
-
     .basha-ai-status{
         font-size:11px;
     }
 
-
     .basha-ai-header-actions{
         gap:2px;
     }
-
 
     .basha-ai-icon-button{
         width:34px;
@@ -1728,7 +1620,6 @@ and
 
         font-size:14px;
     }
-
 
     .basha-ai-character-section{
         min-height:190px;
@@ -1739,12 +1630,10 @@ and
             0;
     }
 
-
     .basha-ai-character{
         width:125px;
         height:178px;
     }
-
 
     .basha-ai-character-orbit{
         left:-10px;
@@ -1754,7 +1643,6 @@ and
         height:185px;
     }
 
-
     .basha-ai-character-glow{
         left:-72px;
         bottom:-135px;
@@ -1762,7 +1650,6 @@ and
         width:280px;
         height:280px;
     }
-
 
     .basha-ai-intro-bubble{
         max-width:
@@ -1781,14 +1668,12 @@ and
         font-size:13px;
     }
 
-
     .basha-ai-messages{
         padding:
             12px
             10px
             6px;
     }
-
 
     .basha-ai-message{
         max-width:91%;
@@ -1800,7 +1685,6 @@ and
         font-size:13px;
     }
 
-
     .basha-ai-thinking{
         padding:
             0
@@ -1808,14 +1692,12 @@ and
             6px;
     }
 
-
     .basha-ai-input-area{
         padding:
             8px
             8px
             5px;
     }
-
 
     .basha-ai-input-area textarea{
         padding:
@@ -1825,13 +1707,11 @@ and
         font-size:16px;
     }
 
-
     .basha-ai-mic-button,
     .basha-ai-send-button{
         width:42px;
         height:42px;
     }
-
 
     .basha-ai-input-help{
         padding:
@@ -1845,7 +1725,6 @@ and
 
 }
 
-
 /* =====================================================
    SMALL MOBILE
 ===================================================== */
@@ -1857,29 +1736,24 @@ and
         font-size:14px;
     }
 
-
     .basha-ai-avatar-wrap{
         width:40px;
         height:40px;
     }
-
 
     .basha-ai-icon-button{
         width:31px;
         height:31px;
     }
 
-
     .basha-ai-character-section{
         min-height:176px;
     }
-
 
     .basha-ai-character{
         width:112px;
         height:164px;
     }
-
 
     .basha-ai-intro-bubble{
         max-width:
@@ -1888,13 +1762,11 @@ and
         font-size:12px;
     }
 
-
     .basha-ai-input-help{
         font-size:9px;
     }
 
 }
-
 
 /* =====================================================
    LANDSCAPE MOBILE
@@ -1916,12 +1788,10 @@ and
         min-height:130px;
     }
 
-
     .basha-ai-character{
         width:100px;
         height:125px;
     }
-
 
     .basha-ai-intro-bubble{
         margin-bottom:15px;
@@ -1929,19 +1799,15 @@ and
         font-size:12px;
     }
 
-
     .basha-ai-header{
         min-height:58px;
     }
-
 
     .basha-ai-avatar-wrap{
         width:38px;
         height:38px;
     }
-
 }
-
 
 /* =====================================================
    REDUCED MOTION
@@ -1958,7 +1824,6 @@ and
     .basha-ai-intro-loading span{
         animation:none !important;
     }
-
 
     .basha-ai-panel,
     .basha-ai-backdrop,
@@ -2033,15 +1898,12 @@ and
         background: #ffffff;
 
         padding:
-            10px
+            8px
             12px
-            10px;
+            6px;
 
         margin-bottom:
-            calc(
-                54px +
-                env(safe-area-inset-bottom)
-            );
+        env(safe-area-inset-bottom);
 
         border-top:
             1px solid
@@ -2066,4 +1928,30 @@ and
             14px
             8px;
     }
+}
+
+@media (max-width: 768px) {
+
+    .basha-ai-input-area {
+        margin-bottom: 0;
+        padding-bottom: 6px;
+    }
+
+    .basha-ai-input-help {
+        position: relative;
+        left: auto;
+        right: auto;
+        bottom: auto;
+
+        flex-shrink: 0;
+
+        padding:
+            2px
+            12px
+            max(
+                10px,
+                env(safe-area-inset-bottom)
+            );
+    }
+
 }
