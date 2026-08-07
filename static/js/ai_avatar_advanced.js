@@ -3,117 +3,82 @@
 console.log("BASHA ADVANCED AI JS LOADED");
 
 document.addEventListener("DOMContentLoaded", function () {
-
-    /* =====================================================
-       ELEMENTS
-    ===================================================== */
-
     function getElement(id) {
         return document.getElementById(id);
     }
 
-    const openButton =
-        getElement("bashaAiOpenButton");
+    const openButton = getElement("bashaAiOpenButton");
+    const topAvatar = getElement("bashaAiTopAvatar");
+    const flyingAvatar = getElement("bashaAiFlyingAvatar");
+    const shell = getElement("bashaAiShell");
 
-    const topAvatar =
-        getElement("bashaAiTopAvatar");
-
-    const flyingAvatar =
-        getElement("bashaAiFlyingAvatar");
-
-    const shell =
-        getElement("bashaAiShell");
-
-    if (
-        !openButton ||
-        !topAvatar ||
-        !flyingAvatar ||
-        !shell
-    ) {
-        console.log(
-            "Basha AI required elements not found."
-        );
-
+    if (!openButton || !topAvatar || !flyingAvatar || !shell) {
+        console.log("Basha AI required elements not found.");
         return;
     }
 
-    const panel =
-        getElement("bashaAiPanel");
+    const panel = getElement("bashaAiPanel");
+    const backdrop = getElement("bashaAiBackdrop");
+    const closeButton = getElement("bashaAiCloseButton");
+    const clearButton = getElement("bashaAiClearButton");
+    const voiceToggle = getElement("bashaAiVoiceToggle");
+    const stopSpeakingButton = getElement("bashaAiStopSpeakingButton");
+    const character = getElement("bashaAiCharacter");
+    const headerAvatar = getElement("bashaAiHeaderAvatar");
+    const thinkingAvatar = getElement("bashaAiThinkingAvatar");
+    const characterSection = getElement("bashaAiCharacterSection");
+    const introBubble = getElement("bashaAiIntroBubble");
+    const messages = getElement("bashaAiMessages");
+    const thinking = getElement("bashaAiThinking");
+    const errorBox = getElement("bashaAiError");
+    const input = getElement("bashaAiInput");
+    const micButton = getElement("bashaAiMicButton");
+    const sendButton = getElement("bashaAiSendButton");
+    const status = getElement("bashaAiStatus");
+    const voiceStatus = getElement("bashaAiVoiceStatus");
+    const characterCount = getElement("bashaAiCharacterCount");
+    const audioPlayer = getElement("bashaAiAudioPlayer");
 
-    const backdrop =
-        getElement("bashaAiBackdrop");
+    const requiredElements = [
+        panel,
+        backdrop,
+        closeButton,
+        clearButton,
+        voiceToggle,
+        stopSpeakingButton,
+        character,
+        headerAvatar,
+        thinkingAvatar,
+        characterSection,
+        introBubble,
+        messages,
+        thinking,
+        errorBox,
+        input,
+        micButton,
+        sendButton,
+        status,
+        voiceStatus,
+        characterCount,
+        audioPlayer,
+    ];
 
-    const closeButton =
-        getElement("bashaAiCloseButton");
-
-    const clearButton =
-        getElement("bashaAiClearButton");
-
-    const voiceToggle =
-        getElement("bashaAiVoiceToggle");
-
-    const character =
-        getElement("bashaAiCharacter");
-
-    const headerAvatar =
-        getElement("bashaAiHeaderAvatar");
-
-    const thinkingAvatar =
-        getElement("bashaAiThinkingAvatar");
-
-    const characterSection =
-        getElement("bashaAiCharacterSection");
-
-    const introBubble =
-        getElement("bashaAiIntroBubble");
-
-    const messages =
-        getElement("bashaAiMessages");
-
-    const thinking =
-        getElement("bashaAiThinking");
-
-    const errorBox =
-        getElement("bashaAiError");
-
-    const input =
-        getElement("bashaAiInput");
-
-    const micButton =
-        getElement("bashaAiMicButton");
-
-    const sendButton =
-        getElement("bashaAiSendButton");
-
-    const status =
-        getElement("bashaAiStatus");
-
-    const voiceStatus =
-        getElement("bashaAiVoiceStatus");
-
-    const characterCount =
-        getElement("bashaAiCharacterCount");
-
-    const audioPlayer =
-        getElement("bashaAiAudioPlayer");    
-
-
-    /* =====================================================
-       AVATAR IMAGE FRAMES
-    ===================================================== */
+    if (requiredElements.some(function (element) { return !element; })) {
+        console.log("Basha AI widget is incomplete.");
+        return;
+    }
 
     const avatarFrames = {
-
         idle: [
             shell.dataset.idle1,
             shell.dataset.idle2,
             shell.dataset.idle3,
-            shell.dataset.idle4
+            shell.dataset.idle4,
         ].filter(Boolean),
 
         blink: [
             shell.dataset.blink1,
-            shell.dataset.blink2
+            shell.dataset.blink2,
         ].filter(Boolean),
 
         wave: [
@@ -121,7 +86,7 @@ document.addEventListener("DOMContentLoaded", function () {
             shell.dataset.wave2,
             shell.dataset.wave3,
             shell.dataset.wave4,
-            shell.dataset.wave5
+            shell.dataset.wave5,
         ].filter(Boolean),
 
         thinking: [
@@ -129,14 +94,14 @@ document.addEventListener("DOMContentLoaded", function () {
             shell.dataset.thinking2,
             shell.dataset.thinking3,
             shell.dataset.thinking4,
-            shell.dataset.thinking5
+            shell.dataset.thinking5,
         ].filter(Boolean),
 
         speaking: [
             shell.dataset.speaking1,
             shell.dataset.speaking2,
             shell.dataset.speaking3,
-            shell.dataset.speaking4
+            shell.dataset.speaking4,
         ].filter(Boolean),
 
         explaining: [
@@ -144,109 +109,15 @@ document.addEventListener("DOMContentLoaded", function () {
             shell.dataset.explaining2,
             shell.dataset.explaining3,
             shell.dataset.explaining4,
-            shell.dataset.explaining5
+            shell.dataset.explaining5,
         ].filter(Boolean),
 
         fallback:
             shell.dataset.fallbackSrc ||
-            "/static/images/ai/idle-1.png"
+            "/static/images/ai/idle-1.png",
     };
 
-
-    /* =====================================================
-       STATE
-    ===================================================== */
-
-    let initialized = false;
-
-    let hasWelcomed = false;
-
-    let currentAudio = null;
-
-    let currentRequest = null;
-
-    let recognition = null;
-
-    let voiceSilenceTimer = null;
-
-    let accumulatedVoiceText = "";
-
-    let recognitionShouldRestart = false;
-
-    let isSpeaking = false;
-
-    let isThinking = false;
-
-    let chatHistory = [];
-
-    let lastVoiceBlob = null;
-
-    let isSending = false;
-
-    let isAnimating = false;
-
-    let isListening = false;
-
-    let lastFinalTranscript = "";
-
-    let iosMediaRecorder = null;
-
-    let iosMediaStream = null;
-
-    let iosAudioChunks = [];
-
-    let iosRecordingTimer = null;
-
-    let iosMaximumTimer = null;
-
-    let iosRecordingStartedAt = 0;
-
-    let iosIsRecording = false;
-
-    let iosTranscriptionController = null;
-
-    const IOS_RECORDING_DELAY = 5000;
-
-    const IOS_MAXIMUM_RECORDING_TIME = 60000;
-
-    let userLanguageCode = "en";
-
-    let conversationHistory = [];
-
-    let currentChatController = null;
-
-    let currentTtsController = null;
-
-    let currentSpeechCancel = null;
-
-    let greetingRunId = 0;
-
-    let blinkTimer = null;
-
-    let avatarAnimationTimer = null;
-
-    let avatarState = "idle";
-
-    let avatarFrameIndex = 0;
-
-    let speechKeepAliveTimer = null;
-
-    let pageIsVisible =
-        document.visibilityState === "visible";
-
-    let voiceReplyEnabled =
-        localStorage.getItem("bashaAiVoiceReply") !== "off";
-
-    const VOICE_SILENCE_DELAY = 3000;
-
-    const AI_REPLY_DELAY = 2000;    
-
-    /* =====================================================
-       LANGUAGE MAP
-    ===================================================== */
-
     const speechLanguageMap = {
-
         en: "en-IN",
         te: "te-IN",
         hi: "hi-IN",
@@ -270,17 +141,92 @@ document.addEventListener("DOMContentLoaded", function () {
         ru: "ru-RU",
         ja: "ja-JP",
         ko: "ko-KR",
-        zh: "zh-CN"
-
+        zh: "zh-CN",
     };
+
+    const SILENT_AUDIO_DATA_URI =
+        "data:audio/wav;base64,UklGRqQCAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YYACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+
+    const VOICE_SILENCE_DELAY = 3000;
+    const AI_REPLY_DELAY = 250;
+    const IOS_MAXIMUM_RECORDING_TIME = 60000;
+    const TTS_MAX_CHUNK_BYTES = 3200;
+
+    let hasWelcomed = false;
+    let isSending = false;
+    let isAnimating = false;
+    let isListening = false;
+    let isSpeaking = false;
+
+    let pageIsVisible =
+        document.visibilityState === "visible";
+
+    let userLanguageCode = "en";
+
+    let conversationHistory = [];
+
+    let currentChatController = null;
+    let currentTtsController = null;
+    let iosTranscriptionController = null;
+
+    let recognition = null;
+    let recognitionShouldRestart = false;
+    let recognitionSessionBaseText = "";
+    let recognitionFinalSegments = new Map();
+
+    let accumulatedVoiceText = "";
+    let voiceSilenceTimer = null;
+
+    let avatarAnimationTimer = null;
+    let blinkTimer = null;
+    let avatarState = "idle";
+    let avatarFrameIndex = 0;
+
+    let greetingRunId = 0;
+
+    let speechRunId = 0;
+    let currentSpeechCancel = null;
+    let currentSpeechDisplay = null;
+    let activeAudioObjectUrl = "";
+    let pendingSpeech = null;
+
+    let audioPlaybackUnlocked =
+        !isIOSDevice();
+
+    let audioUnlockPromise = null;
+
+    let iosMediaRecorder = null;
+    let iosMediaStream = null;
+    let iosAudioChunks = [];
+    let iosMaximumTimer = null;
+    let iosRecordingStartedAt = 0;
+    let iosIsRecording = false;
+    let iosStopPromise = null;
+    let iosVoiceRunId = 0;
+    let iosActiveRunId = 0;
+
+    let pageScrollY = 0;
+    let viewportAnimationFrame = null;
+
+    let voiceReplyEnabled =
+        localStorage.getItem("bashaAiVoiceReply") !== "off";
 
 
     /* =====================================================
        GENERAL HELPERS
     ===================================================== */
 
-    function isIOSDevice() {
+    function wait(milliseconds) {
+        return new Promise(function (resolve) {
+            window.setTimeout(
+                resolve,
+                milliseconds
+            );
+        });
+    }
 
+
+    function isIOSDevice() {
         return (
             /iPad|iPhone|iPod/i.test(
                 navigator.userAgent
@@ -290,309 +236,68 @@ document.addEventListener("DOMContentLoaded", function () {
                 navigator.maxTouchPoints > 1
             )
         );
-
     }
 
-    function supportsMediaRecorder() {
 
+    function supportsMediaRecorder() {
         return Boolean(
             navigator.mediaDevices &&
             navigator.mediaDevices.getUserMedia &&
             window.MediaRecorder
         );
-
-    }
-
-
-    function getSupportedAudioMimeType() {
-
-        const types = [
-            "audio/mp4",
-            "audio/webm;codecs=opus",
-            "audio/webm",
-            "audio/ogg;codecs=opus"
-        ];
-
-        for (const type of types) {
-
-            if (
-                window.MediaRecorder &&
-                typeof MediaRecorder.isTypeSupported ===
-                    "function" &&
-                MediaRecorder.isTypeSupported(type)
-            ) {
-
-                return type;
-
-            }
-
-        }
-
-        return "";
-
-    }
-
-
-    function getAudioFileExtension(
-        mimeType
-    ) {
-
-        const type =
-            String(mimeType || "")
-                .toLowerCase();
-
-        if (type.includes("mp4")) {
-            return "m4a";
-        }
-
-        if (type.includes("ogg")) {
-            return "ogg";
-        }
-
-        if (type.includes("wav")) {
-            return "wav";
-        }
-
-        return "webm";
-
-    }
-
-
-    function releaseIOSMediaStream() {
-
-        if (!iosMediaStream) {
-            return;
-        }
-
-        iosMediaStream
-            .getTracks()
-            .forEach(
-                function (track) {
-
-                    try {
-
-                        track.stop();
-
-                    } catch (error) {
-
-                        console.log(
-                            "iPhone track stop error:",
-                            error
-                        );
-
-                    }
-
-                }
-            );
-
-        iosMediaStream = null;
-
-    }
-
-
-    function clearIOSRecordingTimers() {
-
-        if (iosRecordingTimer) {
-
-            window.clearTimeout(
-                iosRecordingTimer
-            );
-
-            iosRecordingTimer = null;
-
-        }
-
-        if (iosMaximumTimer) {
-
-            window.clearTimeout(
-                iosMaximumTimer
-            );
-
-            iosMaximumTimer = null;
-
-        }
-
-    }
-
-
-    function updateIOSMicUI(
-        recording
-    ) {
-
-        iosIsRecording =
-            Boolean(recording);
-
-        isListening =
-            Boolean(recording);
-
-        if (!micButton) {
-            return;
-        }
-
-        micButton.classList.toggle(
-            "is-listening",
-            iosIsRecording
-        );
-
-        micButton.innerHTML =
-            iosIsRecording
-
-                ? '<i class="bi bi-stop-fill"></i>'
-
-                : '<i class="bi bi-mic-fill"></i>';
-
-        micButton.setAttribute(
-            "aria-label",
-            iosIsRecording
-                ? "Stop recording"
-                : "Start recording"
-        );
-
-    }
-
-    function wait(milliseconds) {
-
-        return new Promise(function (resolve) {
-
-            window.setTimeout(
-                resolve,
-                milliseconds
-            );
-
-        });
-
     }
 
 
     function getCurrentTime() {
-
         return new Intl.DateTimeFormat(
             [],
             {
                 hour: "2-digit",
-                minute: "2-digit"
+                minute: "2-digit",
             }
         ).format(
             new Date()
         );
-
     }
 
 
     function showError(message) {
-
-        if (!errorBox) {
-            return;
-        }
-
         errorBox.textContent =
             message ||
             "Something went wrong.";
 
         errorBox.hidden = false;
-
     }
 
 
     function hideError() {
-
-        if (!errorBox) {
-            return;
-        }
-
         errorBox.hidden = true;
-
         errorBox.textContent = "";
-
     }
 
 
     function scrollMessagesToBottom() {
-
-        if (!messages) {
-            return;
-        }
-
         window.requestAnimationFrame(
             function () {
-
                 messages.scrollTop =
                     messages.scrollHeight;
-
             }
         );
-
-    }
-
-    function updateAiMobileViewport() {
-
-        const viewport =
-            window.visualViewport;
-
-        const visibleHeight =
-            viewport
-                ? viewport.height
-                : window.innerHeight;
-
-        document.documentElement.style.setProperty(
-            "--basha-ai-visible-height",
-            `${Math.round(
-                visibleHeight
-            )}px`
-        );
-
-        if (
-            document.activeElement ===
-            input
-        ) {
-
-            window.setTimeout(
-                function () {
-
-                    scrollMessagesToBottom();
-
-                    input.scrollIntoView({
-                        block: "nearest",
-                        behavior: "smooth"
-                    });
-
-                },
-                120
-            );
-
-        }
-
     }
 
 
     function resizeInput() {
-
-        if (!input) {
-            return;
-        }
-
-        input.style.height =
-            "auto";
+        input.style.height = "auto";
 
         input.style.height =
             Math.min(
                 input.scrollHeight,
                 130
             ) + "px";
-
     }
 
 
     function updateCharacterCount() {
-
-        if (
-            !characterCount ||
-            !input ||
-            !sendButton
-        ) {
-            return;
-        }
-
         characterCount.textContent =
             input.value.length +
             " / 5000";
@@ -600,7 +305,129 @@ document.addEventListener("DOMContentLoaded", function () {
         sendButton.disabled =
             isSending ||
             !input.value.trim();
+    }
 
+
+    function lockPageScroll() {
+        pageScrollY =
+            window.scrollY ||
+            window.pageYOffset ||
+            0;
+
+        document.body.style.top =
+            "-" + pageScrollY + "px";
+
+        document.body.classList.add(
+            "basha-ai-open"
+        );
+    }
+
+
+    function unlockPageScroll() {
+        document.body.classList.remove(
+            "basha-ai-open"
+        );
+
+        document.body.style.top = "";
+
+        window.scrollTo(
+            0,
+            pageScrollY
+        );
+    }
+
+
+    /* =====================================================
+       MOBILE VIEWPORT / SAFARI KEYBOARD
+    ===================================================== */
+
+    function updateAiMobileViewport() {
+        if (viewportAnimationFrame) {
+            window.cancelAnimationFrame(
+                viewportAnimationFrame
+            );
+        }
+
+        viewportAnimationFrame =
+            window.requestAnimationFrame(
+                function () {
+                    viewportAnimationFrame = null;
+
+                    const viewport =
+                        window.visualViewport;
+
+                    const visibleHeight =
+                        Math.max(
+                            320,
+                            Math.round(
+                                viewport
+                                    ? viewport.height
+                                    : window.innerHeight
+                            )
+                        );
+
+                    const viewportTop =
+                        Math.max(
+                            0,
+                            Math.round(
+                                viewport
+                                    ? viewport.offsetTop
+                                    : 0
+                            )
+                        );
+
+                    const viewportLeft =
+                        Math.max(
+                            0,
+                            Math.round(
+                                viewport
+                                    ? viewport.offsetLeft
+                                    : 0
+                            )
+                        );
+
+                    const layoutHeight =
+                        Math.max(
+                            document.documentElement.clientHeight,
+                            window.innerHeight || 0
+                        );
+
+                    const keyboardHeight =
+                        Math.max(
+                            0,
+                            layoutHeight -
+                            visibleHeight -
+                            viewportTop
+                        );
+
+                    document.documentElement.style.setProperty(
+                        "--basha-ai-visible-height",
+                        visibleHeight + "px"
+                    );
+
+                    document.documentElement.style.setProperty(
+                        "--basha-ai-viewport-top",
+                        viewportTop + "px"
+                    );
+
+                    document.documentElement.style.setProperty(
+                        "--basha-ai-viewport-left",
+                        viewportLeft + "px"
+                    );
+
+                    shell.classList.toggle(
+                        "keyboard-open",
+                        document.activeElement === input &&
+                        keyboardHeight > 140
+                    );
+
+                    if (
+                        document.activeElement === input
+                    ) {
+                        scrollMessagesToBottom();
+                    }
+                }
+            );
     }
 
 
@@ -609,7 +436,6 @@ document.addEventListener("DOMContentLoaded", function () {
     ===================================================== */
 
     function installImageFallbacks() {
-
         const images =
             document.querySelectorAll(
                 ".basha-ai-shell img," +
@@ -617,57 +443,48 @@ document.addEventListener("DOMContentLoaded", function () {
                 ".basha-ai-flying-avatar img"
             );
 
-        images.forEach(function (image) {
+        images.forEach(
+            function (image) {
+                image.addEventListener(
+                    "error",
+                    function () {
+                        const fallbackSource =
+                            image.dataset.fallbackSrc ||
+                            avatarFrames.fallback;
 
-            image.addEventListener(
-                "error",
-                function () {
+                        if (!fallbackSource) {
+                            return;
+                        }
 
-                    const fallbackSource =
-                        image.dataset.fallbackSrc ||
-                        avatarFrames.fallback;
+                        const fallbackUrl =
+                            new URL(
+                                fallbackSource,
+                                window.location.href
+                            ).href;
 
-                    if (!fallbackSource) {
-                        return;
+                        if (
+                            image.src !== fallbackUrl
+                        ) {
+                            image.src =
+                                fallbackSource;
+                        }
                     }
-
-                    const fallbackUrl =
-                        new URL(
-                            fallbackSource,
-                            window.location.href
-                        ).href;
-
-                    if (
-                        image.src !== fallbackUrl
-                    ) {
-                        image.src =
-                            fallbackSource;
-                    }
-
-                }
-            );
-
-        });
-
+                );
+            }
+        );
     }
 
 
     function preloadAvatarImages() {
-
-        const allFrames = [
-
+        [
             ...avatarFrames.idle,
             ...avatarFrames.blink,
             ...avatarFrames.wave,
             ...avatarFrames.thinking,
             ...avatarFrames.speaking,
-            ...avatarFrames.explaining
-
-        ];
-
-        allFrames.forEach(
+            ...avatarFrames.explaining,
+        ].forEach(
             function (imageSource) {
-
                 if (!imageSource) {
                     return;
                 }
@@ -677,10 +494,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 image.src =
                     imageSource;
-
             }
         );
-
     }
 
 
@@ -691,98 +506,73 @@ document.addEventListener("DOMContentLoaded", function () {
     function setMainAvatarFrame(
         imageSource
     ) {
-
-        if (!character) {
-            return;
-        }
-
         character.src =
             imageSource ||
             avatarFrames.fallback;
-
     }
 
 
     function setHeaderAvatarFrame(
         imageSource
     ) {
-
-        if (!headerAvatar) {
-            return;
-        }
-
         headerAvatar.src =
             imageSource ||
             avatarFrames.fallback;
-
     }
 
 
     function stopAvatarAnimation() {
-
         if (avatarAnimationTimer) {
-
             window.clearInterval(
                 avatarAnimationTimer
             );
 
-            avatarAnimationTimer =
-                null;
-
+            avatarAnimationTimer = null;
         }
 
         avatarFrameIndex = 0;
-
     }
 
 
     function removeAvatarClasses() {
-
-        if (!character) {
-            return;
-        }
-
         character.classList.remove(
             "is-idle",
             "is-speaking",
             "is-thinking",
             "is-explaining",
             "is-wave",
-            "is-blinking"
+            "is-blinking",
+            "is-blink"
         );
-
     }
 
 
     function playAvatarFrames(
-        state,
+        stateName,
         options
     ) {
-
         const settings =
             options || {};
 
         const frames =
-            avatarFrames[state];
+            avatarFrames[stateName];
 
         if (
             !frames ||
-            frames.length === 0
+            !frames.length
         ) {
-
             setMainAvatarFrame(
                 avatarFrames.fallback
             );
 
             return;
-
         }
 
         stopAvatarAnimation();
-
         removeAvatarClasses();
 
-        avatarState = state;
+        avatarState =
+            stateName;
 
         avatarFrameIndex = 0;
 
@@ -797,7 +587,7 @@ document.addEventListener("DOMContentLoaded", function () {
             settings.returnToIdle !== false;
 
         character.classList.add(
-            "is-" + state
+            "is-" + stateName
         );
 
         setMainAvatarFrame(
@@ -805,53 +595,41 @@ document.addEventListener("DOMContentLoaded", function () {
         );
 
         if (
-            state === "thinking" &&
-            thinkingAvatar
+            stateName === "thinking"
         ) {
-
             thinkingAvatar.src =
                 frames[0];
-
         }
 
         avatarAnimationTimer =
             window.setInterval(
                 function () {
-
                     if (
                         !pageIsVisible &&
-                        state !== "speaking"
+                        stateName !== "speaking"
                     ) {
                         return;
                     }
 
-                    avatarFrameIndex++;
+                    avatarFrameIndex += 1;
 
                     if (
                         avatarFrameIndex >=
                         frames.length
                     ) {
-
                         if (loop) {
-
                             avatarFrameIndex = 0;
-
                         } else {
-
                             stopAvatarAnimation();
 
                             if (returnToIdle) {
-
                                 setAvatarState(
                                     "idle"
                                 );
-
                             }
 
                             return;
-
                         }
-
                     }
 
                     const frame =
@@ -864,153 +642,87 @@ document.addEventListener("DOMContentLoaded", function () {
                     );
 
                     if (
-                        state === "thinking" &&
-                        thinkingAvatar
+                        stateName === "thinking"
                     ) {
-
                         thinkingAvatar.src =
                             frame;
-
                     }
-
                 },
                 speed
             );
-
     }
 
 
     function setAvatarState(
-        state
+        stateName
     ) {
+        const stateOptions = {
+            idle: {
+                speed: 620,
+                loop: true,
+                returnToIdle: false
+            },
 
-        if (state === "idle") {
+            blink: {
+                speed: 115,
+                loop: false,
+                returnToIdle: true
+            },
 
-            playAvatarFrames(
-                "idle",
-                {
-                    speed: 620,
-                    loop: true,
-                    returnToIdle: false
-                }
-            );
+            wave: {
+                speed: 220,
+                loop: false,
+                returnToIdle: true
+            },
 
-            return;
+            thinking: {
+                speed: 270,
+                loop: true,
+                returnToIdle: false
+            },
 
-        }
+            explaining: {
+                speed: 230,
+                loop: true,
+                returnToIdle: false
+            },
 
-        if (state === "blink") {
+            speaking: {
+                speed: 145,
+                loop: true,
+                returnToIdle: false
+            },
+        };
 
-            playAvatarFrames(
-                "blink",
-                {
-                    speed: 115,
-                    loop: false,
-                    returnToIdle: true
-                }
-            );
-
-            return;
-
-        }
-
-        if (state === "wave") {
-
-            playAvatarFrames(
-                "wave",
-                {
-                    speed: 220,
-                    loop: false,
-                    returnToIdle: true
-                }
-            );
-
-            return;
-
-        }
-
-        if (state === "thinking") {
-
-            playAvatarFrames(
-                "thinking",
-                {
-                    speed: 270,
-                    loop: true,
-                    returnToIdle: false
-                }
-            );
-
-            return;
-
-        }
-
-        if (state === "explaining") {
-
-            playAvatarFrames(
-                "explaining",
-                {
-                    speed: 230,
-                    loop: true,
-                    returnToIdle: false
-                }
-            );
-
-            return;
-
-        }
-
-        if (state === "speaking") {
-
-            playAvatarFrames(
-                "speaking",
-                {
-                    speed: 145,
-                    loop: true,
-                    returnToIdle: false
-                }
-            );
-
-        }
-
+        playAvatarFrames(
+            stateName,
+            stateOptions[stateName] ||
+            stateOptions.idle
+        );
     }
 
 
     function resetAssistantVisuals() {
-
         setAvatarState(
             "idle"
         );
 
-        if (status) {
-
-            status.textContent =
-                "Online";
-
-        }
-
+        status.textContent =
+            "Online";
     }
 
 
     function scheduleBlink() {
-
         if (blinkTimer) {
-
             window.clearTimeout(
                 blinkTimer
             );
-
         }
-
-        const nextBlinkTime =
-            3500 +
-            Math.random() * 3500;
 
         blinkTimer =
             window.setTimeout(
                 function () {
-
                     const canBlink =
-
                         pageIsVisible &&
                         !shell.hidden &&
                         !isSending &&
@@ -1018,19 +730,16 @@ document.addEventListener("DOMContentLoaded", function () {
                         avatarState === "idle";
 
                     if (canBlink) {
-
                         setAvatarState(
                             "blink"
                         );
-
                     }
 
                     scheduleBlink();
-
                 },
-                nextBlinkTime
+                3500 +
+                Math.random() * 3500
             );
-
     }
 
 
@@ -1042,7 +751,6 @@ document.addEventListener("DOMContentLoaded", function () {
         role,
         text
     ) {
-
         const row =
             document.createElement(
                 "div"
@@ -1101,25 +809,22 @@ document.addEventListener("DOMContentLoaded", function () {
 
         conversationHistory.push({
             role: role,
-            text: text
+            text: String(text || ""),
         });
 
         if (
             conversationHistory.length >
             20
         ) {
-
             conversationHistory =
                 conversationHistory.slice(
                     -20
                 );
-
         }
 
         scrollMessagesToBottom();
 
         return content;
-
     }
 
 
@@ -1128,7 +833,6 @@ document.addEventListener("DOMContentLoaded", function () {
         text,
         useTypewriter
     ) {
-
         const contentElement =
             createMessage(
                 role,
@@ -1139,53 +843,45 @@ document.addEventListener("DOMContentLoaded", function () {
             String(text || "");
 
         if (!useTypewriter) {
-
             contentElement.textContent =
                 fullText;
 
             scrollMessagesToBottom();
 
-            return;
-
+            return contentElement;
         }
 
-        if (role === "assistant") {
-
+        if (
+            role === "assistant"
+        ) {
             setAvatarState(
                 "explaining"
             );
 
-            if (status) {
-
-                status.textContent =
-                    "Laxmi is explaining...";
-
-            }
-
+            status.textContent =
+                "Laxmi is explaining...";
         }
 
         for (
             const letter of fullText
         ) {
-
             contentElement.textContent +=
                 letter;
 
             scrollMessagesToBottom();
 
             await wait(11);
-
         }
 
+        return contentElement;
     }
 
 
     /* =====================================================
-       SPEECH SYNTHESIS / TTS
+       AUDIO / TTS
     ===================================================== */
 
     function primeSpeechSynthesis() {
-
         if (
             !(
                 "speechSynthesis"
@@ -1196,287 +892,237 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         window.speechSynthesis.resume();
-
         window.speechSynthesis.getVoices();
-
     }
 
 
-    function stopSpeechKeepAlive() {
+    function setStopSpeakingVisible(
+        visible
+    ) {
+        const isVisible =
+            Boolean(visible);
 
-        if (speechKeepAliveTimer) {
+        stopSpeakingButton.hidden =
+            !isVisible;
 
-            window.clearInterval(
-                speechKeepAliveTimer
-            );
+        stopSpeakingButton.disabled =
+            !isVisible;
 
-            speechKeepAliveTimer =
-                null;
+        stopSpeakingButton.classList.toggle(
+            "is-active",
+            isVisible
+        );
+    }
 
+
+    function revokeActiveAudioUrl() {
+        if (!activeAudioObjectUrl) {
+            return;
         }
 
+        URL.revokeObjectURL(
+            activeAudioObjectUrl
+        );
+
+        activeAudioObjectUrl = "";
     }
 
-    function stopCurrentAssistantActivity() {
 
-                clearIOSRecordingTimers();
+    function resetAudioElement() {
+        audioPlayer.pause();
 
-        if (iosTranscriptionController) {
+        try {
+            audioPlayer.currentTime = 0;
+        } catch (error) {
+            console.log(
+                "Audio reset error:",
+                error
+            );
+        }
 
-            iosTranscriptionController.abort();
+        audioPlayer.onloadedmetadata = null;
+        audioPlayer.onended = null;
+        audioPlayer.onerror = null;
 
-            iosTranscriptionController =
-                null;
+        audioPlayer.removeAttribute(
+            "src"
+        );
 
+        audioPlayer.load();
+
+        revokeActiveAudioUrl();
+    }
+
+
+    /* =====================================================
+       IOS AUTOPLAY UNLOCK
+    ===================================================== */
+
+    async function unlockAudioPlayback() {
+        if (!isIOSDevice()) {
+            audioPlaybackUnlocked = true;
+            return true;
+        }
+
+        if (audioPlaybackUnlocked) {
+            return true;
+        }
+
+        if (audioUnlockPromise) {
+            return audioUnlockPromise;
         }
 
         if (
-            iosMediaRecorder &&
-            iosMediaRecorder.state !==
-                "inactive"
+            isSpeaking ||
+            activeAudioObjectUrl
         ) {
-
-            try {
-
-                iosMediaRecorder.onstop =
-                    null;
-
-                iosMediaRecorder.stop();
-
-            } catch (error) {
-
-                console.log(
-                    "iPhone recorder stop error:",
-                    error
-                );
-
-            }
-
+            return false;
         }
 
-        iosMediaRecorder = null;
+        audioUnlockPromise =
+            (
+                async function () {
+                    try {
+                        audioPlayer.src =
+                            SILENT_AUDIO_DATA_URI;
 
-        iosAudioChunks = [];
+                        audioPlayer.volume = 1;
 
-        iosRecordingStartedAt = 0;
+                        const playPromise =
+                            audioPlayer.play();
 
-        updateIOSMicUI(
-            false
-        );
+                        if (
+                            playPromise &&
+                            typeof playPromise.then ===
+                                "function"
+                        ) {
+                            await playPromise;
+                        }
 
-        releaseIOSMediaStream();
+                        audioPlayer.pause();
 
-        /*
-        * Stop current AI chat request.
-        */
-        if (currentChatController) {
+                        audioPlayer.currentTime = 0;
 
-            currentChatController.abort();
+                        audioPlayer.removeAttribute(
+                            "src"
+                        );
 
-            currentChatController = null;
+                        audioPlayer.load();
 
-        }
+                        audioPlaybackUnlocked =
+                            true;
 
-        /*
-        * Stop current TTS request.
-        */
+                        return true;
+
+                    } catch (error) {
+                        console.log(
+                            "iPhone audio unlock error:",
+                            error
+                        );
+
+                        audioPlaybackUnlocked =
+                            false;
+
+                        return false;
+
+                    } finally {
+                        audioUnlockPromise =
+                            null;
+                    }
+                }
+            )();
+
+        return audioUnlockPromise;
+    }
+
+
+    /* =====================================================
+       STOP SPEECH ONLY
+    ===================================================== */
+
+    function stopAssistantSpeech(
+        options
+    ) {
+        const settings =
+            options || {};
+
+        speechRunId += 1;
+
         if (currentTtsController) {
-
             currentTtsController.abort();
-
             currentTtsController = null;
-
         }
 
-        /*
-        * Resolve current speech promise safely.
-        */
         if (currentSpeechCancel) {
-
             currentSpeechCancel();
-
             currentSpeechCancel = null;
-
         }
 
-        /*
-        * Stop Google Cloud audio.
-        */
-        if (audioPlayer) {
-
-            audioPlayer.pause();
-
-            audioPlayer.currentTime = 0;
-
-            audioPlayer.onloadedmetadata = null;
-
-            audioPlayer.onended = null;
-
-            audioPlayer.onerror = null;
-
-            audioPlayer.removeAttribute(
-                "src"
-            );
-
-            audioPlayer.load();
-
+        if (
+            currentSpeechDisplay &&
+            currentSpeechDisplay.element
+        ) {
+            currentSpeechDisplay.element.textContent =
+                currentSpeechDisplay.fullText;
         }
 
-        /*
-        * Stop browser speech fallback.
-        */
-        stopSpeechKeepAlive();
+        currentSpeechDisplay = null;
+        pendingSpeech = null;
+
+        resetAudioElement();
 
         if (
             "speechSynthesis"
             in window
         ) {
-
             window.speechSynthesis.cancel();
-
         }
-
-        /*
-        * Fully reset microphone recognition.
-        */
-
-        recognitionShouldRestart = false;
-
-        clearVoiceSilenceTimer();
-
-        accumulatedVoiceText = "";
-
-        if (recognition) {
-
-            try {
-
-                recognition.abort();
-
-            } catch (error) {
-
-                console.log(
-                    "Recognition abort error:",
-                    error
-                );
-
-            }
-
-            recognition = null;
-
-        }
-
-        isListening = false;
-
-        isSending = false;
 
         isSpeaking = false;
-
-        lastFinalTranscript = "";
-
-        thinking.hidden = true;
-
-        micButton.disabled = false;
-
-        micButton.classList.remove(
-            "is-listening"
-        );
-
-        micButton.innerHTML =
-            '<i class="bi bi-mic-fill"></i>';
 
         characterSection.classList.remove(
             "is-speaking"
         );
 
-        voiceStatus.textContent =
-            "Type or tap microphone";
-
-        resetAssistantVisuals();
-
-        updateCharacterCount();
-
-    }
-
-    function chooseSpeechVoice(
-        languageTag
-    ) {
-
-        if (
-            !(
-                "speechSynthesis"
-                in window
-            )
-        ) {
-            return null;
-        }
-
-        const availableVoices =
-            window.speechSynthesis.getVoices();
-
-        if (
-            !availableVoices.length
-        ) {
-            return null;
-        }
-
-        const normalizedTag =
-            String(
-                languageTag || ""
-            ).toLowerCase();
-
-        const languagePrefix =
-            normalizedTag.split("-")[0];
-
-        const exactVoice =
-            availableVoices.find(
-                function (voice) {
-
-                    return (
-                        voice.lang.toLowerCase() ===
-                        normalizedTag
-                    );
-
-                }
-            );
-
-        if (exactVoice) {
-            return exactVoice;
-        }
-
-        const languageVoice =
-            availableVoices.find(
-                function (voice) {
-
-                    return voice.lang
-                        .toLowerCase()
-                        .startsWith(
-                            languagePrefix
-                        );
-
-                }
-            );
-
-        if (languageVoice) {
-            return languageVoice;
-        }
-
-        return (
-            availableVoices.find(
-                function (voice) {
-
-                    return voice.lang
-                        .toLowerCase()
-                        .startsWith("en");
-
-                }
-            ) ||
-            null
+        setStopSpeakingVisible(
+            false
         );
 
+        if (
+            settings.resetVisuals !== false
+        ) {
+            resetAssistantVisuals();
+        }
+
+        if (
+            !settings.keepVoiceStatus
+        ) {
+            voiceStatus.textContent =
+                voiceReplyEnabled
+                    ? "Type or tap microphone"
+                    : "Voice reply is off";
+        }
     }
 
-    function splitSpeechText(text) {
 
+    function utf8Length(
+        value
+    ) {
+        return new TextEncoder()
+            .encode(
+                String(value || "")
+            )
+            .length;
+    }
+
+
+    /* =====================================================
+       SPLIT LONG TTS
+    ===================================================== */
+
+    function splitSpeechText(
+        text
+    ) {
         const cleanText =
             String(text || "")
                 .replace(/\s+/g, " ")
@@ -1486,115 +1132,133 @@ document.addEventListener("DOMContentLoaded", function () {
             return [];
         }
 
-        const parts =
+        const sentenceParts =
             cleanText.match(
                 /[^.!?।॥\n]+[.!?।॥]?/g
-            ) || [cleanText];
+            ) ||
+            [cleanText];
 
         const chunks = [];
 
         let currentChunk = "";
 
-        parts.forEach(function (part) {
+        function pushWords(
+            value
+        ) {
+            const words =
+                value
+                    .split(/\s+/)
+                    .filter(Boolean);
 
-            const nextChunk =
-                currentChunk
-                    ? currentChunk + " " + part.trim()
-                    : part.trim();
+            let wordChunk = "";
 
-            if (
-                nextChunk.length > 220 &&
-                currentChunk
-            ) {
+            words.forEach(
+                function (word) {
+                    const nextWordChunk =
+                        wordChunk
+                            ? wordChunk + " " + word
+                            : word;
 
-                chunks.push(
-                    currentChunk.trim()
-                );
+                    if (
+                        utf8Length(
+                            nextWordChunk
+                        ) >
+                        TTS_MAX_CHUNK_BYTES &&
+                        wordChunk
+                    ) {
+                        chunks.push(
+                            wordChunk
+                        );
 
-                currentChunk =
-                    part.trim();
-
-            } else {
-
-                currentChunk =
-                    nextChunk;
-
-            }
-
-        });
-
-        if (currentChunk) {
-
-            chunks.push(
-                currentChunk.trim()
+                        wordChunk =
+                            word;
+                    } else {
+                        wordChunk =
+                            nextWordChunk;
+                    }
+                }
             );
 
+            if (wordChunk) {
+                currentChunk =
+                    wordChunk;
+            }
+        }
+
+        sentenceParts.forEach(
+            function (part) {
+                const sentence =
+                    part.trim();
+
+                if (!sentence) {
+                    return;
+                }
+
+                const nextChunk =
+                    currentChunk
+                        ? currentChunk +
+                          " " +
+                          sentence
+                        : sentence;
+
+                if (
+                    utf8Length(
+                        nextChunk
+                    ) <=
+                    TTS_MAX_CHUNK_BYTES
+                ) {
+                    currentChunk =
+                        nextChunk;
+
+                    return;
+                }
+
+                if (currentChunk) {
+                    chunks.push(
+                        currentChunk
+                    );
+
+                    currentChunk =
+                        "";
+                }
+
+                if (
+                    utf8Length(
+                        sentence
+                    ) >
+                    TTS_MAX_CHUNK_BYTES
+                ) {
+                    pushWords(
+                        sentence
+                    );
+                } else {
+                    currentChunk =
+                        sentence;
+                }
+            }
+        );
+
+        if (currentChunk) {
+            chunks.push(
+                currentChunk
+            );
         }
 
         return chunks;
     }
 
 
-    async function speakText(
+    async function fetchTtsAudio(
         text,
-        liveTextElement
+        signal
     ) {
-
-        if (
-            !voiceReplyEnabled ||
-            !text
-        ) {
-
-            if (liveTextElement) {
-                liveTextElement.textContent =
-                    String(text || "");
-            }
-
-            resetAssistantVisuals();
-
-            return;
-        }
-
-        if (!audioPlayer) {
-
-            throw new Error(
-                "AI audio player not found."
-            );
-
-        }
-
-        const fullText =
-            String(text || "").trim();
-
-        if (!fullText) {
-            return;
-        }
-
-        audioPlayer.pause();
-
-        audioPlayer.removeAttribute(
-            "src"
-        );
-
-        audioPlayer.load();
-
-        if (currentTtsController) {
-
-            currentTtsController.abort();
-
-        }
-
-        currentTtsController =
-            new AbortController();
-
         const response =
             await fetch(
                 "/api/tts",
                 {
                     method: "POST",
 
-                    signal:
-                        currentTtsController.signal,
+                    signal: signal,
 
                     credentials:
                         "same-origin",
@@ -1604,27 +1268,24 @@ document.addEventListener("DOMContentLoaded", function () {
                             "application/json",
 
                         "Accept":
-                            "audio/mpeg"
+                            "audio/mpeg",
                     },
 
                     body:
                         JSON.stringify({
-                            text:
-                                fullText,
+                            text: text,
 
                             languageCode:
-                                userLanguageCode
-                        })
+                                userLanguageCode,
+                        }),
                 }
             );
 
         if (!response.ok) {
-
             let errorMessage =
                 "Unable to generate voice.";
 
             try {
-
                 const errorData =
                     await response.json();
 
@@ -1633,7 +1294,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     errorMessage;
 
             } catch (error) {
-                // Audio error response may not be JSON.
+                console.log(
+                    "TTS error response parse failed:",
+                    error
+                );
             }
 
             throw new Error(
@@ -1641,130 +1305,128 @@ document.addEventListener("DOMContentLoaded", function () {
             );
         }
 
-        const audioBlob =
-            await response.blob();
-
-        currentTtsController = null;
+        return response.blob();
+    }
 
 
-        /*
-        * Speaker TTS request madhyalo OFF chesina
-        * audio start kakunda stop chestundi.
-        */
-        if (!voiceReplyEnabled) {
-
-            if (liveTextElement) {
-
-                liveTextElement.textContent =
-                    fullText;
-
-            }
-
-            resetAssistantVisuals();
-
-            voiceStatus.textContent =
-                "Voice is off";
-
-            return;
-
+    async function playSpeechChunk(
+        audioBlob,
+        chunkText,
+        spokenPrefix,
+        liveTextElement,
+        runId
+    ) {
+        if (
+            runId !== speechRunId ||
+            !voiceReplyEnabled ||
+            !pageIsVisible
+        ) {
+            return "cancelled";
         }
 
+        resetAudioElement();
 
-        const audioUrl =
+        activeAudioObjectUrl =
             URL.createObjectURL(
                 audioBlob
             );
 
         audioPlayer.src =
-            audioUrl;
+            activeAudioObjectUrl;
 
-        setAvatarState(
-            "speaking"
-        );
-
-        characterSection.classList.add(
-            "is-speaking"
-        );
-
-        status.textContent =
-            "Laxmi is speaking...";
-
-        voiceStatus.textContent =
-            "Laxmi is speaking...";
-
-        if (liveTextElement) {
-
-            liveTextElement.textContent =
-                "";
-
-        }
-
-        await new Promise(
+        return new Promise(
             function (
                 resolve,
                 reject
             ) {
-
                 let wordTimer = null;
+                let settled = false;
+
+                function clearWordTimer() {
+                    if (wordTimer) {
+                        window.clearInterval(
+                            wordTimer
+                        );
+
+                        wordTimer = null;
+                    }
+                }
+
+                function finish(
+                    result
+                ) {
+                    if (settled) {
+                        return;
+                    }
+
+                    settled = true;
+
+                    clearWordTimer();
+
+                    audioPlayer.onloadedmetadata =
+                        null;
+
+                    audioPlayer.onended =
+                        null;
+
+                    audioPlayer.onerror =
+                        null;
+
+                    currentSpeechCancel =
+                        null;
+
+                    resolve(
+                        result
+                    );
+                }
 
                 currentSpeechCancel =
                     function () {
-
-                        if (wordTimer) {
-
-                            window.clearInterval(
-                                wordTimer
-                            );
-
-                            wordTimer = null;
-
-                        }
-
-                        if (liveTextElement) {
-
+                        if (
+                            liveTextElement &&
+                            currentSpeechDisplay
+                        ) {
                             liveTextElement.textContent =
-                                fullText;
-
+                                currentSpeechDisplay.fullText;
                         }
 
-                        resolve();
-
+                        finish(
+                            "cancelled"
+                        );
                     };
 
-                function startTextSync() {
 
+                function startWordSync() {
                     if (!liveTextElement) {
                         return;
                     }
 
                     const words =
-                        fullText.split(
-                            /\s+/
-                        );
+                        chunkText
+                            .split(/\s+/)
+                            .filter(Boolean);
 
                     let wordIndex = 0;
 
-                    const audioDuration =
+                    const duration =
                         Number(
                             audioPlayer.duration
                         );
 
                     const totalDuration =
                         Number.isFinite(
-                            audioDuration
+                            duration
                         ) &&
-                        audioDuration > 0
-
-                            ? audioDuration * 1000
-
+                        duration > 0
+                            ? duration * 1000
                             : Math.max(
-                                words.length * 430,
-                                1500
+                                words.length * 360,
+                                1200
                             );
 
                     const interval =
                         Math.max(
-                            120,
+                            90,
                             totalDuration /
                             Math.max(
                                 words.length,
@@ -1772,149 +1434,638 @@ document.addEventListener("DOMContentLoaded", function () {
                             )
                         );
 
+                    liveTextElement.textContent =
+                        spokenPrefix;
+
                     wordTimer =
                         window.setInterval(
                             function () {
-
                                 if (
                                     wordIndex >=
                                     words.length
                                 ) {
-
-                                    window.clearInterval(
-                                        wordTimer
-                                    );
-
-                                    wordTimer = null;
-
-                                    liveTextElement.textContent =
-                                        fullText;
-
+                                    clearWordTimer();
                                     return;
-
                                 }
 
-                                liveTextElement.textContent +=
-                                    (
-                                        wordIndex === 0
-                                            ? ""
-                                            : " "
-                                    ) +
-                                    words[wordIndex];
+                                const prefix =
+                                    liveTextElement.textContent
+                                        ? " "
+                                        : "";
 
-                                wordIndex++;
+                                liveTextElement.textContent +=
+                                    prefix +
+                                    words[
+                                        wordIndex
+                                    ];
+
+                                wordIndex += 1;
 
                                 scrollMessagesToBottom();
-
                             },
                             interval
                         );
-
                 }
 
 
                 audioPlayer.onloadedmetadata =
-                    function () {
-
-                        startTextSync();
-
-                    };
+                    startWordSync;
 
 
                 audioPlayer.onended =
                     function () {
+                        clearWordTimer();
 
-                        if (wordTimer) {
-
-                            window.clearInterval(
-                                wordTimer
-                            );
-
-                        }
-
-                        if (liveTextElement) {
-
+                        if (
+                            liveTextElement
+                        ) {
                             liveTextElement.textContent =
-                                fullText;
-
+                                [
+                                    spokenPrefix,
+                                    chunkText
+                                ]
+                                    .filter(Boolean)
+                                    .join(" ");
                         }
 
-                        URL.revokeObjectURL(
-                            audioUrl
+                        resetAudioElement();
+
+                        finish(
+                            "ended"
                         );
-
-                        characterSection.classList.remove(
-                            "is-speaking"
-                        );
-
-                        resetAssistantVisuals();
-
-                        voiceStatus.textContent =
-                            "Type or tap microphone";
-
-                        currentSpeechCancel = null; 
-                        
-                        isSpeaking = false;
-
-                        resolve();
-
                     };
 
 
                 audioPlayer.onerror =
                     function () {
+                        const mediaError =
+                            audioPlayer.error;
 
-                        if (wordTimer) {
+                        resetAudioElement();
 
-                            window.clearInterval(
-                                wordTimer
-                            );
-
-                        }
-
-                        URL.revokeObjectURL(
-                            audioUrl
-                        );
-
-                        characterSection.classList.remove(
-                            "is-speaking"
-                        );
-
-                        resetAssistantVisuals();
-
-                        currentSpeechCancel = null;
+                        currentSpeechCancel =
+                            null;
 
                         reject(
                             new Error(
-                                "Laxmi audio playback failed."
+                                mediaError
+                                    ? "Laxmi audio playback failed. Media code: " +
+                                      mediaError.code
+                                    : "Laxmi audio playback failed."
                             )
                         );
-
                     };
 
-                    audioPlayer.play()
-                    .then(function () {
 
-                        isSpeaking = true;
+                const playPromise =
+                    audioPlayer.play();
 
-                    })
+                Promise.resolve(
+                    playPromise
+                )
+                    .then(
+                        function () {
+                            if (
+                                runId !==
+                                speechRunId
+                            ) {
+                                finish(
+                                    "cancelled"
+                                );
+
+                                return;
+                            }
+
+                            isSpeaking =
+                                true;
+
+                            audioPlaybackUnlocked =
+                                true;
+
+                            characterSection.classList.add(
+                                "is-speaking"
+                            );
+
+                            setAvatarState(
+                                "speaking"
+                            );
+
+                            setStopSpeakingVisible(
+                                true
+                            );
+
+                            status.textContent =
+                                "Laxmi is speaking...";
+
+                            voiceStatus.textContent =
+                                "Laxmi is speaking...";
+                        }
+                    )
                     .catch(
-                    function (error) {
+                        function (error) {
+                            clearWordTimer();
 
-                        URL.revokeObjectURL(
-                            audioUrl
-                        );
+                            resetAudioElement();
 
-                        reject(
-                            error
-                        );
+                            currentSpeechCancel =
+                                null;
 
-                    }
-                );
+                            if (
+                                error &&
+                                error.name ===
+                                    "NotAllowedError"
+                            ) {
+                                audioPlaybackUnlocked =
+                                    false;
 
+                                finish(
+                                    "blocked"
+                                );
+
+                                return;
+                            }
+
+                            reject(
+                                error
+                            );
+                        }
+                    );
             }
         );
+    }
 
+
+    /* =====================================================
+       MAIN SPEAK
+    ===================================================== */
+
+    async function speakText(
+        text,
+        liveTextElement
+    ) {
+        const fullText =
+            String(text || "")
+                .trim();
+
+        if (!fullText) {
+            return;
+        }
+
+        if (
+            !voiceReplyEnabled ||
+            !pageIsVisible
+        ) {
+            if (liveTextElement) {
+                liveTextElement.textContent =
+                    fullText;
+            }
+
+            resetAssistantVisuals();
+
+            return;
+        }
+
+        stopAssistantSpeech({
+            resetVisuals: false,
+            keepVoiceStatus: true,
+        });
+
+        const runId =
+            ++speechRunId;
+
+        const chunks =
+            splitSpeechText(
+                fullText
+            );
+
+        let spokenPrefix = "";
+
+        currentSpeechDisplay = {
+            element:
+                liveTextElement,
+
+            fullText:
+                fullText,
+        };
+
+        if (liveTextElement) {
+            liveTextElement.textContent =
+                "";
+        }
+
+        try {
+            for (
+                const chunk of chunks
+            ) {
+                if (
+                    runId !== speechRunId ||
+                    !voiceReplyEnabled ||
+                    !pageIsVisible
+                ) {
+                    break;
+                }
+
+                currentTtsController =
+                    new AbortController();
+
+                const audioBlob =
+                    await fetchTtsAudio(
+                        chunk,
+                        currentTtsController.signal
+                    );
+
+                currentTtsController =
+                    null;
+
+                const result =
+                    await playSpeechChunk(
+                        audioBlob,
+                        chunk,
+                        spokenPrefix,
+                        liveTextElement,
+                        runId
+                    );
+
+                if (
+                    result === "blocked"
+                ) {
+                    if (
+                        liveTextElement
+                    ) {
+                        liveTextElement.textContent =
+                            fullText;
+                    }
+
+                    pendingSpeech = {
+                        text:
+                            fullText,
+
+                        element:
+                            liveTextElement,
+                    };
+
+                    isSpeaking =
+                        false;
+
+                    characterSection.classList.remove(
+                        "is-speaking"
+                    );
+
+                    setStopSpeakingVisible(
+                        false
+                    );
+
+                    setAvatarState(
+                        "idle"
+                    );
+
+                    voiceStatus.textContent =
+                        "iPhone Safari blocked autoplay. Tap the speaker button once.";
+
+                    status.textContent =
+                        "Tap speaker to play voice";
+
+                    return;
+                }
+
+                if (
+                    result === "cancelled"
+                ) {
+                    break;
+                }
+
+                spokenPrefix =
+                    [
+                        spokenPrefix,
+                        chunk
+                    ]
+                        .filter(Boolean)
+                        .join(" ");
+            }
+
+        } catch (error) {
+            if (
+                error &&
+                error.name ===
+                    "AbortError"
+            ) {
+                return;
+            }
+
+            if (
+                liveTextElement
+            ) {
+                liveTextElement.textContent =
+                    fullText;
+            }
+
+            throw error;
+
+        } finally {
+            if (
+                runId === speechRunId
+            ) {
+                if (
+                    liveTextElement
+                ) {
+                    liveTextElement.textContent =
+                        fullText;
+                }
+
+                currentSpeechDisplay =
+                    null;
+
+                currentTtsController =
+                    null;
+
+                currentSpeechCancel =
+                    null;
+
+                isSpeaking =
+                    false;
+
+                characterSection.classList.remove(
+                    "is-speaking"
+                );
+
+                setStopSpeakingVisible(
+                    false
+                );
+
+                if (!pendingSpeech) {
+                    resetAssistantVisuals();
+
+                    voiceStatus.textContent =
+                        voiceReplyEnabled
+                            ? "Type or tap microphone"
+                            : "Voice reply is off";
+                }
+            }
+        }
+    }
+
+
+    async function replayPendingSpeech() {
+        if (
+            !pendingSpeech ||
+            !voiceReplyEnabled
+        ) {
+            return false;
+        }
+
+        const pending =
+            pendingSpeech;
+
+        const unlocked =
+            await unlockAudioPlayback();
+
+        if (!unlocked) {
+            voiceStatus.textContent =
+                "Tap the speaker button again to allow voice playback.";
+
+            return true;
+        }
+
+        pendingSpeech = null;
+
+        try {
+            await speakText(
+                pending.text,
+                pending.element
+            );
+
+        } catch (error) {
+            showError(
+                error.message ||
+                "Unable to play voice."
+            );
+        }
+
+        return true;
+    }
+
+
+    /* =====================================================
+       VOICE INPUT CLEANUP
+    ===================================================== */
+
+    function clearVoiceSilenceTimer() {
+        if (voiceSilenceTimer) {
+            window.clearTimeout(
+                voiceSilenceTimer
+            );
+
+            voiceSilenceTimer =
+                null;
+        }
+    }
+
+
+    function releaseIOSMediaStream() {
+        if (!iosMediaStream) {
+            return;
+        }
+
+        iosMediaStream
+            .getTracks()
+            .forEach(
+                function (track) {
+                    try {
+                        track.stop();
+
+                    } catch (error) {
+                        console.log(
+                            "iPhone track stop error:",
+                            error
+                        );
+                    }
+                }
+            );
+
+        iosMediaStream =
+            null;
+    }
+
+
+    function clearIOSRecordingTimers() {
+        if (iosMaximumTimer) {
+            window.clearTimeout(
+                iosMaximumTimer
+            );
+
+            iosMaximumTimer =
+                null;
+        }
+    }
+
+
+    function updateIOSMicUI(
+        recording
+    ) {
+        iosIsRecording =
+            Boolean(recording);
+
+        isListening =
+            Boolean(recording);
+
+        micButton.classList.toggle(
+            "is-listening",
+            iosIsRecording
+        );
+
+        micButton.innerHTML =
+            iosIsRecording
+                ? '<i class="bi bi-stop-fill"></i>'
+                : '<i class="bi bi-mic-fill"></i>';
+
+        micButton.setAttribute(
+            "aria-label",
+            iosIsRecording
+                ? "Stop recording"
+                : "Start recording"
+        );
+    }
+
+
+    function stopVoiceInputActivity() {
+        iosVoiceRunId += 1;
+        iosActiveRunId = 0;
+
+        clearVoiceSilenceTimer();
+
+        recognitionShouldRestart =
+            false;
+
+        accumulatedVoiceText =
+            "";
+
+        recognitionSessionBaseText =
+            "";
+
+        recognitionFinalSegments.clear();
+
+        if (recognition) {
+            try {
+                recognition.abort();
+
+            } catch (error) {
+                console.log(
+                    "Recognition abort error:",
+                    error
+                );
+            }
+
+            recognition =
+                null;
+        }
+
+        if (
+            iosTranscriptionController
+        ) {
+            iosTranscriptionController.abort();
+
+            iosTranscriptionController =
+                null;
+        }
+
+        clearIOSRecordingTimers();
+
+        if (
+            iosMediaRecorder &&
+            iosMediaRecorder.state !==
+                "inactive"
+        ) {
+            try {
+                iosMediaRecorder.onstop =
+                    null;
+
+                iosMediaRecorder.stop();
+
+            } catch (error) {
+                console.log(
+                    "iPhone recorder stop error:",
+                    error
+                );
+            }
+        }
+
+        iosMediaRecorder =
+            null;
+
+        iosAudioChunks =
+            [];
+
+        iosRecordingStartedAt =
+            0;
+
+        iosStopPromise =
+            null;
+
+        updateIOSMicUI(
+            false
+        );
+
+        releaseIOSMediaStream();
+
+        isListening =
+            false;
+
+        micButton.disabled =
+            false;
+
+        micButton.classList.remove(
+            "is-listening"
+        );
+
+        micButton.innerHTML =
+            '<i class="bi bi-mic-fill"></i>';
+    }
+
+
+    /* =====================================================
+       STOP ALL ACTIVITY
+    ===================================================== */
+
+    function stopCurrentAssistantActivity(
+        options
+    ) {
+        const settings =
+            options || {};
+
+        stopAssistantSpeech({
+            resetVisuals: false,
+            keepVoiceStatus: true,
+        });
+
+        stopVoiceInputActivity();
+
+        if (
+            settings.abortChat !== false &&
+            currentChatController
+        ) {
+            currentChatController.abort();
+
+            currentChatController =
+                null;
+        }
+
+        isSending =
+            false;
+
+        thinking.hidden =
+            true;
+
+        status.textContent =
+            "Online";
+
+        voiceStatus.textContent =
+            voiceReplyEnabled
+                ? "Type or tap microphone"
+                : "Voice reply is off";
+
+        resetAssistantVisuals();
+
+        updateCharacterCount();
     }
 
 
@@ -1922,20 +2073,20 @@ document.addEventListener("DOMContentLoaded", function () {
        GREETING
     ===================================================== */
 
-    async function typeGreeting(text) {
-
+    async function typeGreeting(
+        text
+    ) {
         const currentRunId =
             ++greetingRunId;
 
-        introBubble.textContent = "";
-
-        const greetingText =
-            String(text || "");
+        introBubble.textContent =
+            "";
 
         for (
-            const letter of greetingText
+            const letter of String(
+                text || ""
+            )
         ) {
-
             if (
                 currentRunId !==
                 greetingRunId
@@ -1946,15 +2097,14 @@ document.addEventListener("DOMContentLoaded", function () {
             introBubble.textContent +=
                 letter;
 
-            await wait(18);
-
+            await wait(
+                18
+            );
         }
-
     }
 
 
     async function loadGreeting() {
-
         introBubble.classList.add(
             "show"
         );
@@ -1968,20 +2118,20 @@ document.addEventListener("DOMContentLoaded", function () {
         `;
 
         try {
-
             const response =
                 await fetch(
                     "/api/ai-assistant/greeting",
                     {
-                        method: "GET",
+                        method:
+                            "GET",
 
                         credentials:
                             "same-origin",
 
                         headers: {
                             "Accept":
-                                "application/json"
-                        }
+                                "application/json",
+                        },
                     }
                 );
 
@@ -1992,12 +2142,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 !response.ok ||
                 !data.success
             ) {
-
                 throw new Error(
                     data.error ||
                     "Unable to load assistant."
                 );
-
             }
 
             userLanguageCode =
@@ -2013,7 +2161,15 @@ document.addEventListener("DOMContentLoaded", function () {
             status.textContent =
                 "Welcoming you...";
 
-            await wait(1050);
+            await wait(
+                1050
+            );
+
+            const greetingText =
+                String(
+                    data.greeting ||
+                    "Welcome. I am Laxmi, your Basha AI Assistant. How can I help you?"
+                ).trim();
 
             introBubble.textContent =
                 "";
@@ -2024,47 +2180,27 @@ document.addEventListener("DOMContentLoaded", function () {
             voiceStatus.textContent =
                 "Please listen...";
 
-            introBubble.textContent =
-                "";
-
-            const shortGreeting =
-                String(
-                    data.greeting || ""
-                )
-                    .split(/\r?\n/)
-                    .map(function (line) {
-                        return line.trim();
-                    })
-                    .find(Boolean)
-                ||
-                (
-                    "Welcome, " +
-                    (
-                        data.name ||
-                        "User"
-                    )
-                );
-
             await speakText(
-                shortGreeting,
+                greetingText,
                 introBubble
             );
 
-            status.textContent =
-                "Ready";
+            if (!pendingSpeech) {
+                status.textContent =
+                    "Ready";
 
-            voiceStatus.textContent =
-                "Tap microphone or type your question";
+                voiceStatus.textContent =
+                    "Tap microphone or type your question";
+            }
 
         } catch (error) {
-
             console.log(
                 "Greeting error:",
                 error
             );
 
             const fallbackGreeting =
-                "Hi 👋 I am Laxmi, your Basha AI Assistant. How can I help you?";
+                "Hi. I am Laxmi, your Basha AI Assistant. How can I help you?";
 
             await typeGreeting(
                 fallbackGreeting
@@ -2075,18 +2211,15 @@ document.addEventListener("DOMContentLoaded", function () {
             );
 
             resetAssistantVisuals();
-
         }
-
     }
 
 
     /* =====================================================
-       OPEN FLY ANIMATION
+       OPEN ANIMATION
     ===================================================== */
 
     function getTargetCharacterRect() {
-
         const sectionRect =
             characterSection
                 .getBoundingClientRect();
@@ -2100,7 +2233,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 : 102;
 
         return {
-
             left:
                 sectionRect.left +
                 (
@@ -2118,45 +2250,46 @@ document.addEventListener("DOMContentLoaded", function () {
                         : 42
                 ),
 
-            width: size,
+            width:
+                size,
 
-            height: size
-
+            height:
+                size,
         };
-
     }
 
 
     function setFlyingAvatarRect(
         rectangle
     ) {
-
         flyingAvatar.style.left =
-            rectangle.left + "px";
+            rectangle.left +
+            "px";
 
         flyingAvatar.style.top =
-            rectangle.top + "px";
+            rectangle.top +
+            "px";
 
         flyingAvatar.style.width =
-            rectangle.width + "px";
+            rectangle.width +
+            "px";
 
         flyingAvatar.style.height =
-            rectangle.height + "px";
-
+            rectangle.height +
+            "px";
     }
 
 
     function resetFlyingAvatarStyles() {
+        flyingAvatar.style.transform =
+            "";
 
-        flyingAvatar.style.transform = "";
-
-        flyingAvatar.style.opacity = "";
-
+        flyingAvatar.style.opacity =
+            "";
     }
 
 
     async function animateOpen() {
-
         if (
             isAnimating ||
             !shell.hidden
@@ -2164,15 +2297,20 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        isAnimating = true;
-
-        primeSpeechSynthesis();
+        isAnimating =
+            true;
 
         hideError();
 
-        stopListening();
+        primeSpeechSynthesis();
+
+        void unlockAudioPlayback();
+
+        stopVoiceInputActivity();
 
         resetFlyingAvatarStyles();
+
+        updateAiMobileViewport();
 
         const flyingImage =
             flyingAvatar.querySelector(
@@ -2180,14 +2318,13 @@ document.addEventListener("DOMContentLoaded", function () {
             );
 
         if (flyingImage) {
-
             flyingImage.src =
                 avatarFrames.idle[0] ||
                 avatarFrames.fallback;
-
         }
 
-        shell.hidden = false;
+        shell.hidden =
+            false;
 
         shell.classList.remove(
             "is-open",
@@ -2201,29 +2338,33 @@ document.addEventListener("DOMContentLoaded", function () {
         resetAssistantVisuals();
 
         const startRect =
-            topAvatar.getBoundingClientRect();
+            topAvatar
+                .getBoundingClientRect();
 
         setFlyingAvatarRect(
             startRect
         );
 
-        flyingAvatar.hidden = false;
+        flyingAvatar.hidden =
+            false;
 
         openButton.classList.add(
             "is-hidden"
         );
 
-        await wait(30);
+        lockPageScroll();
+
+        await wait(
+            30
+        );
 
         shell.classList.add(
             "is-open"
         );
 
-        document.body.classList.add(
-            "basha-ai-open"
+        await wait(
+            110
         );
-
-        await wait(110);
 
         const destination =
             getTargetCharacterRect();
@@ -2251,82 +2392,83 @@ document.addEventListener("DOMContentLoaded", function () {
             );
 
         try {
-
             if (
                 typeof flyingAvatar.animate ===
-                "function"
+                    "function"
             ) {
-
                 const animation =
                     flyingAvatar.animate(
                         [
                             {
                                 transform:
-                                    "translate3d(0, 0, 0) scale(1)",
+                                    "translate3d(0,0,0) scale(1)",
 
-                                opacity: 1
+                                opacity:
+                                    1,
                             },
 
                             {
                                 transform:
                                     "translate3d(" +
                                     (deltaX * 0.52) +
-                                    "px, " +
+                                    "px," +
                                     (deltaY * 0.24) +
-                                    "px, 0) " +
+                                    "px,0) " +
                                     "scale(1.30) rotate(-7deg)",
 
-                                opacity: 1,
+                                opacity:
+                                    1,
 
-                                offset: 0.45
+                                offset:
+                                    0.45,
                             },
 
                             {
                                 transform:
                                     "translate3d(" +
                                     deltaX +
-                                    "px, " +
+                                    "px," +
                                     deltaY +
-                                    "px, 0) " +
+                                    "px,0) " +
                                     "scale(" +
                                     scaleX +
-                                    ", " +
+                                    "," +
                                     scaleY +
                                     ") rotate(0deg)",
 
-                                opacity: 1
-                            }
+                                opacity:
+                                    1,
+                            },
                         ],
-
                         {
-                            duration: 760,
+                            duration:
+                                760,
 
                             easing:
                                 "cubic-bezier(.18,.84,.32,1)",
 
                             fill:
-                                "forwards"
+                                "forwards",
                         }
                     );
 
                 await animation.finished;
 
             } else {
-
-                await wait(400);
-
+                await wait(
+                    400
+                );
             }
 
         } catch (error) {
-
             console.log(
                 "AI open animation error:",
                 error
             );
-
         }
 
-        flyingAvatar.hidden = true;
+        flyingAvatar.hidden =
+            true;
 
         resetFlyingAvatarStyles();
 
@@ -2338,36 +2480,30 @@ document.addEventListener("DOMContentLoaded", function () {
             "show"
         );
 
-        isAnimating = false;
+        isAnimating =
+            false;
 
         scheduleBlink();
 
         window.setTimeout(
             function () {
-
                 if (
                     window.innerWidth >
                     600
                 ) {
-
                     input.focus();
-
                 }
-
             },
             150
         );
 
         if (!hasWelcomed) {
-
-            hasWelcomed = true;
-
-            initialized = true;
+            hasWelcomed =
+                true;
 
             await loadGreeting();
 
         } else {
-
             introBubble.classList.remove(
                 "show"
             );
@@ -2376,27 +2512,28 @@ document.addEventListener("DOMContentLoaded", function () {
                 "Online";
 
             voiceStatus.textContent =
-                "Type or tap microphone";
+                voiceReplyEnabled
+                    ? "Type or tap microphone"
+                    : "Voice reply is off";
 
-            isSending = false;
+            isSending =
+                false;
 
-            micButton.disabled = false;
+            micButton.disabled =
+                false;
 
             setupSpeechRecognition();
 
             updateCharacterCount();
-
         }
-
     }
 
 
     /* =====================================================
-       REVERSE CLOSE ANIMATION
+       CLOSE ANIMATION
     ===================================================== */
 
     async function animateClose() {
-
         if (
             isAnimating ||
             shell.hidden
@@ -2404,24 +2541,30 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        isAnimating = true;
+        isAnimating =
+            true;
 
-        greetingRunId++;
+        greetingRunId += 1;
 
-        stopCurrentAssistantActivity();
+        stopCurrentAssistantActivity({
+            abortChat:
+                true
+        });
 
         stopAvatarAnimation();
 
         if (blinkTimer) {
-
             window.clearTimeout(
                 blinkTimer
             );
 
-        }        
+            blinkTimer =
+                null;
+        }
 
         const characterRect =
-            character.getBoundingClientRect();
+            character
+                .getBoundingClientRect();
 
         const startSize =
             Math.min(
@@ -2431,7 +2574,6 @@ document.addEventListener("DOMContentLoaded", function () {
             );
 
         const startRect = {
-
             left:
                 characterRect.left +
                 (
@@ -2446,10 +2588,11 @@ document.addEventListener("DOMContentLoaded", function () {
                     startSize
                 ) / 2,
 
-            width: startSize,
+            width:
+                startSize,
 
-            height: startSize
-
+            height:
+                startSize,
         };
 
         const destination =
@@ -2466,14 +2609,13 @@ document.addEventListener("DOMContentLoaded", function () {
             );
 
         if (flyingImage) {
-
             flyingImage.src =
                 character.src ||
                 avatarFrames.idle[0];
-
         }
 
-        flyingAvatar.hidden = false;
+        flyingAvatar.hidden =
+            false;
 
         shell.classList.remove(
             "character-ready"
@@ -2483,7 +2625,9 @@ document.addEventListener("DOMContentLoaded", function () {
             "show"
         );
 
-        await wait(30);
+        await wait(
+            30
+        );
 
         shell.classList.remove(
             "is-open"
@@ -2512,12 +2656,10 @@ document.addEventListener("DOMContentLoaded", function () {
             );
 
         try {
-
             if (
                 typeof flyingAvatar.animate ===
-                "function"
+                    "function"
             ) {
-
                 const animation =
                     flyingAvatar.animate(
                         [
@@ -2525,120 +2667,92 @@ document.addEventListener("DOMContentLoaded", function () {
                                 transform:
                                     "translate3d(0,0,0) scale(1)",
 
-                                opacity: 1
+                                opacity:
+                                    1,
                             },
 
                             {
                                 transform:
                                     "translate3d(" +
                                     (deltaX * 0.55) +
-                                    "px, " +
+                                    "px," +
                                     (deltaY * 0.72) +
-                                    "px, 0) " +
+                                    "px,0) " +
                                     "scale(.82) rotate(7deg)",
 
-                                opacity: 1,
+                                opacity:
+                                    1,
 
-                                offset: 0.55
+                                offset:
+                                    0.55,
                             },
 
                             {
                                 transform:
                                     "translate3d(" +
                                     deltaX +
-                                    "px, " +
+                                    "px," +
                                     deltaY +
-                                    "px, 0) " +
+                                    "px,0) " +
                                     "scale(" +
                                     scaleX +
-                                    ", " +
+                                    "," +
                                     scaleY +
                                     ") rotate(0deg)",
 
-                                opacity: 0.96
-                            }
+                                opacity:
+                                    0.96,
+                            },
                         ],
-
                         {
-                            duration: 620,
+                            duration:
+                                620,
 
                             easing:
                                 "cubic-bezier(.4,0,.2,1)",
 
                             fill:
-                                "forwards"
+                                "forwards",
                         }
                     );
 
                 await animation.finished;
 
             } else {
-
-                await wait(300);
-
+                await wait(
+                    300
+                );
             }
 
         } catch (error) {
-
             console.log(
                 "AI close animation error:",
                 error
             );
-
         }
 
-        flyingAvatar.hidden = true;
+        flyingAvatar.hidden =
+            true;
 
         resetFlyingAvatarStyles();
 
-        shell.hidden = true;
+        shell.hidden =
+            true;
+
+        shell.classList.remove(
+            "keyboard-open"
+        );
 
         openButton.classList.remove(
             "is-hidden"
         );
 
-        document.body.classList.remove(
-            "basha-ai-open"
-        );
-
-        /*
-        * Backdrop మరియు GPU compositing cleanup.
-        */
-        if (backdrop) {
-
-            backdrop.style.backdropFilter =
-                "";
-
-            backdrop.style.webkitBackdropFilter =
-                "";
-
-            backdrop.style.opacity =
-                "";
-
-            backdrop.style.transform =
-                "";
-
-        }
-
-        shell.style.transform = "";
-        shell.style.opacity = "";
-
-        document.body.style.transform =
-            "translateZ(0)";
-
-        window.requestAnimationFrame(
-            function () {
-
-                document.body.style.transform =
-                    "";
-
-            }
-        );
+        unlockPageScroll();
 
         resetAssistantVisuals();
 
-        isAnimating = false;
-
+        isAnimating =
+            false;
     }
 
 
@@ -2647,16 +2761,22 @@ document.addEventListener("DOMContentLoaded", function () {
     ===================================================== */
 
     function clearConversation() {
+        stopCurrentAssistantActivity({
+            abortChat:
+                true
+        });
 
-        stopCurrentAssistantActivity();
+        conversationHistory =
+            [];
 
-        conversationHistory = [];
+        messages.innerHTML =
+            "";
 
-        messages.innerHTML = "";
+        input.value =
+            "";
 
-        input.value = "";
-
-        introBubble.textContent = "";
+        introBubble.textContent =
+            "";
 
         introBubble.classList.remove(
             "show"
@@ -2666,22 +2786,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
         hideError();
 
-        thinking.hidden = true;
-
-        isSending = false;
-
-        micButton.disabled = false;
+        thinking.hidden =
+            true;
 
         status.textContent =
             "Online";
 
         voiceStatus.textContent =
-            "Type or tap microphone";
+            voiceReplyEnabled
+                ? "Type or tap microphone"
+                : "Voice reply is off";
 
         setupSpeechRecognition();
 
         updateCharacterCount();
-
     }
 
 
@@ -2690,7 +2808,6 @@ document.addEventListener("DOMContentLoaded", function () {
     ===================================================== */
 
     async function sendMessage() {
-
         const message =
             input.value.trim();
 
@@ -2703,23 +2820,35 @@ document.addEventListener("DOMContentLoaded", function () {
 
         hideError();
 
+        stopAssistantSpeech({
+            resetVisuals:
+                false,
+
+            keepVoiceStatus:
+                true,
+        });
+
         await addMessage(
             "user",
             message,
             false
         );
 
-        input.value = "";
+        input.value =
+            "";
 
         resizeInput();
 
-        isSending = true;
+        isSending =
+            true;
 
         updateCharacterCount();
 
-        thinking.hidden = false;
+        thinking.hidden =
+            false;
 
-        micButton.disabled = true;
+        micButton.disabled =
+            true;
 
         status.textContent =
             "Laxmi is thinking...";
@@ -2734,19 +2863,10 @@ document.addEventListener("DOMContentLoaded", function () {
         scrollMessagesToBottom();
 
         try {
-
-            /*
-            * User message కనిపించిన తర్వాత
-            * 3 seconds wait చేసి request పంపుతుంది.
-            */
             await wait(
                 AI_REPLY_DELAY
             );
 
-            /*
-            * ఈ 3 secondsలో panel close చేసినా
-            * లేదా request cancel చేసినా API call పంపదు.
-            */
             if (
                 !isSending ||
                 shell.hidden
@@ -2760,14 +2880,14 @@ document.addEventListener("DOMContentLoaded", function () {
                     -1
                 );
 
-            if (currentChatController) {
-
+            if (
+                currentChatController
+            ) {
                 currentChatController.abort();
-
             }
 
             currentChatController =
-                new AbortController();    
+                new AbortController();
 
             const response =
                 await fetch(
@@ -2777,49 +2897,44 @@ document.addEventListener("DOMContentLoaded", function () {
                             "POST",
 
                         signal:
-                            currentChatController.signal,    
+                            currentChatController.signal,
 
                         credentials:
                             "same-origin",
 
                         headers: {
-
                             "Content-Type":
                                 "application/json",
 
                             "Accept":
-                                "application/json"
-
+                                "application/json",
                         },
 
                         body:
                             JSON.stringify({
-
                                 message:
                                     message,
 
                                 history:
-                                    historyForRequest
-
-                            })
+                                    historyForRequest,
+                            }),
                     }
                 );
 
             const data =
                 await response.json();
 
-            currentChatController = null;    
+            currentChatController =
+                null;
 
             if (
                 !response.ok ||
                 !data.success
             ) {
-
                 throw new Error(
                     data.error ||
                     "AI response failed."
                 );
-
             }
 
             userLanguageCode =
@@ -2828,13 +2943,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
             setupSpeechRecognition();
 
-            thinking.hidden = true;
-
-            status.textContent =
-                "Laxmi is speaking...";
-
-            voiceStatus.textContent =
-                "Please listen...";
+            thinking.hidden =
+                true;
 
             const assistantContent =
                 createMessage(
@@ -2842,25 +2952,57 @@ document.addEventListener("DOMContentLoaded", function () {
                     data.reply
                 );
 
-            await speakText(
-                data.reply,
-                assistantContent
-            );
+            if (
+                voiceReplyEnabled &&
+                pageIsVisible
+            ) {
+                status.textContent =
+                    "Laxmi is speaking...";
+
+                voiceStatus.textContent =
+                    "Please listen...";
+
+                try {
+                    await speakText(
+                        data.reply,
+                        assistantContent
+                    );
+
+                } catch (voiceError) {
+                    console.log(
+                        "AI voice playback error:",
+                        voiceError
+                    );
+
+                    assistantContent.textContent =
+                        data.reply;
+
+                    showError(
+                        voiceError.message ||
+                        "The answer is ready, but voice playback failed."
+                    );
+
+                    resetAssistantVisuals();
+                }
+
+            } else {
+                assistantContent.textContent =
+                    data.reply;
+
+                resetAssistantVisuals();
+            }
 
         } catch (error) {
-
             if (
                 error &&
                 error.name ===
-                "AbortError"
+                    "AbortError"
             ) {
-
                 console.log(
                     "AI request cancelled."
                 );
 
                 return;
-
             }
 
             console.log(
@@ -2876,56 +3018,194 @@ document.addEventListener("DOMContentLoaded", function () {
             resetAssistantVisuals();
 
         } finally {
+            isSending =
+                false;
 
-            isSending = false;
+            thinking.hidden =
+                true;
 
-            thinking.hidden = true;
+            micButton.disabled =
+                false;
 
-            micButton.disabled = false;
+            currentChatController =
+                null;
 
-            currentChatController = null;
-
-            currentTtsController = null;
-
-            voiceStatus.textContent =
-                "Type or tap microphone";
-
-            if (
-                !character.classList.contains(
-                    "is-speaking"
-                )
-            ) {
-
-                resetAssistantVisuals();
-
-            }
+            currentTtsController =
+                null;
 
             clearVoiceSilenceTimer();
-            accumulatedVoiceText = "";
-            lastFinalTranscript = "";
+
+            accumulatedVoiceText =
+                "";
+
+            recognitionSessionBaseText =
+                "";
+
+            recognitionFinalSegments.clear();
+
+            if (
+                !isSpeaking &&
+                !pendingSpeech
+            ) {
+                voiceStatus.textContent =
+                    voiceReplyEnabled
+                        ? "Type or tap microphone"
+                        : "Voice reply is off";
+
+                resetAssistantVisuals();
+            }
+
             updateCharacterCount();
-
         }
-
     }
 
-    function clearVoiceSilenceTimer() {
 
-        if (voiceSilenceTimer) {
+    /* =====================================================
+       REPEATED SPEECH CLEANUP
+    ===================================================== */
 
-            window.clearTimeout(
-                voiceSilenceTimer
+    function canonicalSpeechToken(
+        token
+    ) {
+        return String(token || "")
+            .toLocaleLowerCase()
+            .replace(
+                /[^\p{L}\p{N}]+/gu,
+                ""
+            );
+    }
+
+
+    function normalizeSpeechText(
+        text
+    ) {
+        const tokens =
+            String(text || "")
+                .replace(/\s+/g, " ")
+                .trim()
+                .split(" ")
+                .filter(Boolean);
+
+        const cleaned =
+            [];
+
+        tokens.forEach(
+            function (token) {
+                const previous =
+                    cleaned.length
+                        ? canonicalSpeechToken(
+                            cleaned[
+                                cleaned.length - 1
+                            ]
+                        )
+                        : "";
+
+                const current =
+                    canonicalSpeechToken(
+                        token
+                    );
+
+                if (
+                    current &&
+                    current === previous
+                ) {
+                    return;
+                }
+
+                cleaned.push(
+                    token
+                );
+            }
+        );
+
+        return cleaned
+            .join(" ")
+            .trim();
+    }
+
+
+    function mergeTranscript(
+        baseText,
+        additionText
+    ) {
+        const base =
+            normalizeSpeechText(
+                baseText
             );
 
-            voiceSilenceTimer = null;
+        const addition =
+            normalizeSpeechText(
+                additionText
+            );
 
+        if (!base) {
+            return addition;
         }
 
+        if (!addition) {
+            return base;
+        }
+
+        const baseWords =
+            base.split(/\s+/);
+
+        const additionWords =
+            addition.split(/\s+/);
+
+        const maximumOverlap =
+            Math.min(
+                baseWords.length,
+                additionWords.length,
+                20
+            );
+
+        let overlap = 0;
+
+        for (
+            let size = maximumOverlap;
+            size >= 1;
+            size -= 1
+        ) {
+            const baseTail =
+                baseWords
+                    .slice(-size)
+                    .map(
+                        canonicalSpeechToken
+                    )
+                    .join("|");
+
+            const additionHead =
+                additionWords
+                    .slice(0, size)
+                    .map(
+                        canonicalSpeechToken
+                    )
+                    .join("|");
+
+            if (
+                baseTail &&
+                baseTail === additionHead
+            ) {
+                overlap =
+                    size;
+
+                break;
+            }
+        }
+
+        return normalizeSpeechText(
+            baseWords
+                .concat(
+                    additionWords.slice(
+                        overlap
+                    )
+                )
+                .join(" ")
+        );
     }
 
 
     function scheduleVoiceMessageSend() {
-
         clearVoiceSilenceTimer();
 
         if (
@@ -2940,15 +3220,17 @@ document.addEventListener("DOMContentLoaded", function () {
         voiceSilenceTimer =
             window.setTimeout(
                 function () {
-
                     const finalVoiceText =
                         accumulatedVoiceText.trim();
 
-                    accumulatedVoiceText = "";
+                    accumulatedVoiceText =
+                        "";
 
-                    recognitionShouldRestart = false;
+                    recognitionShouldRestart =
+                        false;
 
-                    voiceSilenceTimer = null;
+                    voiceSilenceTimer =
+                        null;
 
                     if (!finalVoiceText) {
                         return;
@@ -2961,42 +3243,107 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     updateCharacterCount();
 
-                    stopListening(true);
+                    stopListening(
+                        true
+                    );
 
                     voiceStatus.textContent =
                         "Sending voice message...";
 
-                    sendMessage();
-
+                    void sendMessage();
                 },
                 VOICE_SILENCE_DELAY
             );
-
     }
 
+
     /* =====================================================
-    IPHONE / SAFARI MEDIA RECORDER
+       IOS AUDIO RECORDING HELPERS
+    ===================================================== */
+
+    function getSupportedAudioMimeType() {
+        const types = [
+            "audio/mp4",
+            "audio/webm;codecs=opus",
+            "audio/webm",
+            "audio/ogg;codecs=opus",
+        ];
+
+        for (
+            const type of types
+        ) {
+            if (
+                window.MediaRecorder &&
+                typeof MediaRecorder.isTypeSupported ===
+                    "function" &&
+                MediaRecorder.isTypeSupported(
+                    type
+                )
+            ) {
+                return type;
+            }
+        }
+
+        return "";
+    }
+
+
+    function getAudioFileExtension(
+        mimeType
+    ) {
+        const type =
+            String(mimeType || "")
+                .toLowerCase();
+
+        if (
+            type.includes("mp4")
+        ) {
+            return "m4a";
+        }
+
+        if (
+            type.includes("ogg")
+        ) {
+            return "ogg";
+        }
+
+        if (
+            type.includes("wav")
+        ) {
+            return "wav";
+        }
+
+        if (
+            type.includes("mpeg") ||
+            type.includes("mp3")
+        ) {
+            return "mp3";
+        }
+
+        return "webm";
+    }
+
+
+    /* =====================================================
+       IOS TRANSCRIPTION
     ===================================================== */
 
     async function transcribeIOSAudio(
         audioBlob
     ) {
-
         if (
             !audioBlob ||
             audioBlob.size === 0
         ) {
-
             throw new Error(
                 "Recorded audio is empty."
             );
-
         }
 
-        if (iosTranscriptionController) {
-
+        if (
+            iosTranscriptionController
+        ) {
             iosTranscriptionController.abort();
-
         }
 
         iosTranscriptionController =
@@ -3017,19 +3364,22 @@ document.addEventListener("DOMContentLoaded", function () {
         formData.append(
             "audio",
             audioBlob,
-            "laxmi-voice." + extension
+            "laxmi-voice." +
+            extension
         );
 
         formData.append(
             "languageCode",
-            userLanguageCode || "en"
+            userLanguageCode ||
+            "en"
         );
 
         const response =
             await fetch(
                 "/api/ai-assistant/transcribe",
                 {
-                    method: "POST",
+                    method:
+                        "POST",
 
                     signal:
                         iosTranscriptionController.signal,
@@ -3038,65 +3388,65 @@ document.addEventListener("DOMContentLoaded", function () {
                         "same-origin",
 
                     body:
-                        formData
+                        formData,
                 }
             );
 
-        iosTranscriptionController = null;
+        iosTranscriptionController =
+            null;
 
-        let data = null;
+        let data = {};
 
         try {
-
             data =
                 await response.json();
 
         } catch (error) {
-
-            data = {};
-
+            console.log(
+                "Transcription response parse failed:",
+                error
+            );
         }
 
         if (
             !response.ok ||
             !data.success
         ) {
-
             throw new Error(
                 data.error ||
                 "Unable to convert voice to text."
             );
-
         }
 
         const transcript =
-            String(
+            normalizeSpeechText(
                 data.transcript ||
                 data.text ||
                 ""
-            )
-                .replace(/\s+/g, " ")
-                .trim();
+            );
 
         if (!transcript) {
-
             throw new Error(
                 "No speech was detected."
             );
-
         }
 
         return transcript;
-
     }
 
+
+    /* =====================================================
+       FINISH IOS RECORDING
+    ===================================================== */
 
     async function finishIOSRecording(
         shouldSend
     ) {
+        if (iosStopPromise) {
+            return iosStopPromise;
+        }
 
         if (!iosMediaRecorder) {
-
             updateIOSMicUI(
                 false
             );
@@ -3104,334 +3454,311 @@ document.addEventListener("DOMContentLoaded", function () {
             releaseIOSMediaStream();
 
             return;
-
         }
 
-        clearIOSRecordingTimers();
+        const runId =
+            iosActiveRunId;
 
-        const recorder =
-            iosMediaRecorder;
+        iosStopPromise =
+            (
+                async function () {
+                    clearIOSRecordingTimers();
 
-        iosMediaRecorder = null;
+                    const recorder =
+                        iosMediaRecorder;
 
-        const recordingDuration =
-            Date.now() -
-            iosRecordingStartedAt;
+                    iosMediaRecorder =
+                        null;
 
-        iosRecordingStartedAt = 0;
+                    const recordingDuration =
+                        Date.now() -
+                        iosRecordingStartedAt;
 
-        updateIOSMicUI(
-            false
-        );
+                    iosRecordingStartedAt =
+                        0;
 
-        status.textContent =
-            "Processing voice...";
+                    updateIOSMicUI(
+                        false
+                    );
 
-        voiceStatus.textContent =
-            "Converting voice to text...";
+                    status.textContent =
+                        "Processing voice...";
 
-        const audioBlob =
-            await new Promise(
-                function (
-                    resolve,
-                    reject
-                ) {
+                    voiceStatus.textContent =
+                        "Converting voice to text...";
 
-                    recorder.onstop =
-                        function () {
+                    const audioBlob =
+                        await new Promise(
+                            function (
+                                resolve,
+                                reject
+                            ) {
+                                recorder.onstop =
+                                    function () {
+                                        try {
+                                            const blob =
+                                                new Blob(
+                                                    iosAudioChunks,
+                                                    {
+                                                        type:
+                                                            recorder.mimeType ||
+                                                            "audio/mp4",
+                                                    }
+                                                );
 
-                            try {
+                                            iosAudioChunks =
+                                                [];
 
-                                const blob =
-                                    new Blob(
-                                        iosAudioChunks,
-                                        {
-                                            type:
-                                                recorder.mimeType ||
-                                                "audio/mp4"
+                                            resolve(
+                                                blob
+                                            );
+
+                                        } catch (error) {
+                                            reject(
+                                                error
+                                            );
                                         }
-                                    );
+                                    };
 
-                                iosAudioChunks = [];
+                                recorder.onerror =
+                                    function (event) {
+                                        reject(
+                                            event.error ||
+                                            new Error(
+                                                "Voice recording failed."
+                                            )
+                                        );
+                                    };
 
-                                resolve(
-                                    blob
-                                );
+                                try {
+                                    if (
+                                        recorder.state !==
+                                        "inactive"
+                                    ) {
+                                        recorder.stop();
 
-                            } catch (error) {
+                                    } else {
+                                        const blob =
+                                            new Blob(
+                                                iosAudioChunks,
+                                                {
+                                                    type:
+                                                        recorder.mimeType ||
+                                                        "audio/mp4",
+                                                }
+                                            );
 
-                                reject(
-                                    error
-                                );
+                                        iosAudioChunks =
+                                            [];
 
-                            }
-
-                        };
-
-                    recorder.onerror =
-                        function (event) {
-
-                            reject(
-                                event.error ||
-                                new Error(
-                                    "Voice recording failed."
-                                )
-                            );
-
-                        };
-
-                    try {
-
-                        if (
-                            recorder.state !==
-                            "inactive"
-                        ) {
-
-                            recorder.stop();
-
-                        } else {
-
-                            const blob =
-                                new Blob(
-                                    iosAudioChunks,
-                                    {
-                                        type:
-                                            recorder.mimeType ||
-                                            "audio/mp4"
+                                        resolve(
+                                            blob
+                                        );
                                     }
-                                );
 
-                            iosAudioChunks = [];
-
-                            resolve(
-                                blob
-                            );
-
-                        }
-
-                    } catch (error) {
-
-                        reject(
-                            error
+                                } catch (error) {
+                                    reject(
+                                        error
+                                    );
+                                }
+                            }
                         );
 
+                    releaseIOSMediaStream();
+
+                    if (
+                        !runId ||
+                        runId !== iosVoiceRunId ||
+                        shell.hidden
+                    ) {
+                        return;
                     }
 
+                    if (!shouldSend) {
+                        status.textContent =
+                            "Online";
+
+                        voiceStatus.textContent =
+                            "Type or tap microphone";
+
+                        return;
+                    }
+
+                    if (
+                        recordingDuration <
+                        500
+                    ) {
+                        status.textContent =
+                            "Online";
+
+                        voiceStatus.textContent =
+                            "Please speak for a little longer";
+
+                        return;
+                    }
+
+                    const transcript =
+                        await transcribeIOSAudio(
+                            audioBlob
+                        );
+
+                    if (
+                        runId !== iosVoiceRunId ||
+                        shell.hidden
+                    ) {
+                        return;
+                    }
+
+                    input.value =
+                        transcript;
+
+                    resizeInput();
+
+                    updateCharacterCount();
+
+                    status.textContent =
+                        "Voice received";
+
+                    voiceStatus.textContent =
+                        "Sending voice message...";
+
+                    await wait(
+                        150
+                    );
+
+                    await sendMessage();
                 }
-            );
-
-        releaseIOSMediaStream();
-
-        if (!shouldSend) {
-
-            status.textContent =
-                "Online";
-
-            voiceStatus.textContent =
-                "Type or tap microphone";
-
-            return;
-
-        }
-
-        if (
-            recordingDuration <
-            500
-        ) {
-
-            status.textContent =
-                "Online";
-
-            voiceStatus.textContent =
-                "Please speak for a little longer";
-
-            return;
-
-        }
+            )();
 
         try {
-
-            const transcript =
-                await transcribeIOSAudio(
-                    audioBlob
-                );
-
-            input.value =
-                transcript;
-
-            resizeInput();
-
-            updateCharacterCount();
-
-            status.textContent =
-                "Voice received";
-
-            voiceStatus.textContent =
-                "Sending voice message...";
-
-            await wait(
-                250
-            );
-
-            await sendMessage();
+            await iosStopPromise;
 
         } catch (error) {
-
             if (
-                error &&
-                error.name ===
-                "AbortError"
+                !(
+                    error &&
+                    error.name ===
+                        "AbortError"
+                )
             ) {
+                console.log(
+                    "iPhone transcription error:",
+                    error
+                );
 
-                return;
+                status.textContent =
+                    "Online";
 
+                voiceStatus.textContent =
+                    "Type or tap microphone";
+
+                showError(
+                    error.message ||
+                    "Unable to process voice."
+                );
             }
 
-            console.log(
-                "iPhone transcription error:",
-                error
-            );
+        } finally {
+            iosStopPromise =
+                null;
 
-            status.textContent =
-                "Online";
-
-            voiceStatus.textContent =
-                "Type or tap microphone";
-
-            showError(
-                error.message ||
-                "Unable to process voice."
-            );
-
+            if (
+                runId === iosVoiceRunId
+            ) {
+                iosActiveRunId =
+                    0;
+            }
         }
-
     }
 
 
-    async function startIOSRecording() {
+    /* =====================================================
+       START IOS RECORDING
+    ===================================================== */
 
-        if (isSending) {
+    async function startIOSRecording() {
+        if (
+            isSending ||
+            iosIsRecording
+        ) {
             return;
         }
 
-        if (!supportsMediaRecorder()) {
-
+        if (
+            !supportsMediaRecorder()
+        ) {
             showError(
                 "Voice recording is not supported in this iPhone browser. Please update iOS or use Safari."
             );
 
             return;
-
         }
 
         hideError();
 
-        /*
-        * Stop Laxmi audio only.
-        * Do not reset iPhone recorder state here.
-        */
-        if (currentTtsController) {
+        iosActiveRunId =
+            ++iosVoiceRunId;
 
-            currentTtsController.abort();
+        stopAssistantSpeech({
+            resetVisuals:
+                false,
 
-            currentTtsController = null;
+            keepVoiceStatus:
+                true,
+        });
 
-        }
-
-        if (currentSpeechCancel) {
-
-            currentSpeechCancel();
-
-            currentSpeechCancel = null;
-
-        }
-
-        if (audioPlayer) {
-
-            audioPlayer.pause();
-
-            audioPlayer.currentTime = 0;
-
-            audioPlayer.removeAttribute(
-                "src"
-            );
-
-            audioPlayer.load();
-
-        }
-
-        stopSpeechKeepAlive();
-
-        if (
-            "speechSynthesis"
-            in window
-        ) {
-
-            window.speechSynthesis.cancel();
-
-        }
-
-        isSpeaking = false;
-
-        characterSection.classList.remove(
-            "is-speaking"
-        );
-
-        iosAudioChunks = [];
+        iosAudioChunks =
+            [];
 
         try {
-
             iosMediaStream =
                 await navigator
                     .mediaDevices
                     .getUserMedia({
                         audio: {
-                            echoCancellation: true,
-                            noiseSuppression: true,
-                            autoGainControl: true
-                        }
+                            echoCancellation:
+                                true,
+
+                            noiseSuppression:
+                                true,
+
+                            autoGainControl:
+                                true,
+                        },
                     });
 
             const mimeType =
                 getSupportedAudioMimeType();
 
-            const recorderOptions =
-                mimeType
-                    ? {
-                        mimeType:
-                            mimeType
-                    }
-                    : undefined;
-
             iosMediaRecorder =
-                recorderOptions
+                mimeType
                     ? new MediaRecorder(
                         iosMediaStream,
-                        recorderOptions
+                        {
+                            mimeType:
+                                mimeType
+                        }
                     )
                     : new MediaRecorder(
                         iosMediaStream
                     );
 
+
             iosMediaRecorder.ondataavailable =
                 function (event) {
-
                     if (
                         event.data &&
                         event.data.size > 0
                     ) {
-
                         iosAudioChunks.push(
                             event.data
                         );
-
                     }
-
                 };
+
 
             iosMediaRecorder.onerror =
                 function (event) {
-
                     console.log(
                         "iPhone recorder error:",
                         event.error ||
@@ -3455,8 +3782,8 @@ document.addEventListener("DOMContentLoaded", function () {
                     showError(
                         "Unable to record voice on this iPhone."
                     );
-
                 };
+
 
             iosRecordingStartedAt =
                 Date.now();
@@ -3475,31 +3802,21 @@ document.addEventListener("DOMContentLoaded", function () {
             voiceStatus.textContent =
                 "Speak now. Tap stop when finished.";
 
-            /*
-            * iPhone MediaRecorder browser levelలో
-            * reliable silence detection ఇవ్వదు.
-            * User మాట్లాడడం పూర్తయ్యాక stop button press చేయవచ్చు.
-            *
-            * ఈ timer safety maximum మాత్రమే.
-            */
             iosMaximumTimer =
                 window.setTimeout(
                     function () {
-
-                        if (iosIsRecording) {
-
-                            finishIOSRecording(
+                        if (
+                            iosIsRecording
+                        ) {
+                            void finishIOSRecording(
                                 true
                             );
-
                         }
-
                     },
                     IOS_MAXIMUM_RECORDING_TIME
                 );
 
         } catch (error) {
-
             console.log(
                 "iPhone microphone start error:",
                 error
@@ -3528,13 +3845,11 @@ document.addEventListener("DOMContentLoaded", function () {
                         "PermissionDeniedError"
                 )
             ) {
-
                 showError(
                     "Please allow microphone permission in iPhone Safari Website Settings."
                 );
 
                 return;
-
             }
 
             if (
@@ -3542,64 +3857,48 @@ document.addEventListener("DOMContentLoaded", function () {
                 error.name ===
                     "NotFoundError"
             ) {
-
                 showError(
                     "No microphone was found on this device."
                 );
 
                 return;
-
             }
 
             showError(
                 error.message ||
                 "Unable to start microphone."
             );
-
         }
-
     }
 
 
     async function toggleIOSRecording() {
-
         if (iosIsRecording) {
-
             await finishIOSRecording(
                 true
             );
 
             return;
-
         }
 
         await startIOSRecording();
-
     }
 
 
     /* =====================================================
-       SPEECH RECOGNITION
+       ANDROID / CHROME SPEECH RECOGNITION
     ===================================================== */
 
     function setupSpeechRecognition() {
-
-        /*
-        * IMPORTANT:
-        * iPhone check must come before SpeechRecognition check.
-        *
-        * iPhone Safari uses MediaRecorder.
-        * Chrome/Android/Desktop use SpeechRecognition.
-        */
         if (isIOSDevice()) {
+            recognition =
+                null;
 
-            recognition = null;
-
-            const mediaRecorderSupported =
+            const supported =
                 supportsMediaRecorder();
 
             micButton.disabled =
-                !mediaRecorderSupported;
+                !supported;
 
             micButton.classList.remove(
                 "is-listening"
@@ -3609,7 +3908,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 '<i class="bi bi-mic-fill"></i>';
 
             voiceStatus.textContent =
-                mediaRecorderSupported
+                supported
                     ? "Tap microphone to record"
                     : "Voice recording is not supported";
 
@@ -3623,10 +3922,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
         if (!SpeechRecognition) {
+            recognition =
+                null;
 
-            recognition = null;
-
-            micButton.disabled = true;
+            micButton.disabled =
+                true;
 
             micButton.classList.remove(
                 "is-listening"
@@ -3642,11 +3942,11 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
 
-        micButton.disabled = false;
+        micButton.disabled =
+            false;
 
 
         if (recognition) {
-
             recognition.lang =
                 speechLanguageMap[
                     userLanguageCode
@@ -3662,11 +3962,14 @@ document.addEventListener("DOMContentLoaded", function () {
             new SpeechRecognition();
 
 
-        recognition.continuous = true;
+        recognition.continuous =
+            true;
 
-        recognition.interimResults = true;
+        recognition.interimResults =
+            true;
 
-        recognition.maxAlternatives = 1;
+        recognition.maxAlternatives =
+            1;
 
         recognition.lang =
             speechLanguageMap[
@@ -3678,12 +3981,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
         recognition.onstart =
             function () {
+                isListening =
+                    true;
 
-                isListening = true;
+                recognitionShouldRestart =
+                    true;
 
-                recognitionShouldRestart = true;
+                recognitionSessionBaseText =
+                    accumulatedVoiceText;
 
-                micButton.disabled = false;
+                recognitionFinalSegments =
+                    new Map();
+
+                micButton.disabled =
+                    false;
 
                 micButton.classList.add(
                     "is-listening"
@@ -3697,158 +4008,93 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 status.textContent =
                     "Laxmi is listening...";
-
             };
 
 
         recognition.onresult =
             function (event) {
-
-                let finalText = "";
-
-                let interimText = "";
-
+                const interimSegments =
+                    [];
 
                 for (
-                    let index =
-                        event.resultIndex;
-
+                    let index = 0;
                     index <
                         event.results.length;
-
-                    index++
+                    index += 1
                 ) {
-
                     const transcript =
-                        String(
+                        normalizeSpeechText(
                             event.results[
                                 index
-                            ][0].transcript || ""
-                        )
-                            .replace(/\s+/g, " ")
-                            .trim();
-
+                            ][0].transcript ||
+                            ""
+                        );
 
                     if (!transcript) {
                         continue;
                     }
-
 
                     if (
                         event.results[
                             index
                         ].isFinal
                     ) {
-
-                        finalText +=
-                            (
-                                finalText
-                                    ? " "
-                                    : ""
-                            ) +
-                            transcript;
+                        recognitionFinalSegments.set(
+                            index,
+                            transcript
+                        );
 
                     } else {
-
-                        interimText +=
-                            (
-                                interimText
-                                    ? " "
-                                    : ""
-                            ) +
-                            transcript;
-
+                        interimSegments.push(
+                            transcript
+                        );
                     }
-
                 }
 
 
-                if (finalText) {
-
-                    const normalizedFinalText =
-                        finalText
-                            .replace(/\s+/g, " ")
-                            .trim();
-
-
-                    if (
-                        normalizedFinalText &&
-                        normalizedFinalText !==
-                            lastFinalTranscript
-                    ) {
-
-                        const oldWords =
-                            accumulatedVoiceText
-                                .split(/\s+/)
-                                .filter(Boolean);
-
-                        const newWords =
-                            normalizedFinalText
-                                .split(/\s+/)
-                                .filter(Boolean);
+                const sessionFinalText =
+                    Array.from(
+                        recognitionFinalSegments.entries()
+                    )
+                        .sort(
+                            function (
+                                first,
+                                second
+                            ) {
+                                return (
+                                    first[0] -
+                                    second[0]
+                                );
+                            }
+                        )
+                        .map(
+                            function (entry) {
+                                return entry[1];
+                            }
+                        )
+                        .join(" ");
 
 
-                        const oldTail =
-                            oldWords
-                                .slice(
-                                    -newWords.length
-                                )
-                                .join(" ")
-                                .toLowerCase();
-
-                        const newTextLower =
-                            newWords
-                                .join(" ")
-                                .toLowerCase();
+                accumulatedVoiceText =
+                    mergeTranscript(
+                        recognitionSessionBaseText,
+                        sessionFinalText
+                    );
 
 
-                        if (
-                            oldTail !==
-                            newTextLower
-                        ) {
-
-                            accumulatedVoiceText =
-                                (
-                                    accumulatedVoiceText +
-                                    " " +
-                                    normalizedFinalText
-                                )
-                                    .replace(
-                                        /\s+/g,
-                                        " "
-                                    )
-                                    .trim();
-
-                        }
-
-                        lastFinalTranscript =
-                            normalizedFinalText;
-
-                    }
-
-                    scheduleVoiceMessageSend();
-
-                }
-
-
-                if (interimText) {
-
-                    clearVoiceSilenceTimer();
-
-                }
+                const interimText =
+                    normalizeSpeechText(
+                        interimSegments.join(
+                            " "
+                        )
+                    );
 
 
                 const visibleText =
-                    (
-                        accumulatedVoiceText +
-                        " " +
+                    mergeTranscript(
+                        accumulatedVoiceText,
                         interimText
-                    )
-                        .replace(
-                            /\s+/g,
-                            " "
-                        )
-                        .trim();
+                    );
 
 
                 input.value =
@@ -3860,6 +4106,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
                 if (interimText) {
+                    clearVoiceSilenceTimer();
 
                     voiceStatus.textContent =
                         "Listening...";
@@ -3870,18 +4117,16 @@ document.addEventListener("DOMContentLoaded", function () {
                 } else if (
                     accumulatedVoiceText
                 ) {
+                    scheduleVoiceMessageSend();
 
                     voiceStatus.textContent =
                         "Waiting 3 seconds...";
-
                 }
-
             };
 
 
         recognition.onerror =
             function (event) {
-
                 console.log(
                     "Voice recognition error:",
                     event.error
@@ -3894,7 +4139,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     event.error ===
                         "service-not-allowed"
                 ) {
-
                     recognitionShouldRestart =
                         false;
 
@@ -3905,7 +4149,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     );
 
                     return;
-
                 }
 
 
@@ -3914,9 +4157,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         "no-speech" &&
                     recognitionShouldRestart
                 ) {
-
                     return;
-
                 }
 
 
@@ -3924,9 +4165,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     event.error ===
                         "aborted"
                 ) {
-
                     return;
-
                 }
 
 
@@ -3939,22 +4178,18 @@ document.addEventListener("DOMContentLoaded", function () {
                     "Voice input error: " +
                     event.error
                 );
-
             };
 
 
         recognition.onend =
             function () {
-
                 if (
                     isListening &&
                     recognitionShouldRestart &&
                     !isSending
                 ) {
-
                     window.setTimeout(
                         function () {
-
                             if (
                                 !isListening ||
                                 !recognitionShouldRestart ||
@@ -3965,24 +4200,19 @@ document.addEventListener("DOMContentLoaded", function () {
                             }
 
                             try {
-
                                 recognition.start();
 
                             } catch (error) {
-
                                 console.log(
                                     "Voice recognition restart:",
                                     error
                                 );
-
                             }
-
                         },
-                        500
+                        350
                     );
 
                     return;
-
                 }
 
 
@@ -3995,91 +4225,50 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
                 if (!isSending) {
-
                     status.textContent =
                         "Online";
-
                 }
-
             };
-
     }
 
-    function startListening() {
 
+    /* =====================================================
+       START LISTENING
+    ===================================================== */
+
+    function startListening() {
         if (isSending) {
             return;
         }
 
         if (isIOSDevice()) {
-
-            toggleIOSRecording();
-
+            void toggleIOSRecording();
             return;
-
         }
 
-        /*
-        * Stop only Laxmi voice playback.
-        * Do not reset the microphone recognition object here.
-        */
-        if (currentTtsController) {
+        stopAssistantSpeech({
+            resetVisuals:
+                false,
 
-            currentTtsController.abort();
-
-            currentTtsController = null;
-
-        }
-
-        if (currentSpeechCancel) {
-
-            currentSpeechCancel();
-
-            currentSpeechCancel = null;
-
-        }
-
-        if (audioPlayer) {
-
-            audioPlayer.pause();
-
-            audioPlayer.currentTime = 0;
-
-            audioPlayer.removeAttribute(
-                "src"
-            );
-
-            audioPlayer.load();
-
-        }
-
-        stopSpeechKeepAlive();
-
-        if (
-            "speechSynthesis"
-            in window
-        ) {
-
-            window.speechSynthesis.cancel();
-
-        }
-
-        isSpeaking = false;
-
-        characterSection.classList.remove(
-            "is-speaking"
-        );
+            keepVoiceStatus:
+                true,
+        });
 
         clearVoiceSilenceTimer();
 
-        accumulatedVoiceText = "";
+        accumulatedVoiceText =
+            "";
 
-        recognitionShouldRestart = true;
+        recognitionSessionBaseText =
+            "";
+
+        recognitionFinalSegments.clear();
+
+        recognitionShouldRestart =
+            true;
 
         if (!recognition) {
-
             setupSpeechRecognition();
-
         }
 
         if (!recognition) {
@@ -4088,30 +4277,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
         hideError();
 
-        /*
-        * Laxmi voice play అవుతుంటే
-        * microphone start చేసినప్పుడు stop చేయాలి.
-        */
-        if (audioPlayer) {
-
-            audioPlayer.pause();
-
-            audioPlayer.currentTime = 0;
-
-        }
-
-        stopSpeechKeepAlive();
-
-        if (
-            "speechSynthesis"
-            in window
-        ) {
-
-            window.speechSynthesis.cancel();
-
-        }
-
-        input.value = "";
+        input.value =
+            "";
 
         resizeInput();
 
@@ -4135,59 +4302,48 @@ document.addEventListener("DOMContentLoaded", function () {
             "Laxmi is listening...";
 
         try {
-
             recognition.start();
 
         } catch (error) {
-
             console.log(
                 "Speech recognition already active:",
                 error
             );
-
         }
-
     }
 
+
+    /* =====================================================
+       STOP LISTENING
+    ===================================================== */
 
     function stopListening(
         keepSilenceTimer
     ) {
+        recognitionShouldRestart =
+            false;
 
-        recognitionShouldRestart = false;
-
-        /*
-        * Silence timer నుంచే stopListening
-        * call అయితే timerని మళ్లీ clear చేయాల్సిన
-        * అవసరం లేదు.
-        */
         if (!keepSilenceTimer) {
-
             clearVoiceSilenceTimer();
-
         }
 
         if (
             recognition &&
             isListening
         ) {
-
             try {
-
                 recognition.stop();
 
             } catch (error) {
-
                 console.log(
                     "Stop recognition error:",
                     error
                 );
-
             }
-
         }
 
-        isListening = false;
+        isListening =
+            false;
 
         micButton.classList.remove(
             "is-listening"
@@ -4197,15 +4353,12 @@ document.addEventListener("DOMContentLoaded", function () {
             '<i class="bi bi-mic-fill"></i>';
 
         if (!isSending) {
-
             voiceStatus.textContent =
                 "Type or tap microphone";
 
             status.textContent =
                 "Online";
-
         }
-
     }
 
 
@@ -4214,18 +4367,14 @@ document.addEventListener("DOMContentLoaded", function () {
     ===================================================== */
 
     function updateVoiceToggleUI() {
-
         voiceToggle.classList.toggle(
             "is-muted",
             !voiceReplyEnabled
         );
 
         voiceToggle.innerHTML =
-
             voiceReplyEnabled
-
                 ? '<i class="bi bi-volume-up-fill"></i>'
-
                 : '<i class="bi bi-volume-mute-fill"></i>';
 
         voiceToggle.setAttribute(
@@ -4234,12 +4383,58 @@ document.addEventListener("DOMContentLoaded", function () {
                 ? "false"
                 : "true"
         );
-
     }
 
 
     /* =====================================================
-       EVENTS
+       IOS USER GESTURE AUDIO ACTIVATION
+    ===================================================== */
+
+    function installAudioActivationHandlers(
+        element
+    ) {
+        if (!element) {
+            return;
+        }
+
+        element.addEventListener(
+            "pointerdown",
+            function () {
+                primeSpeechSynthesis();
+
+                void unlockAudioPlayback();
+            },
+            {
+                passive:
+                    true
+            }
+        );
+    }
+
+
+    installAudioActivationHandlers(
+        openButton
+    );
+
+    installAudioActivationHandlers(
+        panel
+    );
+
+    installAudioActivationHandlers(
+        sendButton
+    );
+
+    installAudioActivationHandlers(
+        micButton
+    );
+
+    installAudioActivationHandlers(
+        voiceToggle
+    );
+
+
+    /* =====================================================
+       MAIN EVENTS
     ===================================================== */
 
     openButton.addEventListener(
@@ -4265,149 +4460,104 @@ document.addEventListener("DOMContentLoaded", function () {
         clearConversation
     );
 
-    /* ==========================================
-    MOBILE KEYBOARD VIEWPORT EVENTS
-    =========================================== */
 
-    window.addEventListener(
-        "resize",
-        updateAiMobileViewport
-    );
+    /* =====================================================
+       STOP SPEAKING BUTTON
+    ===================================================== */
 
-    window.addEventListener(
-        "orientationchange",
-        updateAiMobileViewport
-    );
-
-    if (window.visualViewport) {
-
-        window.visualViewport.addEventListener(
-            "resize",
-            updateAiMobileViewport
-        );
-
-        window.visualViewport.addEventListener(
-            "scroll",
-            updateAiMobileViewport
-        );
-
-    }
-
-    input.addEventListener(
-        "focus",
+    stopSpeakingButton.addEventListener(
+        "click",
         function () {
+            stopAssistantSpeech();
 
-            window.setTimeout(
-                updateAiMobileViewport,
-                100
-            );
+            status.textContent =
+                "Online";
 
+            voiceStatus.textContent =
+                voiceReplyEnabled
+                    ? "Speaking stopped"
+                    : "Voice reply is off";
         }
     );
 
-    input.addEventListener(
-        "blur",
-        function () {
 
-            window.setTimeout(
-                updateAiMobileViewport,
-                100
-            );
-
-        }
-    );
-
-    updateAiMobileViewport();
-
+    /* =====================================================
+       VOICE ON / OFF
+    ===================================================== */
 
     voiceToggle.addEventListener(
         "click",
-        function () {
+        async function () {
+            hideError();
 
-            voiceReplyEnabled = !voiceReplyEnabled;
+            if (
+                await replayPendingSpeech()
+            ) {
+                return;
+            }
+
+            voiceReplyEnabled =
+                !voiceReplyEnabled;
 
             localStorage.setItem(
                 "bashaAiVoiceReply",
-                voiceReplyEnabled ? "on" : "off"
+                voiceReplyEnabled
+                    ? "on"
+                    : "off"
             );
 
             if (!voiceReplyEnabled) {
+                stopAssistantSpeech({
+                    resetVisuals:
+                        true,
 
-                stopCurrentAssistantActivity();
+                    keepVoiceStatus:
+                        true,
+                });
 
-                if (audioPlayer) {
-                    audioPlayer.pause();
-                    audioPlayer.currentTime = 0;
-                }
-
-                if (window.speechSynthesis) {
-                    window.speechSynthesis.cancel();
-                }
-
-                status.textContent = "Voice Off";
-
-            } else {
-
-                status.textContent = "Online";
-
-            }
-
-            updateVoiceToggleUI();
-
-            if (!voiceReplyEnabled) {
-
-                stopSpeechKeepAlive();
-
-                if (
-                    "speechSynthesis"
-                    in window
-                ) {
-
-                    window.speechSynthesis.cancel();
-
-                }
-
-                resetAssistantVisuals();
+                status.textContent =
+                    "Voice Off";
 
                 voiceStatus.textContent =
                     "Voice reply is off";
 
             } else {
-
                 primeSpeechSynthesis();
+
+                await unlockAudioPlayback();
+
+                status.textContent =
+                    "Online";
 
                 voiceStatus.textContent =
                     "Voice reply is on";
-
             }
 
+            updateVoiceToggleUI();
         }
     );
 
 
+    /* =====================================================
+       MICROPHONE BUTTON
+    ===================================================== */
+
     micButton.addEventListener(
         "click",
         async function () {
-
             hideError();
 
-            if (isIOSDevice()) {
+            await unlockAudioPlayback();
 
+
+            if (isIOSDevice()) {
                 await toggleIOSRecording();
 
                 return;
-
             }
 
+
             if (isListening) {
-
-                const spokenText =
-                    (
-                        accumulatedVoiceText ||
-                        input.value ||
-                        ""
-                    ).trim();
-
                 recognitionShouldRestart =
                     false;
 
@@ -4415,13 +4565,27 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 stopListening();
 
-                if (spokenText) {
+                await wait(
+                    180
+                );
 
+
+                const spokenText =
+                    normalizeSpeechText(
+                        accumulatedVoiceText ||
+                        input.value ||
+                        ""
+                    );
+
+
+                if (spokenText) {
                     accumulatedVoiceText =
                         "";
 
-                    lastFinalTranscript =
+                    recognitionSessionBaseText =
                         "";
+
+                    recognitionFinalSegments.clear();
 
                     input.value =
                         spokenText;
@@ -4434,37 +4598,42 @@ document.addEventListener("DOMContentLoaded", function () {
                         "Sending voice message...";
 
                     await sendMessage();
-
                 }
 
                 return;
-
             }
+
 
             if (isSpeaking) {
-
-                stopCurrentAssistantActivity();
-
+                stopAssistantSpeech();
             }
 
-            startListening();
 
+            startListening();
         }
     );
+
+
+    /* =====================================================
+       SEND
+    ===================================================== */
 
     sendButton.addEventListener(
         "click",
         sendMessage
     );
 
+
+    /* =====================================================
+       TEXTAREA
+    ===================================================== */
+
     input.addEventListener(
         "input",
         function () {
-
             resizeInput();
 
             updateCharacterCount();
-
         }
     );
 
@@ -4472,159 +4641,181 @@ document.addEventListener("DOMContentLoaded", function () {
     input.addEventListener(
         "keydown",
         function (event) {
-
             if (
                 event.key === "Enter" &&
                 !event.shiftKey
             ) {
-
                 event.preventDefault();
 
-                sendMessage();
-
+                void sendMessage();
             }
-
         }
     );
 
+
+    input.addEventListener(
+        "focus",
+        function () {
+            window.setTimeout(
+                updateAiMobileViewport,
+                80
+            );
+        }
+    );
+
+
+    input.addEventListener(
+        "blur",
+        function () {
+            window.setTimeout(
+                updateAiMobileViewport,
+                120
+            );
+        }
+    );
+
+
+    /* =====================================================
+       ESC CLOSE
+    ===================================================== */
 
     document.addEventListener(
         "keydown",
         function (event) {
-
             if (
                 event.key === "Escape" &&
                 !shell.hidden
             ) {
-
-                animateClose();
-
+                void animateClose();
             }
-
         }
     );
 
+
+    /* =====================================================
+       PAGE VISIBILITY
+       BACKGROUND LO VOICE CONTINUE KAKUDADHU
+    ===================================================== */
 
     document.addEventListener(
         "visibilitychange",
         function () {
-
             pageIsVisible =
                 document.visibilityState ===
                 "visible";
 
+
             if (!pageIsVisible) {
+                stopAssistantSpeech({
+                    resetVisuals:
+                        false,
 
-                stopCurrentAssistantActivity();
+                    keepVoiceStatus:
+                        true,
+                });
 
-                if (audioPlayer) {
+                stopVoiceInputActivity();
 
-                    audioPlayer.pause();
-
-                    audioPlayer.currentTime = 0;
-
-                }
 
                 if (blinkTimer) {
+                    window.clearTimeout(
+                        blinkTimer
+                    );
 
-                    window.clearTimeout(blinkTimer);
-
+                    blinkTimer =
+                        null;
                 }
 
                 return;
-
-            } else if (!shell.hidden) {
-
-                if (
-                    avatarState !==
-                    "speaking" &&
-                    avatarState !==
-                    "thinking"
-                ) {
-
-                    setAvatarState(
-                        "idle"
-                    );
-
-                }
-
-                scheduleBlink();
-
             }
 
+
+            if (!shell.hidden) {
+                updateAiMobileViewport();
+
+                setAvatarState(
+                    "idle"
+                );
+
+                scheduleBlink();
+            }
         }
     );
+
+
+    /* =====================================================
+       PAGE HIDE / UNLOAD
+    ===================================================== */
 
     window.addEventListener(
         "pagehide",
         function () {
-
-            stopCurrentAssistantActivity();
-            
-            if (audioPlayer) {
-
-                audioPlayer.pause();
-
-                audioPlayer.currentTime = 0;
-
-            }
-
+            stopCurrentAssistantActivity({
+                abortChat:
+                    true
+            });
         }
     );
 
-    window.addEventListener(
-        "blur",
-        function () {
-
-            stopCurrentAssistantActivity();
-
-            if (audioPlayer) {
-
-                audioPlayer.pause();
-
-                audioPlayer.currentTime = 0;
-
-            }
-
-        }
-    );
 
     window.addEventListener(
         "beforeunload",
         function () {
-
-            stopCurrentAssistantActivity();
-
-            if (audioPlayer) {
-
-                audioPlayer.pause();
-
-                audioPlayer.currentTime = 0;
-
-            }
+            stopCurrentAssistantActivity({
+                abortChat:
+                    true
+            });
 
             stopAvatarAnimation();
-
         }
     );
 
+
     /* =====================================================
-       SPEECH VOICES LOAD
+       MOBILE VIEWPORT EVENTS
+    ===================================================== */
+
+    window.addEventListener(
+        "resize",
+        updateAiMobileViewport
+    );
+
+
+    window.addEventListener(
+        "orientationchange",
+        updateAiMobileViewport
+    );
+
+
+    if (
+        window.visualViewport
+    ) {
+        window.visualViewport.addEventListener(
+            "resize",
+            updateAiMobileViewport
+        );
+
+        window.visualViewport.addEventListener(
+            "scroll",
+            updateAiMobileViewport
+        );
+    }
+
+
+    /* =====================================================
+       SPEECH VOICES
     ===================================================== */
 
     if (
         "speechSynthesis"
         in window
     ) {
-
         window.speechSynthesis.onvoiceschanged =
             function () {
-
                 window.speechSynthesis.getVoices();
-
             };
-
     }
+
 
     /* =====================================================
        INITIAL SETUP
@@ -4634,32 +4825,42 @@ document.addEventListener("DOMContentLoaded", function () {
 
     preloadAvatarImages();
 
+
     setHeaderAvatarFrame(
         avatarFrames.idle[0] ||
         avatarFrames.fallback
     );
 
-    if (thinkingAvatar) {
 
-        thinkingAvatar.src =
-            avatarFrames.thinking[0] ||
-            avatarFrames.fallback;
+    thinkingAvatar.src =
+        avatarFrames.thinking[0] ||
+        avatarFrames.fallback;
 
-    }
 
     setMainAvatarFrame(
         avatarFrames.idle[0] ||
         avatarFrames.fallback
     );
 
+
     setAvatarState(
         "idle"
     );
 
+
+    setStopSpeakingVisible(
+        false
+    );
+
+
     updateVoiceToggleUI();
+
 
     setupSpeechRecognition();
 
-    updateCharacterCount();        
 
+    updateCharacterCount();
+
+
+    updateAiMobileViewport();
 });

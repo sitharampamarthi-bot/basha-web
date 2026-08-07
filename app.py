@@ -147,7 +147,36 @@ configure_google_tts_credentials()
 #genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 app = Flask(__name__)
-app.secret_key = "basha_secret_key"
+
+IS_PRODUCTION = (
+    os.getenv("RENDER", "").strip().lower() == "true"
+    or os.getenv("FLASK_ENV", "").strip().lower() == "production"
+)
+
+app.secret_key = (
+    os.getenv("FLASK_SECRET_KEY")
+    or "basha-local-development-only-secret"
+)
+
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=IS_PRODUCTION,
+    MAX_CONTENT_LENGTH=20 * 1024 * 1024,
+)
+
+
+@app.after_request
+def add_basha_ai_browser_permissions(response):
+    response.headers.setdefault(
+        "Permissions-Policy",
+        "microphone=(self), autoplay=(self)",
+    )
+    response.headers.setdefault(
+        "X-Content-Type-Options",
+        "nosniff",
+    )
+    return response
 
 firebase_json = os.getenv("FIREBASE_SERVICE_ACCOUNT")
 
@@ -385,10 +414,6 @@ init_ai_avatar_module(
 app.register_blueprint(
     ai_avatar_bp
 )
-
-app.config[
-    "MAX_CONTENT_LENGTH"
-] = 20 * 1024 * 1024
 
 # ==================================
 # LAXMI AI ASSISTANT V3

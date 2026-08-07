@@ -155,6 +155,21 @@
                 </button>
 
 
+                <!-- STOP SPEAKING -->
+
+                <button type="button"
+                        class="basha-ai-icon-button basha-ai-stop-speaking-button"
+                        id="bashaAiStopSpeakingButton"
+                        title="Stop speaking"
+                        aria-label="Stop Laxmi speaking"
+                        hidden
+                        disabled>
+
+                    <i class="bi bi-stop-fill"></i>
+
+                </button>
+
+
                 <!-- CLEAR CHAT -->
 
                 <button type="button"
@@ -297,7 +312,11 @@
                       rows="1"
                       maxlength="5000"
                       placeholder="Ask Laxmi AI..."
-                      aria-label="Ask Laxmi AI"></textarea>
+                      aria-label="Ask Laxmi AI"
+                      enterkeyhint="send"
+                      autocapitalize="sentences"
+                      autocomplete="off"
+                      spellcheck="true"></textarea>
 
 
             <!-- SEND BUTTON -->
@@ -334,8 +353,9 @@
         =========================================== -->
 
         <audio id="bashaAiAudioPlayer"
-               preload="auto"
+               preload="none"
                playsinline
+               aria-hidden="true"
                hidden>
         </audio>
 
