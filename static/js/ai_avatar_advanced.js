@@ -147,9 +147,11 @@ document.addEventListener("DOMContentLoaded", function () {
     const SILENT_AUDIO_DATA_URI =
         "data:audio/wav;base64,UklGRqQCAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YYACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 
-    const VOICE_SILENCE_DELAY = 3000;
-    const AI_REPLY_DELAY = 250;
+    const VOICE_SILENCE_DELAY = 1400;
+    const AI_REPLY_DELAY = 0;
     const IOS_MAXIMUM_RECORDING_TIME = 60000;
+    const IOS_SILENCE_AFTER_SPEECH = 1200;
+    const IOS_SPEECH_RMS_THRESHOLD = 0.020;
     const TTS_MAX_CHUNK_BYTES = 3200;
 
     let hasWelcomed = false;
@@ -204,6 +206,13 @@ document.addEventListener("DOMContentLoaded", function () {
     let iosStopPromise = null;
     let iosVoiceRunId = 0;
     let iosActiveRunId = 0;
+    let iosAudioContext = null;
+    let iosAudioSource = null;
+    let iosAnalyser = null;
+    let iosSilenceMonitorTimer = null;
+    let iosSpeechDetected = false;
+    let iosSpeechFrames = 0;
+    let iosLastSpeechAt = 0;
 
     let pageScrollY = 0;
     let viewportAnimationFrame = null;
@@ -1861,29 +1870,384 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 
-    function releaseIOSMediaStream() {
-        if (!iosMediaStream) {
-            return;
+    function stopIOSSilenceDetection() {
+
+        if (
+            iosSilenceMonitorTimer
+        ) {
+
+            window.clearTimeout(
+                iosSilenceMonitorTimer
+            );
+
+            iosSilenceMonitorTimer =
+                null;
+
         }
+
+
+        if (
+            iosAudioSource
+        ) {
+
+            try {
+
+                iosAudioSource.disconnect();
+
+            } catch (
+                error
+            ) {
+
+                console.log(
+                    "iPhone audio source disconnect error:",
+                    error
+                );
+
+            }
+
+
+            iosAudioSource =
+                null;
+
+        }
+
+
+        iosAnalyser =
+            null;
+
+
+        iosSpeechDetected =
+            false;
+
+
+        iosSpeechFrames =
+            0;
+
+
+        iosLastSpeechAt =
+            0;
+
+
+        if (
+            iosAudioContext
+        ) {
+
+            const context =
+                iosAudioContext;
+
+
+            iosAudioContext =
+                null;
+
+
+            try {
+
+                const closePromise =
+                    context.close();
+
+
+                if (
+                    closePromise &&
+                    typeof closePromise.catch ===
+                        "function"
+                ) {
+
+                    closePromise.catch(
+                        function () {}
+                    );
+
+                }
+
+            } catch (
+                error
+            ) {
+
+                console.log(
+                    "iPhone audio context close error:",
+                    error
+                );
+
+            }
+
+        }
+
+    }
+
+
+    function startIOSSilenceDetection(
+        stream,
+        runId
+    ) {
+
+        stopIOSSilenceDetection();
+
+
+        const AudioContextClass =
+
+            window.AudioContext ||
+
+            window.webkitAudioContext;
+
+
+        if (
+            !AudioContextClass ||
+            !stream
+        ) {
+
+            return;
+
+        }
+
+
+        try {
+
+            iosAudioContext =
+                new AudioContextClass();
+
+
+            iosAudioSource =
+                iosAudioContext
+                    .createMediaStreamSource(
+                        stream
+                    );
+
+
+            iosAnalyser =
+                iosAudioContext
+                    .createAnalyser();
+
+
+            iosAnalyser.fftSize =
+                1024;
+
+
+            iosAnalyser.smoothingTimeConstant =
+                0.25;
+
+
+            iosAudioSource.connect(
+                iosAnalyser
+            );
+
+
+            if (
+                iosAudioContext.state ===
+                    "suspended"
+            ) {
+
+                const resumePromise =
+                    iosAudioContext.resume();
+
+
+                if (
+                    resumePromise &&
+                    typeof resumePromise.catch ===
+                        "function"
+                ) {
+
+                    resumePromise.catch(
+                        function () {}
+                    );
+
+                }
+
+            }
+
+
+            const samples =
+                new Float32Array(
+                    iosAnalyser.fftSize
+                );
+
+
+            const startedAt =
+                Date.now();
+
+
+            function monitor() {
+
+                if (
+                    !iosIsRecording ||
+
+                    runId !==
+                        iosVoiceRunId ||
+
+                    runId !==
+                        iosActiveRunId ||
+
+                    !iosAnalyser
+                ) {
+
+                    return;
+
+                }
+
+
+                iosAnalyser
+                    .getFloatTimeDomainData(
+                        samples
+                    );
+
+
+                let sumSquares =
+                    0;
+
+
+                for (
+                    let index = 0;
+
+                    index <
+                        samples.length;
+
+                    index += 1
+                ) {
+
+                    const sample =
+                        samples[index];
+
+
+                    sumSquares +=
+                        sample * sample;
+
+                }
+
+
+                const rms =
+                    Math.sqrt(
+                        sumSquares /
+                        samples.length
+                    );
+
+
+                const now =
+                    Date.now();
+
+
+                if (
+                    rms >=
+                    IOS_SPEECH_RMS_THRESHOLD
+                ) {
+
+                    iosSpeechFrames +=
+                        1;
+
+
+                    iosLastSpeechAt =
+                        now;
+
+
+                    if (
+                        iosSpeechFrames >=
+                        2
+                    ) {
+
+                        iosSpeechDetected =
+                            true;
+
+                    }
+
+                } else if (
+
+                    iosSpeechDetected &&
+
+                    now -
+                        iosLastSpeechAt >=
+                        IOS_SILENCE_AFTER_SPEECH &&
+
+                    now -
+                        startedAt >=
+                        900
+
+                ) {
+
+                    stopIOSSilenceDetection();
+
+
+                    void finishIOSRecording(
+                        true
+                    );
+
+
+                    return;
+
+                }
+
+
+                iosSilenceMonitorTimer =
+                    window.setTimeout(
+                        monitor,
+                        80
+                    );
+
+            }
+
+
+            iosSilenceMonitorTimer =
+                window.setTimeout(
+                    monitor,
+                    100
+                );
+
+        } catch (
+            error
+        ) {
+
+            console.log(
+                "iPhone silence detection unavailable:",
+                error
+            );
+
+
+            stopIOSSilenceDetection();
+
+        }
+
+    }
+
+
+    function releaseIOSMediaStream() {
+
+        stopIOSSilenceDetection();
+
+
+        if (
+            !iosMediaStream
+        ) {
+
+            return;
+
+        }
+
 
         iosMediaStream
             .getTracks()
             .forEach(
-                function (track) {
+                function (
+                    track
+                ) {
+
                     try {
+
                         track.stop();
 
-                    } catch (error) {
+                    } catch (
+                        error
+                    ) {
+
                         console.log(
                             "iPhone track stop error:",
                             error
                         );
+
                     }
+
                 }
             );
 
+
         iosMediaStream =
             null;
+
     }
 
 
@@ -2808,6 +3172,7 @@ document.addEventListener("DOMContentLoaded", function () {
     ===================================================== */
 
     async function sendMessage() {
+
         const message =
             input.value.trim();
 
@@ -2821,11 +3186,8 @@ document.addEventListener("DOMContentLoaded", function () {
         hideError();
 
         stopAssistantSpeech({
-            resetVisuals:
-                false,
-
-            keepVoiceStatus:
-                true,
+            resetVisuals: false,
+            keepVoiceStatus: true
         });
 
         await addMessage(
@@ -2834,21 +3196,17 @@ document.addEventListener("DOMContentLoaded", function () {
             false
         );
 
-        input.value =
-            "";
+        input.value = "";
 
         resizeInput();
 
-        isSending =
-            true;
+        isSending = true;
 
         updateCharacterCount();
 
-        thinking.hidden =
-            false;
+        thinking.hidden = false;
 
-        micButton.disabled =
-            true;
+        micButton.disabled = true;
 
         status.textContent =
             "Laxmi is thinking...";
@@ -2863,6 +3221,7 @@ document.addEventListener("DOMContentLoaded", function () {
         scrollMessagesToBottom();
 
         try {
+
             await wait(
                 AI_REPLY_DELAY
             );
@@ -2883,7 +3242,9 @@ document.addEventListener("DOMContentLoaded", function () {
             if (
                 currentChatController
             ) {
+
                 currentChatController.abort();
+
             }
 
             currentChatController =
@@ -2893,8 +3254,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 await fetch(
                     "/api/ai-assistant/chat",
                     {
-                        method:
-                            "POST",
+                        method: "POST",
 
                         signal:
                             currentChatController.signal,
@@ -2903,11 +3263,13 @@ document.addEventListener("DOMContentLoaded", function () {
                             "same-origin",
 
                         headers: {
+
                             "Content-Type":
                                 "application/json",
 
                             "Accept":
-                                "application/json",
+                                "application/json"
+
                         },
 
                         body:
@@ -2916,8 +3278,8 @@ document.addEventListener("DOMContentLoaded", function () {
                                     message,
 
                                 history:
-                                    historyForRequest,
-                            }),
+                                    historyForRequest
+                            })
                     }
                 );
 
@@ -2931,10 +3293,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 !response.ok ||
                 !data.success
             ) {
+
                 throw new Error(
                     data.error ||
                     "AI response failed."
                 );
+
             }
 
             userLanguageCode =
@@ -2943,8 +3307,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             setupSpeechRecognition();
 
-            thinking.hidden =
-                true;
+            thinking.hidden = true;
 
             const assistantContent =
                 createMessage(
@@ -2952,30 +3315,49 @@ document.addEventListener("DOMContentLoaded", function () {
                     data.reply
                 );
 
+            /*
+            * IMPORTANT:
+            * AI text immediate ga display cheyyali.
+            * TTS kosam answer ni hide cheyyakudadhu.
+            */
+
+            assistantContent.textContent =
+                data.reply;
+
+            scrollMessagesToBottom();
+
             if (
                 voiceReplyEnabled &&
                 pageIsVisible
             ) {
+
                 status.textContent =
-                    "Laxmi is speaking...";
+                    "Preparing voice...";
 
                 voiceStatus.textContent =
-                    "Please listen...";
+                    "Answer ready. Preparing voice...";
 
                 try {
+
+                    /*
+                    * null pass chestunnam.
+                    * Text already display ayindi.
+                    * TTS text ni clear/re-type cheyyadu.
+                    */
+
                     await speakText(
                         data.reply,
-                        assistantContent
+                        null
                     );
 
-                } catch (voiceError) {
+                } catch (
+                    voiceError
+                ) {
+
                     console.log(
                         "AI voice playback error:",
                         voiceError
                     );
-
-                    assistantContent.textContent =
-                        data.reply;
 
                     showError(
                         voiceError.message ||
@@ -2983,21 +3365,23 @@ document.addEventListener("DOMContentLoaded", function () {
                     );
 
                     resetAssistantVisuals();
+
                 }
 
             } else {
-                assistantContent.textContent =
-                    data.reply;
 
                 resetAssistantVisuals();
+
             }
 
         } catch (error) {
+
             if (
                 error &&
                 error.name ===
                     "AbortError"
             ) {
+
                 console.log(
                     "AI request cancelled."
                 );
@@ -3018,28 +3402,21 @@ document.addEventListener("DOMContentLoaded", function () {
             resetAssistantVisuals();
 
         } finally {
-            isSending =
-                false;
 
-            thinking.hidden =
-                true;
+            isSending = false;
 
-            micButton.disabled =
-                false;
+            thinking.hidden = true;
 
-            currentChatController =
-                null;
+            micButton.disabled = false;
 
-            currentTtsController =
-                null;
+            currentChatController = null;
+            currentTtsController = null;
 
             clearVoiceSilenceTimer();
 
-            accumulatedVoiceText =
-                "";
+            accumulatedVoiceText = "";
 
-            recognitionSessionBaseText =
-                "";
+            recognitionSessionBaseText = "";
 
             recognitionFinalSegments.clear();
 
@@ -3047,18 +3424,21 @@ document.addEventListener("DOMContentLoaded", function () {
                 !isSpeaking &&
                 !pendingSpeech
             ) {
+
                 voiceStatus.textContent =
                     voiceReplyEnabled
                         ? "Type or tap microphone"
                         : "Voice reply is off";
 
                 resetAssistantVisuals();
+
             }
 
             updateCharacterCount();
-        }
-    }
 
+        }
+
+    }
 
     /* =====================================================
        REPEATED SPEECH CLEANUP
@@ -3067,30 +3447,103 @@ document.addEventListener("DOMContentLoaded", function () {
     function canonicalSpeechToken(
         token
     ) {
-        return String(token || "")
+
+        return String(
+            token || ""
+        )
             .toLocaleLowerCase()
             .replace(
                 /[^\p{L}\p{N}]+/gu,
                 ""
             );
+
     }
 
 
-    function normalizeSpeechText(
+    function sameSpeechWords(
+        firstWords,
+        secondWords
+    ) {
+
+        if (
+            firstWords.length !==
+            secondWords.length
+        ) {
+
+            return false;
+
+        }
+
+        for (
+            let index = 0;
+            index < firstWords.length;
+            index += 1
+        ) {
+
+            if (
+                canonicalSpeechToken(
+                    firstWords[index]
+                ) !==
+                canonicalSpeechToken(
+                    secondWords[index]
+                )
+            ) {
+
+                return false;
+
+            }
+
+        }
+
+        return true;
+
+    }
+
+
+    function collapseRepeatedSpeechPhrases(
         text
     ) {
-        const tokens =
-            String(text || "")
-                .replace(/\s+/g, " ")
+
+        const words =
+            String(
+                text || ""
+            )
+                .replace(
+                    /\s+/g,
+                    " "
+                )
                 .trim()
                 .split(" ")
                 .filter(Boolean);
 
-        const cleaned =
-            [];
 
-        tokens.forEach(
-            function (token) {
+        if (!words.length) {
+
+            return "";
+
+        }
+
+
+        /*
+        * Same word immediate ga repeat అయితే remove.
+        *
+        * Example:
+        * today today weather
+        * ->
+        * today weather
+        */
+
+        const cleaned = [];
+
+
+        words.forEach(
+            function (word) {
+
+                const current =
+                    canonicalSpeechToken(
+                        word
+                    );
+
                 const previous =
                     cleaned.length
                         ? canonicalSpeechToken(
@@ -3100,27 +3553,137 @@ document.addEventListener("DOMContentLoaded", function () {
                         )
                         : "";
 
-                const current =
-                    canonicalSpeechToken(
-                        token
-                    );
 
                 if (
                     current &&
+                    previous &&
                     current === previous
                 ) {
+
                     return;
+
                 }
 
+
                 cleaned.push(
-                    token
+                    word
                 );
+
             }
         );
+
+
+        /*
+        * Chrome Android occasionally entire phrases repeat చేస్తుంది.
+        *
+        * Example:
+        *
+        * laxmi today vijayawada weather
+        * laxmi today vijayawada weather
+        *
+        * Duplicate second phrase remove.
+        */
+
+        let changed = true;
+
+        let safety = 0;
+
+
+        while (
+            changed &&
+            safety < 30
+        ) {
+
+            changed = false;
+
+            safety += 1;
+
+
+            const maximumPhraseSize =
+                Math.min(
+                    18,
+                    Math.floor(
+                        cleaned.length / 2
+                    )
+                );
+
+
+            for (
+                let phraseSize =
+                    maximumPhraseSize;
+
+                phraseSize >= 2;
+
+                phraseSize -= 1
+            ) {
+
+                let index = 0;
+
+
+                while (
+                    index +
+                    phraseSize * 2 <=
+                    cleaned.length
+                ) {
+
+                    const firstPhrase =
+                        cleaned.slice(
+                            index,
+                            index + phraseSize
+                        );
+
+
+                    const secondPhrase =
+                        cleaned.slice(
+                            index + phraseSize,
+                            index +
+                            phraseSize * 2
+                        );
+
+
+                    if (
+                        sameSpeechWords(
+                            firstPhrase,
+                            secondPhrase
+                        )
+                    ) {
+
+                        cleaned.splice(
+                            index + phraseSize,
+                            phraseSize
+                        );
+
+                        changed = true;
+
+                        continue;
+
+                    }
+
+
+                    index += 1;
+
+                }
+
+            }
+
+        }
+
 
         return cleaned
             .join(" ")
             .trim();
+
+    }
+
+
+    function normalizeSpeechText(
+        text
+    ) {
+
+        return collapseRepeatedSpeechPhrases(
+            text
+        );
+
     }
 
 
@@ -3128,6 +3691,7 @@ document.addEventListener("DOMContentLoaded", function () {
         baseText,
         additionText
     ) {
+
         const base =
             normalizeSpeechText(
                 baseText
@@ -3138,62 +3702,137 @@ document.addEventListener("DOMContentLoaded", function () {
                 additionText
             );
 
+
         if (!base) {
+
             return addition;
+
         }
+
 
         if (!addition) {
+
             return base;
+
         }
 
+
         const baseWords =
-            base.split(/\s+/);
+            base
+                .split(/\s+/)
+                .filter(Boolean);
+
 
         const additionWords =
-            addition.split(/\s+/);
+            addition
+                .split(/\s+/)
+                .filter(Boolean);
+
+
+        /*
+        * Android recognition restart ayyaka
+        * complete old sentence malli return chesina case.
+        *
+        * base:
+        * laxmi vijayawada weather report
+        *
+        * addition:
+        * laxmi vijayawada weather report today
+        *
+        * Result:
+        * laxmi vijayawada weather report today
+        */
+
+        if (
+            additionWords.length >=
+                baseWords.length &&
+            sameSpeechWords(
+                baseWords,
+                additionWords.slice(
+                    0,
+                    baseWords.length
+                )
+            )
+        ) {
+
+            return normalizeSpeechText(
+                addition
+            );
+
+        }
+
+
+        /*
+        * Addition already base tail lo ఉంటే
+        * duplicate append చేయదు.
+        */
+
+        if (
+            baseWords.length >=
+                additionWords.length &&
+            sameSpeechWords(
+                additionWords,
+                baseWords.slice(
+                    -additionWords.length
+                )
+            )
+        ) {
+
+            return normalizeSpeechText(
+                base
+            );
+
+        }
+
+
+        /*
+        * Partial overlap detect.
+        */
 
         const maximumOverlap =
             Math.min(
                 baseWords.length,
                 additionWords.length,
-                20
+                80
             );
+
 
         let overlap = 0;
 
+
         for (
-            let size = maximumOverlap;
+            let size =
+                maximumOverlap;
+
             size >= 1;
+
             size -= 1
         ) {
-            const baseTail =
-                baseWords
-                    .slice(-size)
-                    .map(
-                        canonicalSpeechToken
-                    )
-                    .join("|");
-
-            const additionHead =
-                additionWords
-                    .slice(0, size)
-                    .map(
-                        canonicalSpeechToken
-                    )
-                    .join("|");
 
             if (
-                baseTail &&
-                baseTail === additionHead
+                sameSpeechWords(
+                    baseWords.slice(
+                        -size
+                    ),
+
+                    additionWords.slice(
+                        0,
+                        size
+                    )
+                )
             ) {
-                overlap =
-                    size;
+
+                overlap = size;
 
                 break;
+
             }
+
         }
 
+
         return normalizeSpeechText(
+
             baseWords
                 .concat(
                     additionWords.slice(
@@ -3201,9 +3840,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     )
                 )
                 .join(" ")
-        );
-    }
 
+        );
+
+    }
 
     function scheduleVoiceMessageSend() {
         clearVoiceSilenceTimer();
@@ -3677,45 +4317,57 @@ document.addEventListener("DOMContentLoaded", function () {
     ===================================================== */
 
     async function startIOSRecording() {
+
         if (
             isSending ||
             iosIsRecording
         ) {
+
             return;
+
         }
+
 
         if (
             !supportsMediaRecorder()
         ) {
+
             showError(
                 "Voice recording is not supported in this iPhone browser. Please update iOS or use Safari."
             );
 
             return;
+
         }
 
+
         hideError();
+
 
         iosActiveRunId =
             ++iosVoiceRunId;
 
-        stopAssistantSpeech({
-            resetVisuals:
-                false,
 
-            keepVoiceStatus:
-                true,
+        stopAssistantSpeech({
+            resetVisuals: false,
+            keepVoiceStatus: true
         });
+
 
         iosAudioChunks =
             [];
 
+
         try {
+
             iosMediaStream =
+
                 await navigator
                     .mediaDevices
                     .getUserMedia({
+
                         audio: {
+
                             echoCancellation:
                                 true,
 
@@ -3723,15 +4375,21 @@ document.addEventListener("DOMContentLoaded", function () {
                                 true,
 
                             autoGainControl:
-                                true,
-                        },
+                                true
+
+                        }
+
                     });
+
 
             const mimeType =
                 getSupportedAudioMimeType();
 
+
             iosMediaRecorder =
+
                 mimeType
+
                     ? new MediaRecorder(
                         iosMediaStream,
                         {
@@ -3739,138 +4397,196 @@ document.addEventListener("DOMContentLoaded", function () {
                                 mimeType
                         }
                     )
+
                     : new MediaRecorder(
                         iosMediaStream
                     );
 
 
             iosMediaRecorder.ondataavailable =
-                function (event) {
+                function (
+                    event
+                ) {
+
                     if (
                         event.data &&
                         event.data.size > 0
                     ) {
+
                         iosAudioChunks.push(
                             event.data
                         );
+
                     }
+
                 };
 
 
             iosMediaRecorder.onerror =
-                function (event) {
+                function (
+                    event
+                ) {
+
                     console.log(
                         "iPhone recorder error:",
                         event.error ||
                         event
                     );
 
+
                     clearIOSRecordingTimers();
+
 
                     updateIOSMicUI(
                         false
                     );
 
+
                     releaseIOSMediaStream();
+
 
                     status.textContent =
                         "Online";
 
+
                     voiceStatus.textContent =
                         "Voice recording failed";
+
 
                     showError(
                         "Unable to record voice on this iPhone."
                     );
+
                 };
 
 
             iosRecordingStartedAt =
                 Date.now();
 
+
             iosMediaRecorder.start(
                 250
             );
+
 
             updateIOSMicUI(
                 true
             );
 
+
+            /*
+            * User stop button press చేయాల్సిన అవసరం లేదు.
+            * Speech complete ayyaka silence detect చేసి auto-send.
+            */
+
+            startIOSSilenceDetection(
+                iosMediaStream,
+                iosActiveRunId
+            );
+
+
             status.textContent =
                 "Laxmi is listening...";
 
+
             voiceStatus.textContent =
-                "Speak now. Tap stop when finished.";
+                "Speak now. I will send after you stop speaking.";
+
+
+            /*
+            * Safety limit.
+            */
 
             iosMaximumTimer =
                 window.setTimeout(
                     function () {
+
                         if (
                             iosIsRecording
                         ) {
+
                             void finishIOSRecording(
                                 true
                             );
+
                         }
+
                     },
                     IOS_MAXIMUM_RECORDING_TIME
                 );
 
-        } catch (error) {
+        } catch (
+            error
+        ) {
+
             console.log(
                 "iPhone microphone start error:",
                 error
             );
 
+
             clearIOSRecordingTimers();
+
 
             updateIOSMicUI(
                 false
             );
 
+
             releaseIOSMediaStream();
+
 
             status.textContent =
                 "Online";
 
+
             voiceStatus.textContent =
                 "Microphone permission required";
+
 
             if (
                 error &&
                 (
                     error.name ===
                         "NotAllowedError" ||
+
                     error.name ===
                         "PermissionDeniedError"
                 )
             ) {
+
                 showError(
                     "Please allow microphone permission in iPhone Safari Website Settings."
                 );
 
                 return;
+
             }
+
 
             if (
                 error &&
                 error.name ===
                     "NotFoundError"
             ) {
+
                 showError(
                     "No microphone was found on this device."
                 );
 
                 return;
+
             }
+
 
             showError(
                 error.message ||
                 "Unable to start microphone."
             );
-        }
-    }
 
+        }
+
+    }
 
     async function toggleIOSRecording() {
         if (iosIsRecording) {
@@ -3890,55 +4606,82 @@ document.addEventListener("DOMContentLoaded", function () {
     ===================================================== */
 
     function setupSpeechRecognition() {
-        if (isIOSDevice()) {
-            recognition =
-                null;
+
+        /*
+        * iPhone Safari MediaRecorder path.
+        */
+
+        if (
+            isIOSDevice()
+        ) {
+
+            recognition = null;
+
 
             const supported =
                 supportsMediaRecorder();
 
+
             micButton.disabled =
                 !supported;
+
 
             micButton.classList.remove(
                 "is-listening"
             );
 
+
             micButton.innerHTML =
                 '<i class="bi bi-mic-fill"></i>';
 
+
             voiceStatus.textContent =
                 supported
+
                     ? "Tap microphone to record"
+
                     : "Voice recording is not supported";
 
+
             return;
+
         }
 
+
+        /*
+        * Android Chrome / Desktop Chrome.
+        */
 
         const SpeechRecognition =
             window.SpeechRecognition ||
             window.webkitSpeechRecognition;
 
 
-        if (!SpeechRecognition) {
-            recognition =
-                null;
+        if (
+            !SpeechRecognition
+        ) {
+
+            recognition = null;
 
             micButton.disabled =
                 true;
+
 
             micButton.classList.remove(
                 "is-listening"
             );
 
+
             micButton.innerHTML =
                 '<i class="bi bi-mic-fill"></i>';
+
 
             voiceStatus.textContent =
                 "Voice input is not supported in this browser";
 
+
             return;
+
         }
 
 
@@ -3946,15 +4689,23 @@ document.addEventListener("DOMContentLoaded", function () {
             false;
 
 
-        if (recognition) {
+        if (
+            recognition
+        ) {
+
             recognition.lang =
+
                 speechLanguageMap[
                     userLanguageCode
                 ] ||
+
                 userLanguageCode ||
+
                 "en-IN";
 
+
             return;
+
         }
 
 
@@ -3965,151 +4716,220 @@ document.addEventListener("DOMContentLoaded", function () {
         recognition.continuous =
             true;
 
+
         recognition.interimResults =
             true;
+
 
         recognition.maxAlternatives =
             1;
 
+
         recognition.lang =
+
             speechLanguageMap[
                 userLanguageCode
             ] ||
+
             userLanguageCode ||
+
             "en-IN";
 
 
         recognition.onstart =
             function () {
+
                 isListening =
                     true;
+
 
                 recognitionShouldRestart =
                     true;
 
+
                 recognitionSessionBaseText =
                     accumulatedVoiceText;
+
 
                 recognitionFinalSegments =
                     new Map();
 
+
                 micButton.disabled =
                     false;
+
 
                 micButton.classList.add(
                     "is-listening"
                 );
 
+
                 micButton.innerHTML =
                     '<i class="bi bi-stop-fill"></i>';
+
 
                 voiceStatus.textContent =
                     "Listening...";
 
+
                 status.textContent =
                     "Laxmi is listening...";
+
             };
 
 
         recognition.onresult =
-            function (event) {
+            function (
+                event
+            ) {
+
                 const interimSegments =
                     [];
 
+
+                /*
+                * IMPORTANT:
+                * event.resultIndex nundi మాత్రమే process.
+                *
+                * Old results malli process cheyyakudadhu.
+                */
+
                 for (
-                    let index = 0;
+                    let index =
+                        event.resultIndex;
+
                     index <
                         event.results.length;
+
                     index += 1
                 ) {
+
                     const transcript =
                         normalizeSpeechText(
+
                             event.results[
                                 index
                             ][0].transcript ||
+
                             ""
+
                         );
 
-                    if (!transcript) {
+
+                    if (
+                        !transcript
+                    ) {
+
                         continue;
+
                     }
+
 
                     if (
                         event.results[
                             index
                         ].isFinal
                     ) {
+
                         recognitionFinalSegments.set(
                             index,
                             transcript
                         );
 
                     } else {
+
                         interimSegments.push(
                             transcript
                         );
+
                     }
+
                 }
 
 
                 const sessionFinalText =
+
                     Array.from(
                         recognitionFinalSegments.entries()
                     )
+
                         .sort(
                             function (
                                 first,
                                 second
                             ) {
+
                                 return (
                                     first[0] -
                                     second[0]
                                 );
+
                             }
                         )
+
                         .map(
-                            function (entry) {
+                            function (
+                                entry
+                            ) {
+
                                 return entry[1];
+
                             }
                         )
+
                         .join(" ");
 
 
                 accumulatedVoiceText =
                     mergeTranscript(
+
                         recognitionSessionBaseText,
+
                         sessionFinalText
+
                     );
 
 
                 const interimText =
                     normalizeSpeechText(
+
                         interimSegments.join(
                             " "
                         )
+
                     );
 
 
                 const visibleText =
                     mergeTranscript(
+
                         accumulatedVoiceText,
+
                         interimText
+
                     );
 
 
                 input.value =
                     visibleText;
 
+
                 resizeInput();
+
 
                 updateCharacterCount();
 
 
-                if (interimText) {
+                if (
+                    interimText
+                ) {
+
                     clearVoiceSilenceTimer();
+
 
                     voiceStatus.textContent =
                         "Listening...";
+
 
                     status.textContent =
                         "Laxmi is listening...";
@@ -4117,16 +4937,23 @@ document.addEventListener("DOMContentLoaded", function () {
                 } else if (
                     accumulatedVoiceText
                 ) {
+
                     scheduleVoiceMessageSend();
 
+
                     voiceStatus.textContent =
-                        "Waiting 3 seconds...";
+                        "Finishing voice input...";
+
                 }
+
             };
 
 
         recognition.onerror =
-            function (event) {
+            function (
+                event
+            ) {
+
                 console.log(
                     "Voice recognition error:",
                     event.error
@@ -4136,28 +4963,37 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (
                     event.error ===
                         "not-allowed" ||
+
                     event.error ===
                         "service-not-allowed"
                 ) {
+
                     recognitionShouldRestart =
                         false;
 
+
                     stopListening();
+
 
                     showError(
                         "Please allow microphone permission in browser settings."
                     );
 
+
                     return;
+
                 }
 
 
                 if (
                     event.error ===
                         "no-speech" &&
+
                     recognitionShouldRestart
                 ) {
+
                     return;
+
                 }
 
 
@@ -4165,54 +5001,100 @@ document.addEventListener("DOMContentLoaded", function () {
                     event.error ===
                         "aborted"
                 ) {
+
                     return;
+
                 }
 
 
                 recognitionShouldRestart =
                     false;
 
+
                 stopListening();
+
 
                 showError(
                     "Voice input error: " +
                     event.error
                 );
+
             };
 
 
         recognition.onend =
             function () {
+
+                /*
+                * IMPORTANT FIX:
+                *
+                * Final words already వచ్చాయి అంటే
+                * recognition malli immediately restart cheyyakudadhu.
+                *
+                * Restart valla Android old phrase malli send chestundi.
+                */
+
+                if (
+                    isListening &&
+                    recognitionShouldRestart &&
+                    !isSending &&
+                    accumulatedVoiceText.trim()
+                ) {
+
+                    scheduleVoiceMessageSend();
+
+                    return;
+
+                }
+
+
+                /*
+                * Speech ఇంకా detect కాకపోతే మాత్రమే restart.
+                */
+
                 if (
                     isListening &&
                     recognitionShouldRestart &&
                     !isSending
                 ) {
+
                     window.setTimeout(
                         function () {
+
                             if (
                                 !isListening ||
                                 !recognitionShouldRestart ||
                                 isSending ||
                                 !recognition
                             ) {
+
                                 return;
+
                             }
 
+
                             try {
+
                                 recognition.start();
 
-                            } catch (error) {
+                            } catch (
+                                error
+                            ) {
+
                                 console.log(
                                     "Voice recognition restart:",
                                     error
                                 );
+
                             }
+
                         },
                         350
                     );
 
+
                     return;
+
                 }
 
 
@@ -4220,17 +5102,23 @@ document.addEventListener("DOMContentLoaded", function () {
                     "is-listening"
                 );
 
+
                 micButton.innerHTML =
                     '<i class="bi bi-mic-fill"></i>';
 
 
-                if (!isSending) {
+                if (
+                    !isSending
+                ) {
+
                     status.textContent =
                         "Online";
-                }
-            };
-    }
 
+                }
+
+            };
+
+    }
 
     /* =====================================================
        START LISTENING

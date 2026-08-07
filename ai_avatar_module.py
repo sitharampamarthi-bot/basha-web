@@ -473,8 +473,9 @@ LIVE_CONTEXT_TERMS = re.compile(
     r"usd|inr|dollar|rupee|currency|forex|"
     r"crude|oil|natural\s*gas|commodity|"
     r"weather|temperature|rain|forecast|"
-    r"సెన్సెక్స్|నిఫ్టీ|బంగారం|వెండి|బిట్.?కాయిన్|మార్కెట్|ధర|"
-    r"सोना|चांदी|बिटकॉइन|बाज़ार|बाजार|भाव"
+    r"సెన్సెక్స్|నిఫ్టీ|బంగారం|వెండి|బిట్.?కాయిన్|"
+    r"మార్కెట్|ధర|వాతావరణం|వెదర్|"
+    r"सोना|चांदी|बिटकॉइन|बाज़ार|बाजार|भाव|मौसम"
     r")",
     re.IGNORECASE,
 )
@@ -483,52 +484,177 @@ LIVE_CONTEXT_TERMS = re.compile(
 LIVE_FOLLOW_UP_TERMS = re.compile(
     r"(?:"
     r"how\s+much|what\s+about|now|today|current|change|changed|"
-    r"up|down|high|low|open|close|percentage|percent|"
-    r"it|that|this|same|again|"
-    r"ఎంత|ఇప్పుడు|నేడు|ఈరోజు|పెరిగింది|తగ్గింది|మార్పు|అది|దాని|"
-    r"कितना|अभी|आज|बढ़ा|घटा|बदला|वही|उसका"
+    r"up|down|high|low|open|close|percentage|percent|price|rate|quote|"
+    r"it|that|this|same|again|report|"
+    r"entha|ippudu|eroju|ee\s*roju|perigindi|taggindi|"
+    r"ఎంత|ఇప్పుడు|నేడు|ఈరోజు|పెరిగింది|తగ్గింది|మార్పు|"
+    r"అది|దాని|ధర|రేటు|రిపోర్ట్|"
+    r"कितना|अभी|आज|बढ़ा|घटा|बदला|वही|उसका|भाव|रिपोर्ट"
+    r")",
+    re.IGNORECASE,
+)
+
+
+LIVE_EXPLICIT_TERMS = re.compile(
+    r"(?:"
+    r"live|current|now|today|tonight|price|rate|quote|report|"
+    r"high|low|open|close|change|changed|up|down|percent|percentage|"
+    r"weather|temperature|rain|forecast|"
+    r"entha|ippudu|eroju|ee\s*roju|perigindi|taggindi|"
+    r"ఇప్పుడు|ప్రస్తుతం|ఈరోజు|నేడు|ధర|రేటు|ఎంత|"
+    r"పెరిగింది|తగ్గింది|వాతావరణం|వెదర్|వర్షం|"
+    r"ఫోర్.?కాస్ట్|రిపోర్ట్|"
+    r"अभी|आज|मौसम|तापमान|बारिश|भाव|कीमत|रिपोर्ट"
+    r")",
+    re.IGNORECASE,
+)
+
+
+STATIC_INFORMATION_TERMS = re.compile(
+    r"(?:"
+    r"company\s+list|companies|constituents?|members?|"
+    r"list\s+of|\blist\b|"
+    r"what\s+is|meaning|explain|history|definition|how\s+does|"
+    r"కంపెనీ\s*లిస్ట్|కంపెనీల|కంపెనీలు|జాబితా|ఏ\s*కంపెనీలు|"
+    r"అంటే\s*ఏమిటి|అంటే\s*ఏంటి|వివరించు|చరిత్ర|"
+    r"कंपनी\s*लिस्ट|कंपनियां|सूची|क्या\s+है|समझाओ|इतिहास"
+    r")",
+    re.IGNORECASE,
+)
+
+
+WEATHER_TERMS = re.compile(
+    r"(?:"
+    r"weather|temperature|rain|forecast|"
+    r"వాతావరణం|వెదర్|వర్షం|"
+    r"मौसम|तापमान|बारिश"
     r")",
     re.IGNORECASE,
 )
 
 
 def find_recent_live_context(history):
-    for item in reversed(history[-10:]):
-        text = clean_text(item.get("text"))
 
-        if text and LIVE_CONTEXT_TERMS.search(text):
+    for item in reversed(
+        history[-10:]
+    ):
+
+        text = clean_text(
+            item.get("text")
+        )
+
+        if (
+            text
+            and LIVE_CONTEXT_TERMS.search(
+                text
+            )
+        ):
+
             return text[:1200]
 
     return ""
 
 
-def build_live_search_message(user_message, history):
-    message = clean_text(user_message)
+def should_use_live_search(
+    user_message,
+    history
+):
 
-    if not message:
-        return ""
-
-    if LIVE_CONTEXT_TERMS.search(message):
-        return message
-
-    recent_context = find_recent_live_context(
-        history
+    message = clean_text(
+        user_message
     )
 
-    if not recent_context:
-        return message
+    if not message:
 
-    looks_like_follow_up = (
-        len(message) <= 180
-        or bool(
-            LIVE_FOLLOW_UP_TERMS.search(
-                message
-            )
+        return False
+
+
+    # Static/general request.
+    if STATIC_INFORMATION_TERMS.search(
+        message
+    ):
+
+        return False
+
+
+    # Weather queries normally require live data.
+    if WEATHER_TERMS.search(
+        message
+    ):
+
+        return True
+
+
+    # Market/crypto/currency live intent.
+    if (
+        LIVE_CONTEXT_TERMS.search(
+            message
+        )
+        and
+        LIVE_EXPLICIT_TERMS.search(
+            message
+        )
+    ):
+
+        return True
+
+
+    # Follow-up to previous live topic.
+    recent_context = (
+        find_recent_live_context(
+            history
         )
     )
 
-    if not looks_like_follow_up:
+
+    if (
+        recent_context
+        and
+        LIVE_FOLLOW_UP_TERMS.search(
+            message
+        )
+        and
+        len(message) <= 220
+    ):
+
+        return True
+
+
+    return False
+
+
+def build_live_search_message(
+    user_message,
+    history
+):
+
+    message = clean_text(
+        user_message
+    )
+
+    if not message:
+
+        return ""
+
+
+    if LIVE_CONTEXT_TERMS.search(
+        message
+    ):
+
         return message
+
+
+    recent_context = (
+        find_recent_live_context(
+            history
+        )
+    )
+
+
+    if not recent_context:
+
+        return message
+
 
     return (
         "Previous live topic or result:\n"
@@ -536,7 +662,6 @@ def build_live_search_message(user_message, history):
         "Current follow-up request:\n"
         f"{message}"
     )
-
 
 def build_conversation_text(
     user_message,
@@ -636,51 +761,70 @@ def ai_assistant_greeting():
     methods=["POST"],
 )
 def ai_assistant_chat():
+
     if "user_id" not in session:
+
         return jsonify({
             "success": False,
             "error": "Login required",
         }), 401
 
+
     try:
+
         user = get_current_user()
 
+
         if not user:
+
             return jsonify({
                 "success": False,
                 "error": "User not found",
             }), 404
 
+
         data = request.get_json(
             silent=True
         ) or {}
 
+
         message = clean_text(
-            data.get("message")
+            data.get(
+                "message"
+            )
         )
+
 
         history = normalize_history(
-            data.get("history")
+            data.get(
+                "history"
+            )
         )
 
+
         if not message:
+
             return jsonify({
                 "success": False,
                 "error": "Please enter a message",
             }), 400
 
+
         if len(message) > 5000:
+
             return jsonify({
                 "success": False,
                 "error": "Message is too long",
             }), 400
 
-        live_search_message = (
-            build_live_search_message(
+
+        use_live_search = (
+            should_use_live_search(
                 message,
                 history,
             )
         )
+
 
         live_result = {
             "live": False,
@@ -688,80 +832,165 @@ def ai_assistant_chat():
             "prompt": "",
         }
 
-        try:
-            live_result = process(
-                live_search_message
+
+        if use_live_search:
+
+            live_search_message = (
+                build_live_search_message(
+                    message,
+                    history,
+                )
             )
 
-        except Exception as live_error:
-            print(
-                "LIVE SEARCH ERROR:",
-                str(live_error),
-            )
+
+            try:
+
+                live_result = process(
+                    live_search_message
+                )
+
+
+            except Exception as live_error:
+
+                print(
+                    "LIVE SEARCH ERROR:",
+                    str(
+                        live_error
+                    ),
+                )
+
 
         live_prompt = ""
 
+
         if (
-            isinstance(live_result, dict)
-            and live_result.get("live")
-        ):
-            live_prompt = clean_text(
-                live_result.get("prompt")
+            isinstance(
+                live_result,
+                dict
             )
+            and
+            live_result.get(
+                "live"
+            )
+        ):
+
+            live_prompt = clean_text(
+                live_result.get(
+                    "prompt"
+                )
+            )
+
 
         client = get_gemini_client()
 
-        response = client.models.generate_content(
-            model=MODEL_NAME,
-            contents=build_conversation_text(
-                message,
-                history,
-                live_prompt,
-            ),
-            config=types.GenerateContentConfig(
-                system_instruction=(
-                    build_system_prompt(user)
-                ),
-                temperature=0.25,
-                max_output_tokens=4096,
-            ),
+
+        response = (
+            client.models
+            .generate_content(
+
+                model=
+                    MODEL_NAME,
+
+                contents=
+                    build_conversation_text(
+                        message,
+                        history,
+                        live_prompt,
+                    ),
+
+                config=
+                    types.GenerateContentConfig(
+
+                        system_instruction=
+                            build_system_prompt(
+                                user
+                            ),
+
+                        temperature=
+                            0.25,
+
+                        max_output_tokens=
+                            2048,
+
+                    ),
+
+            )
         )
+
 
         reply = clean_text(
-            getattr(response, "text", "")
+            getattr(
+                response,
+                "text",
+                ""
+            )
         )
 
+
         if not reply:
+
             raise RuntimeError(
                 "AI returned an empty response."
             )
 
-        language_code, language_name = (
-            get_user_language(user)
+
+        (
+            language_code,
+            language_name
+        ) = get_user_language(
+            user
         )
+
 
         return jsonify({
-            "success": True,
-            "reply": reply,
-            "languageCode": language_code,
-            "languageName": language_name,
-            "live": bool(live_prompt),
-            "liveCategory": clean_text(
-                live_result.get("category")
-                if isinstance(live_result, dict)
-                else ""
-            ),
+
+            "success":
+                True,
+
+            "reply":
+                reply,
+
+            "languageCode":
+                language_code,
+
+            "languageName":
+                language_name,
+
+            "live":
+                bool(
+                    live_prompt
+                ),
+
+            "liveCategory":
+                clean_text(
+                    live_result.get(
+                        "category"
+                    )
+                    if isinstance(
+                        live_result,
+                        dict
+                    )
+                    else ""
+                ),
+
         })
 
+
     except Exception as error:
+
         print(
             "AI ASSISTANT ERROR:",
-            str(error),
+            str(
+                error
+            ),
         )
+
 
         return jsonify({
             "success": False,
-            "error": str(error),
+            "error": str(
+                error
+            ),
         }), 500
 
 TTS_LANGUAGE_CONFIG = {
@@ -1121,24 +1350,30 @@ def normalize_transcript_text(value):
     methods=["POST"],
 )
 def transcribe_ai_voice():
+
     if "user_id" not in session:
+
         return jsonify({
             "success": False,
             "error": "Login required",
         }), 401
 
+
     uploaded_audio = request.files.get(
         "audio"
     )
+
 
     if (
         uploaded_audio is None
         or not uploaded_audio.filename
     ):
+
         return jsonify({
             "success": False,
             "error": "Audio file is required",
         }), 400
+
 
     language_code = clean_language_code(
         request.form.get(
@@ -1146,26 +1381,41 @@ def transcribe_ai_voice():
         ) or "en"
     )
 
+
     uploaded_audio.seek(
         0,
         os.SEEK_END,
     )
 
-    audio_size = uploaded_audio.tell()
 
-    uploaded_audio.seek(0)
+    audio_size = (
+        uploaded_audio.tell()
+    )
+
+
+    uploaded_audio.seek(
+        0
+    )
+
 
     if audio_size <= 0:
+
         return jsonify({
             "success": False,
             "error": "Audio file is empty",
         }), 400
 
+
     maximum_audio_size = (
         15 * 1024 * 1024
     )
 
-    if audio_size > maximum_audio_size:
+
+    if (
+        audio_size >
+        maximum_audio_size
+    ):
+
         return jsonify({
             "success": False,
             "error": (
@@ -1174,90 +1424,152 @@ def transcribe_ai_voice():
             ),
         }), 413
 
+
     original_suffix = Path(
         uploaded_audio.filename
     ).suffix.lower()
 
-    allowed_suffixes = {
-        ".webm",
-        ".m4a",
-        ".mp4",
-        ".ogg",
-        ".wav",
-        ".aac",
-        ".mp3",
+
+    mime_type = clean_text(
+        uploaded_audio.mimetype
+        or
+        uploaded_audio.content_type
+    ).lower()
+
+
+    suffix_mime_types = {
+
+        ".webm":
+            "audio/webm",
+
+        ".m4a":
+            "audio/mp4",
+
+        ".mp4":
+            "audio/mp4",
+
+        ".ogg":
+            "audio/ogg",
+
+        ".wav":
+            "audio/wav",
+
+        ".aac":
+            "audio/aac",
+
+        ".mp3":
+            "audio/mpeg",
+
     }
 
-    if original_suffix not in allowed_suffixes:
-        content_type = clean_text(
-            uploaded_audio.content_type
-        ).lower()
 
-        if "mp4" in content_type:
-            original_suffix = ".m4a"
-        elif "ogg" in content_type:
-            original_suffix = ".ogg"
-        elif "wav" in content_type:
-            original_suffix = ".wav"
-        elif "mpeg" in content_type or "mp3" in content_type:
-            original_suffix = ".mp3"
-        else:
-            original_suffix = ".webm"
+    if (
+        not mime_type
+        or
+        not mime_type.startswith(
+            "audio/"
+        )
+        or
+        mime_type ==
+            "audio/x-m4a"
+    ):
 
-    temporary_path = None
-    client = None
-    uploaded_file_name = ""
+        mime_type = (
+            suffix_mime_types.get(
+                original_suffix,
+                "audio/webm",
+            )
+        )
+
 
     try:
-        with tempfile.NamedTemporaryFile(
-            suffix=original_suffix,
-            delete=False,
-        ) as temporary_file:
-            temporary_path = temporary_file.name
-            uploaded_audio.save(
-                temporary_path
+
+        audio_bytes = (
+            uploaded_audio.read()
+        )
+
+
+        if not audio_bytes:
+
+            return jsonify({
+                "success": False,
+                "error": "Audio file is empty",
+            }), 400
+
+
+        client = (
+            get_gemini_client()
+        )
+
+
+        language_name = (
+            LANGUAGE_NAMES.get(
+                language_code,
+                language_code,
             )
-
-        client = get_gemini_client()
-
-        uploaded_file = client.files.upload(
-            file=temporary_path
         )
 
-        uploaded_file_name = clean_text(
-            getattr(uploaded_file, "name", "")
+        audio_part = (
+            types.Part.from_bytes(
+                data=
+                    audio_bytes,
+
+                mime_type=
+                    mime_type,
+            )
         )
 
-        language_name = LANGUAGE_NAMES.get(
-            language_code,
-            language_code,
+        response = (
+            client.models
+            .generate_content(
+
+                model=
+                    MODEL_NAME,
+
+                contents=[
+
+                    (
+                        "Transcribe this audio accurately. "
+                        f"The expected spoken language is {language_name}. "
+                        "Return only the spoken words. "
+                        "Do not repeat any word or phrase unless it was clearly "
+                        "spoken more than once. "
+                        "Do not add explanations, labels, quotation marks, "
+                        "or markdown. "
+                        "Preserve names, numbers, prices, locations, "
+                        "and stock symbols carefully."
+                    ),
+
+                    audio_part,
+
+                ],
+
+                config=
+                    types.GenerateContentConfig(
+
+                        temperature=
+                            0.0,
+
+                        max_output_tokens=
+                            700,
+
+                    ),
+
+            )
         )
 
-        response = client.models.generate_content(
-            model=MODEL_NAME,
-            contents=[
-                uploaded_file,
-                (
-                    "Transcribe this audio accurately. "
-                    f"The expected spoken language is {language_name}. "
-                    "Return only the spoken words. "
-                    "Do not repeat any word or phrase unless it was clearly "
-                    "spoken more than once. Do not add explanations, labels, "
-                    "quotation marks, or markdown. Preserve names, numbers, "
-                    "prices, and stock symbols carefully."
-                ),
-            ],
-            config=types.GenerateContentConfig(
-                temperature=0.0,
-                max_output_tokens=1200,
-            ),
-        )
-
-        transcript = normalize_transcript_text(
-            getattr(response, "text", "")
+        transcript = (
+            normalize_transcript_text(
+                getattr(
+                    response,
+                    "text",
+                    ""
+                )
+            )
         )
 
         if not transcript:
+
             return jsonify({
                 "success": False,
                 "error": (
@@ -1267,15 +1579,25 @@ def transcribe_ai_voice():
             }), 422
 
         return jsonify({
-            "success": True,
-            "transcript": transcript,
-            "languageCode": language_code,
+
+            "success":
+                True,
+
+            "transcript":
+                transcript,
+
+            "languageCode":
+                language_code,
+
         })
 
     except Exception as error:
+
         print(
             "AI VOICE TRANSCRIPTION ERROR:",
-            str(error),
+            str(
+                error
+            ),
         )
 
         return jsonify({
@@ -1285,27 +1607,3 @@ def transcribe_ai_voice():
                 f"{error}"
             ),
         }), 500
-
-    finally:
-        if (
-            client is not None
-            and uploaded_file_name
-        ):
-            try:
-                client.files.delete(
-                    name=uploaded_file_name
-                )
-            except Exception as delete_error:
-                print(
-                    "AI UPLOADED FILE DELETE ERROR:",
-                    str(delete_error),
-                )
-
-        if (
-            temporary_path
-            and os.path.exists(temporary_path)
-        ):
-            try:
-                os.remove(temporary_path)
-            except OSError:
-                pass
