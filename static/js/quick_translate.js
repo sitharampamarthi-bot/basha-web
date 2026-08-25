@@ -111,6 +111,11 @@ document.addEventListener(
             "qtSendBtn"
         );
 
+    const liveFreezeBtn =
+        document.getElementById(
+            "qtLiveFreezeBtn"
+        );    
+
 
     /* FILE BUTTONS */
 
@@ -360,6 +365,12 @@ document.addEventListener(
         "lens";
 
     let lastLiveRegions = [];
+
+    let liveCameraFrozen =
+        false;
+
+    let frozenFrameDataUrl =
+        "";
 
 
     /* =========================================
@@ -1012,6 +1023,157 @@ document.addEventListener(
     LIVE CAMERA AUTO TRANSLATION
     ========================================= */
 
+    function updateFreezeButton() {
+
+        if (!liveFreezeBtn) {
+            return;
+        }
+
+        const icon =
+            liveFreezeBtn.querySelector(
+                "i"
+            );
+
+        const text =
+            liveFreezeBtn.querySelector(
+                "span"
+            );
+
+
+        liveFreezeBtn.classList.toggle(
+            "is-frozen",
+            liveCameraFrozen
+        );
+
+
+        if (liveCameraFrozen) {
+
+            if (icon) {
+                icon.className =
+                    "bi bi-play-fill";
+            }
+
+            if (text) {
+                text.textContent =
+                    "Re-read";
+            }
+
+            liveFreezeBtn.title =
+                "Resume live translation";
+
+        } else {
+
+            if (icon) {
+                icon.className =
+                    "bi bi-pause-fill";
+            }
+
+            if (text) {
+                text.textContent =
+                    "Freeze";
+            }
+
+            liveFreezeBtn.title =
+                "Freeze translated frame";
+        }
+    }
+
+    function freezeLiveCamera() {
+
+        if (
+            !liveCameraRunning ||
+            liveCameraFrozen
+        ) {
+            return;
+        }
+
+
+        liveCameraFrozen =
+            true;
+
+
+        stopLiveCameraTimer();
+
+
+        /*
+        * Do not stop camera hardware.
+        * Video stays visible but scanning
+        * is paused.
+        */
+        if (liveCameraStage) {
+
+            liveCameraStage
+                .classList.add(
+                    "is-frozen"
+                );
+        }
+
+
+        liveCameraBadgeText.textContent =
+            "Frozen";
+
+        liveCameraStatus.textContent =
+            "Read translation — tap Re-read to continue";
+
+
+        updateFreezeButton();
+    }
+
+    function resumeLiveCamera() {
+
+        if (
+            !liveCameraRunning
+        ) {
+            return;
+        }
+
+
+        liveCameraFrozen =
+            false;
+
+
+        if (liveCameraStage) {
+
+            liveCameraStage
+                .classList.remove(
+                    "is-frozen"
+                );
+        }
+
+
+        /*
+        * Force next frame to be read again.
+        */
+        lastLiveFrameSignature =
+            "";
+
+        liveCameraBadgeText.textContent =
+            "Reading again...";
+
+        liveCameraStatus.textContent =
+            "Detecting visible language...";
+
+
+        updateFreezeButton();
+
+
+        scheduleLiveCameraScan(
+            180
+        );
+    }
+
+    function toggleLiveCameraFreeze() {
+
+        if (liveCameraFrozen) {
+
+            resumeLiveCamera();
+
+        } else {
+
+            freezeLiveCamera();
+        }
+    }
+    
     function clearLensRegions() {
 
         lastLiveRegions = [];
@@ -1368,6 +1530,19 @@ document.addEventListener(
         liveCameraRunning =
             false;
 
+        liveCameraFrozen =
+            false;
+
+        if (liveCameraStage) {
+
+            liveCameraStage
+                .classList.remove(
+                    "is-frozen"
+                );
+        }
+
+        updateFreezeButton();    
+
         stopLiveCameraTimer();
 
         cancelLiveCameraRequest();
@@ -1591,7 +1766,7 @@ document.addEventListener(
         * uploads/API latency stay lower.
         */
         const maximumWidth =
-            960;
+            768;
 
         const scale =
             Math.min(
@@ -1677,7 +1852,7 @@ document.addEventListener(
 
                     },
                     "image/jpeg",
-                    0.78
+                    0.72
                 );
             }
         );
@@ -1685,7 +1860,7 @@ document.addEventListener(
 
 
     function scheduleLiveCameraScan(
-        delay = 1600
+        delay = 700
     ) {
 
         stopLiveCameraTimer();
@@ -1707,6 +1882,11 @@ document.addEventListener(
 
 
     async function scanLiveCamera() {
+
+        if (liveCameraFrozen) {
+            return;
+        }
+
 
         if (
             !liveCameraRunning ||
@@ -1747,7 +1927,7 @@ document.addEventListener(
         */
         if (
             lastLiveFrameSignature &&
-            difference < 0.10
+            difference < 0.055
         ) {
 
             liveCameraBadgeText.textContent =
@@ -1756,7 +1936,7 @@ document.addEventListener(
                     : "Looking for text...";
 
             scheduleLiveCameraScan(
-                1000
+                650
             );
 
             return;
@@ -1999,8 +2179,9 @@ document.addEventListener(
 
 
             liveCameraStatus.textContent =
-                "Move camera to another text";
+                "Translation ready — tap Re-read for next page";
 
+            freezeLiveCamera();    
 
             /*
             * Also keep regular translator
@@ -2084,7 +2265,7 @@ document.addEventListener(
                 if (liveCameraRunning) {
 
                     scheduleLiveCameraScan(
-                        1300
+                        700
                     );
                 }
             }
@@ -2093,6 +2274,11 @@ document.addEventListener(
 
 
     async function startLiveCamera() {
+
+        liveCameraFrozen =
+            false;
+
+        updateFreezeButton();
 
         closeRecorder();
 
@@ -2360,6 +2546,14 @@ document.addEventListener(
                     "full"
                 );
             }
+        );
+    }
+
+    if (liveFreezeBtn) {
+
+        liveFreezeBtn.addEventListener(
+            "click",
+            toggleLiveCameraFreeze
         );
     }
 

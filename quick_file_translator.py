@@ -281,6 +281,14 @@ Rules:
 - Regions must not cover unrelated areas unnecessarily.
 - If no readable text exists, return empty strings
   and an empty regions array.
+- Capture ALL clearly readable text inside the camera frame.
+- Do not omit readable paragraphs only because the screen contains many regions.
+- Prefer multiple smaller regions rather than one very large region.
+- Each region should normally contain 1 to 4 visible text lines.
+- Never combine distant text blocks into one region.
+- Return regions in top-to-bottom visual order.
+- Keep translated text concise but complete.
+- Preserve every visible numeric value.  
 """.strip()
 
 
