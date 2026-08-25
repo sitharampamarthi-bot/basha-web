@@ -1888,7 +1888,7 @@ document.addEventListener(
 
                     },
                     "image/jpeg",
-                    0.68
+                    0.58
                 );
             }
         );
@@ -2062,7 +2062,7 @@ document.addEventListener(
 
             const response =
                 await fetch(
-                    "/api/quick-translate/file",
+                    "/api/quick-translate/live",
                     {
                         method:
                             "POST",

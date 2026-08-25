@@ -15,7 +15,8 @@ from quick_file_translator import (
     ALLOWED_EXTENSIONS,
     IMAGE_EXTENSIONS,
     translate_uploaded_file,
-    translate_image_spatial
+    translate_image_spatial,
+    translate_live_camera_fast
 )
 
 
@@ -164,6 +165,127 @@ def translate_value(
         text,
         target_language
     )
+    
+@quick_translate_bp.route(
+    "/api/quick-translate/live",
+    methods=["POST"]
+)
+def quick_translate_live_api():
+
+    if "user_id" not in session:
+        return jsonify({
+            "success": False,
+            "error": "Login required"
+        }), 401
+
+    try:
+
+        uploaded_file = request.files.get(
+            "file"
+        )
+
+        if not uploaded_file:
+            return jsonify({
+                "success": False,
+                "error": "Camera frame missing"
+            }), 400
+
+        image_bytes = uploaded_file.read()
+
+        if not image_bytes:
+            return jsonify({
+                "success": False,
+                "error": "Empty camera frame"
+            }), 400
+
+        # Live Camera always uses
+        # logged-in user's preferred language.
+        (
+            target_language_code,
+            target_info
+        ) = get_user_preferred_language()
+
+        mime_type = (
+            uploaded_file.mimetype
+            or "image/jpeg"
+        )
+
+        result = translate_live_camera_fast(
+            image_bytes=image_bytes,
+            mime_type=mime_type,
+            target_language=target_info["name"]
+        )
+
+        detected_language = clean_text(
+            result.get("detected_language")
+            or "Auto Detected"
+        )
+
+        original_text = clean_text(
+            result.get("original_text")
+        )
+
+        translated_text = clean_text(
+            result.get("translated_text")
+        )
+
+        return jsonify({
+            "success": True,
+
+            "inputType": "image",
+
+            "original":
+                original_text,
+
+            "translated":
+                translated_text,
+
+            "sourceLanguage":
+                "auto",
+
+            "sourceLanguageName":
+                detected_language,
+
+            "detectedLanguage":
+                detected_language,
+
+            "targetLanguage":
+                target_language_code,
+
+            "targetLanguageName":
+                target_info["name"],
+
+            "lensMode":
+                True,
+
+            "regions":
+                result.get(
+                    "regions",
+                    []
+                )
+        })
+
+    except ValueError as error:
+
+        # Live camera lo unreadable frame normal.
+        # 500 error ga treat cheyyakudadhu.
+        return jsonify({
+            "success": False,
+            "noText": True,
+            "error": str(error)
+        }), 200
+
+    except Exception as error:
+
+        print(
+            "QUICK LIVE TRANSLATE ERROR:",
+            str(error)
+        )
+
+        return jsonify({
+            "success": False,
+            "error": str(error)
+        }), 500    
 
 
 @quick_translate_bp.route(

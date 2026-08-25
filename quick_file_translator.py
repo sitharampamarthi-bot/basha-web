@@ -320,6 +320,50 @@ No explanation.
 No comments outside JSON.
 """.strip()
 
+def build_live_fast_prompt(target_language):
+    target_language = str(
+        target_language or "English"
+    ).strip()
+
+    return f"""
+Read the visible text in this camera frame.
+
+Source language can be ANY language.
+
+Translate ALL clearly readable text directly into:
+{target_language}
+
+IMPORTANT:
+- Output translation MUST be {target_language}.
+- Never output English unless target is English.
+- Detect source language automatically.
+- Do not explain.
+- Do not translate unreadable text.
+- Preserve numbers, dates, URLs, codes and names.
+
+Group nearby text into paragraph-sized blocks.
+
+Return ONLY JSON:
+
+{{
+  "detected_language": "source language",
+  "original_text": "visible source text",
+  "translated_text": "complete {target_language} translation",
+  "regions": [
+    {{
+      "translated": "{target_language} translation",
+      "x": 0.10,
+      "y": 0.20,
+      "width": 0.50,
+      "height": 0.10
+    }}
+  ]
+}}
+
+Coordinates are normalized 0 to 1.
+Return maximum 8 useful regions.
+""".strip()
+
 
 def parse_translation_response(
     response_text
@@ -799,5 +843,79 @@ def translate_image_spatial(
     result[
         "extension"
     ] = extension
+
+    return result
+
+def translate_live_camera_fast(
+    image_bytes,
+    mime_type,
+    target_language
+):
+    api_key = os.getenv(
+        "GEMINI_API_KEY",
+        ""
+    ).strip()
+
+    if not api_key:
+        raise RuntimeError(
+            "GEMINI_API_KEY is missing."
+        )
+
+    if not image_bytes:
+        raise ValueError(
+            "Empty camera frame."
+        )
+
+    target_language = str(
+        target_language or "English"
+    ).strip()
+
+    client = genai.Client(
+        api_key=api_key
+    )
+
+    prompt = build_live_fast_prompt(
+        target_language
+    )
+
+    response = client.models.generate_content(
+        model=LIVE_MODEL_NAME,
+
+        contents=[
+            prompt,
+
+            types.Part.from_bytes(
+                data=image_bytes,
+                mime_type=(
+                    mime_type
+                    or "image/jpeg"
+                )
+            )
+        ],
+
+        config=types.GenerateContentConfig(
+            temperature=0.0,
+            response_mime_type="application/json",
+            max_output_tokens=1800
+        )
+    )
+
+    response_text = str(
+        response.text or ""
+    ).strip()
+
+    if not response_text:
+        raise RuntimeError(
+            "Empty live camera response."
+        )
+
+    result = (
+        parse_spatial_translation_response(
+            response_text
+        )
+    )
+
+    result["input_type"] = "image"
+    result["extension"] = ".jpg"
 
     return result
