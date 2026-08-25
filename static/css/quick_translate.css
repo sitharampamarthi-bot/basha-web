@@ -1982,3 +1982,50 @@
         line-height:1.06;
     }
 }
+
+.qt-live-resume-btn{
+    position:absolute;
+    top:14px;
+    right:14px;
+    z-index:8;
+
+    min-height:36px;
+    border:none;
+    border-radius:18px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+
+    padding:7px 13px;
+
+    background:#6f42c1;
+    color:#fff;
+
+    font-size:10px;
+    font-weight:800;
+
+    box-shadow:
+        0 4px 12px
+        rgba(0,0,0,.24);
+}
+
+.qt-live-resume-btn[hidden]{
+    display:none !important;
+}
+
+.qt-live-resume-btn:active{
+    transform:scale(.97);
+}
+
+@media(max-width:600px){
+
+    .qt-live-resume-btn{
+        top:12px;
+        right:12px;
+        min-height:34px;
+        padding:6px 11px;
+        font-size:9px;
+    }
+}

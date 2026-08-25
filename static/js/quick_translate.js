@@ -114,6 +114,11 @@ document.addEventListener(
     const liveFreezeBtn =
         document.getElementById(
             "qtLiveFreezeBtn"
+        );
+        
+    const liveResumeBtn =
+        document.getElementById(
+            "qtLiveResumeBtn"
         );    
 
 
@@ -1093,26 +1098,24 @@ document.addEventListener(
 
         liveCameraScanning = false;
 
-        /*
-        * Do not stop camera hardware.
-        * Video stays visible but scanning
-        * is paused.
-        */
         if (liveCameraStage) {
 
-            liveCameraStage
-                .classList.add(
-                    "is-frozen"
-                );
+            liveCameraStage.classList.add(
+                "is-frozen"
+            );
         }
-
 
         liveCameraBadgeText.textContent =
             "Frozen";
 
         liveCameraStatus.textContent =
-            "Read translation — tap Re-read to continue";
+            "Read translation — tap Resume to continue";
 
+        if (liveResumeBtn) {
+
+            liveResumeBtn.hidden =
+                false;
+        }
 
         updateFreezeButton();
     }
@@ -1123,21 +1126,15 @@ document.addEventListener(
             return;
         }
 
-        /*
-        * IMPORTANT:
-        * Previous scan may have completed while
-        * freeze state was being applied.
-        *
-        * Re-read must always start from a clean
-        * scanning state.
-        */
         stopLiveCameraTimer();
 
         cancelLiveCameraRequest();
 
-        liveCameraScanning = false;
+        liveCameraScanning =
+            false;
 
-        liveCameraFrozen = false;
+        liveCameraFrozen =
+            false;
 
         if (liveCameraStage) {
 
@@ -1146,11 +1143,29 @@ document.addEventListener(
             );
         }
 
+        if (liveResumeBtn) {
+
+            liveResumeBtn.hidden =
+                true;
+        }
+
         /*
-        * Force same page / new page to be
-        * processed again.
+        * Force next scan even if
+        * same camera view is still visible.
         */
-        lastLiveFrameSignature = "";
+        lastLiveFrameSignature =
+            "";
+
+        lastLiveTranslatedText =
+            "";
+
+        clearLensRegions();
+
+        if (liveCameraOverlay) {
+
+            liveCameraOverlay.hidden =
+                true;
+        }
 
         liveCameraBadgeText.textContent =
             "Reading again...";
@@ -1161,27 +1176,23 @@ document.addEventListener(
         updateFreezeButton();
 
         /*
-        * Small delay gives mobile camera
-        * one fresh frame before OCR capture.
+        * Fresh scan immediately.
         */
-        liveCameraTimer =
-            setTimeout(
-                () => {
+        setTimeout(
+            () => {
 
-                    liveCameraTimer = null;
+                if (
+                    !liveCameraRunning ||
+                    liveCameraFrozen
+                ) {
+                    return;
+                }
 
-                    if (
-                        !liveCameraRunning ||
-                        liveCameraFrozen
-                    ) {
-                        return;
-                    }
+                scanLiveCamera();
 
-                    scanLiveCamera();
-
-                },
-                250
-            );
+            },
+            150
+        );
     }
 
     function toggleLiveCameraFreeze() {
@@ -1560,7 +1571,13 @@ document.addEventListener(
             );
         }
 
-        updateFreezeButton();    
+        updateFreezeButton();
+        
+        if (liveResumeBtn) {
+
+            liveResumeBtn.hidden =
+                true;
+        }        
 
         stopLiveCameraTimer();
 
@@ -2302,6 +2319,12 @@ document.addEventListener(
 
         updateFreezeButton();
 
+        if (liveResumeBtn) {
+
+            liveResumeBtn.hidden =
+                true;
+        }
+
         closeRecorder();
 
         cancelPendingTranslation();
@@ -2576,6 +2599,14 @@ document.addEventListener(
         liveFreezeBtn.addEventListener(
             "click",
             toggleLiveCameraFreeze
+        );
+    }
+
+    if (liveResumeBtn) {
+
+        liveResumeBtn.addEventListener(
+            "click",
+            resumeLiveCamera
         );
     }
 
