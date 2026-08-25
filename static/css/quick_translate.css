@@ -856,3 +856,804 @@
         font-size:17px;
     }
 }
+
+/* ==========================================================
+   BASHA INSTANT TRANSLATE - HOME / VOICE UPGRADE
+========================================================== */
+
+.qt-mode-heading{
+    margin-top:18px;
+    margin-bottom:8px;
+    color:#777;
+    font-size:12px;
+    font-weight:700;
+}
+
+.qt-file-tools{
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    padding:0;
+    border-bottom:none;
+    background:transparent;
+}
+
+.qt-file-tool{
+    min-height:50px;
+    border-radius:15px;
+}
+
+.qt-file-tool i{
+    font-size:17px;
+}
+
+.qt-audio-tool{
+    border-color:#d9c9f8;
+}
+
+.qt-audio-tool.is-active{
+    border-color:#6f42c1;
+    background:#6f42c1;
+    color:#fff;
+}
+
+
+/* =========================
+   AUDIO RECORDER
+========================= */
+
+.qt-recorder{
+    margin-top:14px;
+    padding:16px;
+    border:1px solid #e1d5f5;
+    border-radius:20px;
+    background:
+        linear-gradient(
+            145deg,
+            #fbf9ff,
+            #f6f0ff
+        );
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.8);
+}
+
+.qt-recorder[hidden]{
+    display:none !important;
+}
+
+.qt-recorder-top{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.qt-recorder-icon{
+    width:48px;
+    height:48px;
+    min-width:48px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#e9ddff;
+    color:#6f42c1;
+    font-size:20px;
+    transition:.2s ease;
+}
+
+.qt-recorder.is-recording
+.qt-recorder-icon{
+    background:#fee2e2;
+    color:#dc3545;
+    animation:qtMicPulse 1.2s infinite;
+}
+
+@keyframes qtMicPulse{
+    0%{
+        box-shadow:
+            0 0 0 0 rgba(220,53,69,.28);
+    }
+
+    70%{
+        box-shadow:
+            0 0 0 12px rgba(220,53,69,0);
+    }
+
+    100%{
+        box-shadow:
+            0 0 0 0 rgba(220,53,69,0);
+    }
+}
+
+.qt-recorder-info{
+    flex:1;
+    min-width:0;
+}
+
+.qt-recorder-info strong{
+    display:block;
+    color:#222;
+    font-size:14px;
+    font-weight:800;
+}
+
+.qt-recorder-info span{
+    display:block;
+    margin-top:3px;
+    color:#777;
+    font-size:11px;
+    line-height:1.4;
+}
+
+.qt-record-time{
+    min-width:52px;
+    padding:7px 9px;
+    border-radius:20px;
+    background:#fff;
+    color:#6f42c1;
+    font-size:12px;
+    font-weight:800;
+    text-align:center;
+}
+
+
+/* WAVE */
+
+.qt-wave{
+    height:42px;
+    margin:13px 0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+}
+
+.qt-wave span{
+    width:4px;
+    height:8px;
+    border-radius:20px;
+    background:#b99be8;
+    transition:.2s;
+}
+
+.qt-recorder.is-recording
+.qt-wave span{
+    animation:
+        qtVoiceWave .8s ease-in-out infinite;
+}
+
+.qt-recorder.is-recording
+.qt-wave span:nth-child(2){
+    animation-delay:.08s;
+}
+
+.qt-recorder.is-recording
+.qt-wave span:nth-child(3){
+    animation-delay:.16s;
+}
+
+.qt-recorder.is-recording
+.qt-wave span:nth-child(4){
+    animation-delay:.24s;
+}
+
+.qt-recorder.is-recording
+.qt-wave span:nth-child(5){
+    animation-delay:.16s;
+}
+
+.qt-recorder.is-recording
+.qt-wave span:nth-child(6){
+    animation-delay:.08s;
+}
+
+@keyframes qtVoiceWave{
+    0%,100%{
+        height:8px;
+    }
+
+    50%{
+        height:30px;
+    }
+}
+
+
+/* RECORDER BUTTONS */
+
+.qt-recorder-actions{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+}
+
+.qt-record-start,
+.qt-record-stop,
+.qt-record-cancel{
+    min-height:42px;
+    border:none;
+    border-radius:13px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+    padding:9px 14px;
+    font-size:12px;
+    font-weight:800;
+}
+
+.qt-record-start{
+    flex:1;
+    background:#6f42c1;
+    color:#fff;
+}
+
+.qt-record-start:hover{
+    background:#5e36aa;
+}
+
+.qt-record-stop{
+    flex:1;
+    background:#dc3545;
+    color:#fff;
+}
+
+.qt-record-stop:hover{
+    background:#bb2d3b;
+}
+
+.qt-record-stop[hidden]{
+    display:none !important;
+}
+
+.qt-record-cancel{
+    background:#fff;
+    border:1px solid #dfd5ee;
+    color:#666;
+}
+
+.qt-recorder-note{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin-top:11px;
+    color:#777;
+    font-size:10px;
+}
+
+.qt-recorder-note i{
+    color:#198754;
+}
+
+
+/* =========================
+   TRANSLATED AUDIO
+========================= */
+
+.qt-audio-result{
+    margin-top:16px;
+    padding:13px;
+    border:1px solid #dfd2f5;
+    border-radius:16px;
+    background:#faf7ff;
+}
+
+.qt-audio-result[hidden]{
+    display:none !important;
+}
+
+.qt-audio-result-title{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:9px;
+}
+
+.qt-audio-result-title span{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    color:#6f42c1;
+    font-size:12px;
+    font-weight:800;
+}
+
+.qt-audio-result-title small{
+    overflow:hidden;
+    color:#777;
+    font-size:10px;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+}
+
+.qt-audio-result audio{
+    display:block;
+    width:100%;
+    height:42px;
+}
+
+.qt-audio-help{
+    margin-top:6px;
+    color:#888;
+    font-size:10px;
+}
+
+
+/* =========================
+   HOME-FIRST VISUAL POLISH
+========================= */
+
+.quick-translate-card{
+    box-shadow:
+        0 20px 50px rgba(70,40,120,.14);
+}
+
+.qt-collapse{
+    padding-top:2px;
+}
+
+.qt-toggle{
+    cursor:pointer;
+}
+
+.qt-title{
+    letter-spacing:-.3px;
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media(max-width:600px){
+
+    .qt-file-tools{
+        grid-template-columns:
+            repeat(4,minmax(0,1fr));
+        gap:6px;
+    }
+
+    .qt-file-tool{
+        min-height:54px;
+        flex-direction:column;
+        gap:3px;
+        padding:7px 3px;
+        font-size:10px;
+    }
+
+    .qt-file-tool i{
+        font-size:18px;
+    }
+
+    .qt-recorder{
+        padding:14px 12px;
+        border-radius:17px;
+    }
+
+    .qt-recorder-top{
+        gap:9px;
+    }
+
+    .qt-recorder-icon{
+        width:43px;
+        height:43px;
+        min-width:43px;
+        font-size:18px;
+    }
+
+    .qt-recorder-actions{
+        display:grid;
+        grid-template-columns:1fr auto;
+    }
+
+    .qt-record-start,
+    .qt-record-stop{
+        width:100%;
+    }
+
+    .qt-record-cancel{
+        width:42px;
+        padding:0;
+    }
+
+    .qt-record-cancel span{
+        display:none;
+    }
+
+    .qt-audio-result audio{
+        height:40px;
+    }
+}
+
+
+@media(max-width:380px){
+
+    .qt-file-tool span{
+        display:block;
+    }
+
+    .qt-file-tool{
+        font-size:9px;
+    }
+
+    .qt-file-tool i{
+        font-size:17px;
+    }
+
+    .qt-record-time{
+        min-width:48px;
+        padding:6px;
+    }
+}
+
+/* ==========================================================
+   BASHA LIVE CAMERA AUTO TRANSLATOR
+========================================================== */
+
+.qt-file-tools{
+    grid-template-columns:
+        repeat(5,minmax(0,1fr));
+}
+
+.qt-live-camera-tool{
+    border-color:#d6c4f6;
+}
+
+.qt-live-camera-tool.is-active{
+    border-color:#6f42c1;
+    background:#6f42c1;
+    color:#fff;
+}
+
+
+/* ==========================
+   LIVE CAMERA CONTAINER
+========================== */
+
+.qt-live-camera{
+    margin-top:14px;
+    overflow:hidden;
+    border:1px solid #ddd0f4;
+    border-radius:20px;
+    background:#160f22;
+    box-shadow:
+        0 14px 32px rgba(34,18,57,.18);
+}
+
+.qt-live-camera[hidden]{
+    display:none !important;
+}
+
+
+.qt-live-camera-header{
+    min-height:62px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:10px 13px;
+    background:#fff;
+    border-bottom:1px solid #eee8f8;
+}
+
+
+.qt-live-camera-heading{
+    min-width:0;
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+
+.qt-live-camera-icon{
+    width:39px;
+    height:39px;
+    min-width:39px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#eee6ff;
+    color:#6f42c1;
+    font-size:17px;
+}
+
+
+.qt-live-camera-heading strong{
+    display:block;
+    color:#222;
+    font-size:13px;
+    font-weight:800;
+}
+
+
+.qt-live-camera-heading span:not(
+    .qt-live-camera-icon
+){
+    display:block;
+    margin-top:2px;
+    overflow:hidden;
+    color:#777;
+    font-size:10px;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+}
+
+
+.qt-live-camera-close{
+    width:36px;
+    height:36px;
+    min-width:36px;
+    border:none;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#f2ecff;
+    color:#6f42c1;
+}
+
+
+/* ==========================
+   CAMERA VIEW
+========================== */
+
+.qt-live-camera-stage{
+    position:relative;
+    width:100%;
+    aspect-ratio:16/10;
+    overflow:hidden;
+    background:#09070d;
+}
+
+
+.qt-live-camera-stage video{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    background:#09070d;
+}
+
+
+/* VIEW GUIDE */
+
+.qt-live-camera-guide{
+    position:absolute;
+    inset:13%;
+    pointer-events:none;
+}
+
+
+.qt-corner{
+    position:absolute;
+    width:34px;
+    height:34px;
+    border-color:#fff;
+    border-style:solid;
+    filter:
+        drop-shadow(
+            0 1px 2px rgba(0,0,0,.55)
+        );
+}
+
+
+.qt-corner-tl{
+    top:0;
+    left:0;
+    border-width:3px 0 0 3px;
+    border-radius:8px 0 0 0;
+}
+
+
+.qt-corner-tr{
+    top:0;
+    right:0;
+    border-width:3px 3px 0 0;
+    border-radius:0 8px 0 0;
+}
+
+
+.qt-corner-bl{
+    bottom:0;
+    left:0;
+    border-width:0 0 3px 3px;
+    border-radius:0 0 0 8px;
+}
+
+
+.qt-corner-br{
+    bottom:0;
+    right:0;
+    border-width:0 3px 3px 0;
+    border-radius:0 0 8px 0;
+}
+
+
+/* SCANNING BADGE */
+
+.qt-live-camera-badge{
+    position:absolute;
+    top:12px;
+    left:12px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    max-width:calc(100% - 24px);
+    padding:6px 10px;
+    border-radius:30px;
+    background:rgba(20,14,29,.72);
+    backdrop-filter:blur(8px);
+    color:#fff;
+    font-size:10px;
+    font-weight:800;
+}
+
+
+.qt-live-camera-badge
+.spinner-grow{
+    width:8px;
+    height:8px;
+    color:#b991ff;
+}
+
+
+/* TRANSLATION OVERLAY */
+
+.qt-live-camera-overlay{
+    position:absolute;
+    left:12px;
+    right:12px;
+    bottom:12px;
+    max-height:45%;
+    overflow:auto;
+    padding:11px 12px;
+    border:1px solid rgba(255,255,255,.22);
+    border-radius:15px;
+    background:rgba(24,16,36,.80);
+    backdrop-filter:blur(12px);
+    color:#fff;
+    box-shadow:
+        0 12px 30px rgba(0,0,0,.28);
+}
+
+
+.qt-live-camera-overlay[hidden]{
+    display:none !important;
+}
+
+
+.qt-live-camera-language{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin-bottom:6px;
+    color:#d9c7ff;
+    font-size:10px;
+    font-weight:800;
+}
+
+
+.qt-live-camera-text{
+    color:#fff;
+    font-size:14px;
+    font-weight:700;
+    line-height:1.55;
+    white-space:pre-wrap;
+    word-break:break-word;
+}
+
+
+/* ==========================
+   CAMERA FOOTER
+========================== */
+
+.qt-live-camera-footer{
+    min-height:48px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:8px 11px;
+    background:#fff;
+}
+
+
+.qt-live-camera-footer > span{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    color:#777;
+    font-size:9px;
+}
+
+
+.qt-live-camera-footer > span i{
+    color:#198754;
+}
+
+
+.qt-live-camera-switch{
+    min-height:34px;
+    border:1px solid #ddd0f4;
+    border-radius:11px;
+    display:flex;
+    align-items:center;
+    gap:5px;
+    padding:6px 10px;
+    background:#faf8ff;
+    color:#6f42c1;
+    font-size:10px;
+    font-weight:800;
+}
+
+
+/* ==========================
+   MOBILE LIVE CAMERA
+========================== */
+
+@media(max-width:600px){
+
+    .qt-file-tools{
+        grid-template-columns:
+            repeat(5,minmax(0,1fr));
+        gap:5px;
+    }
+
+    .qt-file-tool{
+        min-width:0;
+        min-height:52px;
+        padding:6px 2px;
+        font-size:9px;
+    }
+
+    .qt-file-tool i{
+        font-size:17px;
+    }
+
+    .qt-live-camera{
+        margin-top:11px;
+        border-radius:17px;
+    }
+
+    .qt-live-camera-stage{
+        aspect-ratio:3/4;
+        max-height:68vh;
+    }
+
+    .qt-live-camera-guide{
+        inset:10%;
+    }
+
+    .qt-live-camera-overlay{
+        left:9px;
+        right:9px;
+        bottom:9px;
+        max-height:42%;
+        padding:10px;
+    }
+
+    .qt-live-camera-text{
+        font-size:13px;
+    }
+
+    .qt-live-camera-footer{
+        padding-bottom:
+            max(
+                8px,
+                env(safe-area-inset-bottom)
+            );
+    }
+}
+
+
+@media(max-width:380px){
+
+    .qt-file-tool span{
+        font-size:8px;
+    }
+
+    .qt-live-camera-switch{
+        padding:6px 8px;
+    }
+}

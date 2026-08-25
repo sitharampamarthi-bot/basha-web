@@ -4,7 +4,7 @@
     <button type="button"
             class="qt-toggle"
             id="qtToggle"
-            aria-expanded="false"
+            aria-expanded="true"
             aria-controls="qtCollapse">
 
         <div class="qt-toggle-left">
@@ -15,11 +15,11 @@
 
             <div>
                 <h4 class="qt-title mb-1">
-                    Quick Translate
+                    Instant Translate
                 </h4>
 
                 <div class="qt-subtitle">
-                    Type on the left and translate automatically
+                    Text, photo, document or voice — translate instantly
                 </div>
             </div>
 
@@ -31,8 +31,7 @@
 
 
     <div class="qt-collapse"
-         id="qtCollapse"
-         hidden>
+         id="qtCollapse">
 
         <!-- LANGUAGE SELECTORS -->
         <div class="qt-language-row">
@@ -83,7 +82,7 @@
             <div class="qt-field">
 
                 <label for="qtTargetLanguage">
-                    To
+                    Translate To
                 </label>
 
                 <select id="qtTargetLanguage">
@@ -110,26 +109,362 @@
         </div>
 
 
+        <div class="qt-mode-heading">
+            <span>
+                Choose how you want to translate
+            </span>
+        </div>
+
+
+        <!-- INPUT TOOLS -->
+        <div class="qt-file-tools">
+
+            <button type="button"
+                    class="qt-file-tool"
+                    id="qtCameraBtn"
+                    title="Take one photo and translate">
+
+                <i class="bi bi-camera-fill"></i>
+                <span>Camera</span>
+
+            </button>
+
+
+            <button type="button"
+                    class="qt-file-tool qt-live-camera-tool"
+                    id="qtLiveCameraBtn"
+                    title="Live camera auto translate">
+
+                <i class="bi bi-bounding-box-circles"></i>
+                <span>Live</span>
+
+            </button>
+
+
+            <button type="button"
+                    class="qt-file-tool"
+                    id="qtImageBtn"
+                    title="Select an image">
+
+                <i class="bi bi-image-fill"></i>
+                <span>Image</span>
+
+            </button>
+
+
+            <button type="button"
+                    class="qt-file-tool"
+                    id="qtDocumentBtn"
+                    title="Select a document">
+
+                <i class="bi bi-file-earmark-text-fill"></i>
+                <span>Document</span>
+
+            </button>
+
+
+            <button type="button"
+                    class="qt-file-tool qt-audio-tool"
+                    id="qtAudioBtn"
+                    title="Record voice">
+
+                <i class="bi bi-mic-fill"></i>
+                <span>Voice</span>
+
+            </button>
+
+        </div>
+
+
+        <input type="file"
+               id="qtCameraInput"
+               accept="image/*"
+               capture="environment"
+               hidden>
+
+
+        <input type="file"
+               id="qtImageInput"
+               accept="image/png,image/jpeg,image/webp,image/gif"
+               hidden>
+
+
+        <input type="file"
+               id="qtDocumentInput"
+               accept=".pdf,.docx,.txt,application/pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+               hidden>
+
+        <!-- LIVE CAMERA AUTO TRANSLATOR -->
+        <div class="qt-live-camera"
+            id="qtLiveCamera"
+            hidden>
+
+            <div class="qt-live-camera-header">
+
+                <div class="qt-live-camera-heading">
+
+                    <span class="qt-live-camera-icon">
+                        <i class="bi bi-camera-video-fill"></i>
+                    </span>
+
+                    <div>
+                        <strong>
+                            Live Camera Translate
+                        </strong>
+
+                        <span id="qtLiveCameraStatus">
+                            Point camera at text
+                        </span>
+                    </div>
+
+                </div>
+
+
+                <button type="button"
+                        class="qt-live-camera-close"
+                        id="qtLiveCameraClose"
+                        aria-label="Close live camera">
+
+                    <i class="bi bi-x-lg"></i>
+
+                </button>
+
+            </div>
+
+
+            <div class="qt-live-camera-stage">
+
+                <video id="qtLiveCameraVideo"
+                    autoplay
+                    muted
+                    playsinline>
+                </video>
+
+
+                <canvas id="qtLiveCameraCanvas"
+                        hidden>
+                </canvas>
+
+
+                <div class="qt-live-camera-guide">
+
+                    <span class="qt-corner qt-corner-tl"></span>
+                    <span class="qt-corner qt-corner-tr"></span>
+                    <span class="qt-corner qt-corner-bl"></span>
+                    <span class="qt-corner qt-corner-br"></span>
+
+                </div>
+
+
+                <div class="qt-live-camera-badge"
+                    id="qtLiveCameraBadge">
+
+                    <span class="spinner-grow spinner-grow-sm"
+                        id="qtLiveCameraDot">
+                    </span>
+
+                    <span id="qtLiveCameraBadgeText">
+                        Starting camera...
+                    </span>
+
+                </div>
+
+
+                <div class="qt-live-camera-overlay"
+                    id="qtLiveCameraOverlay"
+                    hidden>
+
+                    <div class="qt-live-camera-language">
+
+                        <i class="bi bi-translate"></i>
+
+                        <span id="qtLiveDetectedLanguage">
+                            Auto Detected
+                        </span>
+
+                    </div>
+
+
+                    <div class="qt-live-camera-text"
+                        id="qtLiveTranslatedText">
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="qt-live-camera-footer">
+
+                <span>
+                    <i class="bi bi-lightning-charge-fill"></i>
+                    Automatically scans when the view changes
+                </span>
+
+                <button type="button"
+                        id="qtLiveCameraSwitch"
+                        class="qt-live-camera-switch"
+                        title="Switch camera">
+
+                    <i class="bi bi-arrow-repeat"></i>
+                    Switch
+                </button>
+
+            </div>
+
+        </div>       
+
+
+        <!-- AUDIO RECORDER -->
+        <div class="qt-recorder"
+             id="qtRecorder"
+             hidden>
+
+            <div class="qt-recorder-top">
+
+                <div class="qt-recorder-icon"
+                     id="qtRecorderIcon">
+
+                    <i class="bi bi-mic-fill"></i>
+
+                </div>
+
+
+                <div class="qt-recorder-info">
+
+                    <strong id="qtRecorderTitle">
+                        Voice Translation
+                    </strong>
+
+                    <span id="qtRecorderStatus">
+                        Tap Start and speak naturally
+                    </span>
+
+                </div>
+
+
+                <div class="qt-record-time"
+                     id="qtRecordTime">
+                    00:00
+                </div>
+
+            </div>
+
+
+            <div class="qt-wave"
+                 id="qtWave"
+                 aria-hidden="true">
+
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+
+            </div>
+
+
+            <div class="qt-recorder-actions">
+
+                <button type="button"
+                        class="qt-record-start"
+                        id="qtRecordStart">
+
+                    <i class="bi bi-mic-fill"></i>
+
+                    <span>Start Recording</span>
+
+                </button>
+
+
+                <button type="button"
+                        class="qt-record-stop"
+                        id="qtRecordStop"
+                        hidden>
+
+                    <i class="bi bi-stop-fill"></i>
+
+                    <span>Stop & Translate</span>
+
+                </button>
+
+
+                <button type="button"
+                        class="qt-record-cancel"
+                        id="qtRecordCancel">
+
+                    <i class="bi bi-x-lg"></i>
+
+                    <span>Close</span>
+
+                </button>
+
+            </div>
+
+
+            <div class="qt-recorder-note">
+                <i class="bi bi-shield-check"></i>
+                Microphone stops immediately when recording ends.
+            </div>
+
+        </div>
+
+
+        <!-- SELECTED FILE -->
+        <div class="qt-selected-file"
+             id="qtSelectedFile"
+             hidden>
+
+            <span class="qt-selected-file-icon">
+                <i class="bi bi-paperclip"></i>
+            </span>
+
+            <div class="qt-selected-file-info">
+
+                <strong id="qtSelectedFileName">
+                    Selected file
+                </strong>
+
+                <span id="qtSelectedFileStatus">
+                    Reading and translating...
+                </span>
+
+            </div>
+
+            <button type="button"
+                    class="qt-selected-file-remove"
+                    id="qtSelectedFileRemove"
+                    title="Remove selected file">
+
+                <i class="bi bi-x-lg"></i>
+
+            </button>
+
+        </div>
+
+
         <!-- TWO PANEL TRANSLATOR -->
         <div class="qt-two-panel">
 
-            <!-- LEFT INPUT PANEL -->
+            <!-- ORIGINAL -->
             <div class="qt-text-panel qt-source-panel">
 
                 <div class="qt-panel-header">
 
                     <div>
-                        <strong>Original Text</strong>
+                        <strong>Original</strong>
 
                         <span id="qtSourceLabel">
-                            Start typing below
+                            Auto Detect
                         </span>
                     </div>
 
                     <button type="button"
                             class="qt-small-action"
                             id="qtClearBtn"
-                            title="Clear text">
+                            title="Clear">
 
                         <i class="bi bi-x-lg"></i>
 
@@ -137,100 +472,10 @@
 
                 </div>
 
-                <!-- CAMERA / IMAGE / DOCUMENT INPUT TOOLS -->
-                <div class="qt-file-tools">
-
-                    <button type="button"
-                            class="qt-file-tool"
-                            id="qtCameraBtn"
-                            title="Take a photo">
-
-                        <i class="bi bi-camera-fill"></i>
-
-                        <span>Camera</span>
-
-                    </button>
-
-
-                    <button type="button"
-                            class="qt-file-tool"
-                            id="qtImageBtn"
-                            title="Select an image">
-
-                        <i class="bi bi-image-fill"></i>
-
-                        <span>Image</span>
-
-                    </button>
-
-
-                    <button type="button"
-                            class="qt-file-tool"
-                            id="qtDocumentBtn"
-                            title="Select a document">
-
-                        <i class="bi bi-file-earmark-text-fill"></i>
-
-                        <span>Document</span>
-
-                    </button>
-
-                </div>
-
-
-                <input type="file"
-                    id="qtCameraInput"
-                    accept="image/*"
-                    capture="environment"
-                    hidden>
-
-
-                <input type="file"
-                    id="qtImageInput"
-                    accept="image/png,image/jpeg,image/webp,image/gif"
-                    hidden>
-
-
-                <input type="file"
-                    id="qtDocumentInput"
-                    accept=".pdf,.docx,.txt,application/pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                    hidden>
-
-
-                <div class="qt-selected-file"
-                    id="qtSelectedFile"
-                    hidden>
-
-                    <span class="qt-selected-file-icon">
-                        <i class="bi bi-paperclip"></i>
-                    </span>
-
-                    <div class="qt-selected-file-info">
-
-                        <strong id="qtSelectedFileName">
-                            Selected file
-                        </strong>
-
-                        <span id="qtSelectedFileStatus">
-                            Reading and translating...
-                        </span>
-
-                    </div>
-
-                    <button type="button"
-                            class="qt-selected-file-remove"
-                            id="qtSelectedFileRemove"
-                            title="Remove selected file">
-
-                        <i class="bi bi-x-lg"></i>
-
-                    </button>
-
-                </div>
 
                 <textarea id="qtInput"
                           maxlength="5000"
-                          placeholder="Type or paste text..."></textarea>
+                          placeholder="Type, paste, capture, upload or record..."></textarea>
 
 
                 <div class="qt-panel-footer">
@@ -242,7 +487,7 @@
                     <span class="qt-auto-status"
                           id="qtAutoStatus">
 
-                        Auto translate
+                        Ready
 
                     </span>
 
@@ -251,16 +496,16 @@
             </div>
 
 
-            <!-- RIGHT RESULT PANEL -->
+            <!-- TRANSLATION -->
             <div class="qt-text-panel qt-result-panel">
 
                 <div class="qt-panel-header">
 
                     <div>
-                        <strong>Translated Text</strong>
+                        <strong>Translation</strong>
 
                         <span id="qtResultLanguage">
-                            Select languages and start typing
+                            Choose a target language
                         </span>
                     </div>
 
@@ -285,7 +530,7 @@
                         <i class="bi bi-translate"></i>
 
                         <span>
-                            Translation will appear here automatically
+                            Your translation will appear here
                         </span>
 
                     </div>
@@ -309,6 +554,35 @@
                          hidden>
                     </div>
 
+
+                    <!-- TRANSLATED AUDIO -->
+                    <div class="qt-audio-result"
+                         id="qtAudioResult"
+                         hidden>
+
+                        <div class="qt-audio-result-title">
+
+                            <span>
+                                <i class="bi bi-volume-up-fill"></i>
+                                Translated Audio
+                            </span>
+
+                            <small id="qtDetectedLanguage"></small>
+
+                        </div>
+
+                        <audio id="qtTranslatedAudio"
+                               controls
+                               playsinline
+                               preload="metadata">
+                        </audio>
+
+                        <div class="qt-audio-help">
+                            Tap Play to hear the translated voice
+                        </div>
+
+                    </div>
+
                 </div>
 
 
@@ -320,7 +594,7 @@
 
                     <span class="qt-live-indicator">
                         <i class="bi bi-lightning-charge-fill"></i>
-                        Live
+                        Instant
                     </span>
 
                 </div>
@@ -330,14 +604,12 @@
         </div>
 
 
-        <!-- ERROR -->
         <div class="qt-error"
              id="qtError"
              hidden>
         </div>
 
 
-        <!-- ACTION BUTTONS -->
         <div class="qt-actions">
 
             <button type="button"
@@ -370,7 +642,7 @@
 </div>
 
 
-<!-- QUICK TRANSLATE CONTACT SELECTOR POPUP -->
+<!-- CONTACT SELECTOR -->
 <div class="qt-contact-modal"
      id="qtContactModal"
      hidden>

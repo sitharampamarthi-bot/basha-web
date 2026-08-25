@@ -18,7 +18,7 @@
         href="{{ url_for('static', filename='css/recent_files.css') }}">
 
     <link rel="stylesheet"
-        href="{{ url_for('static', filename='css/quick_translate.css') }}?v=8">
+        href="{{ url_for('static', filename='css/quick_translate.css') }}?v=9">
 
     <link rel="stylesheet"
         href="{{ url_for('static', filename='css/ai_avatar_advanced.css') }}?v=7">    
@@ -463,6 +463,165 @@
                 display:none;
             }
         }
+
+        /* =========================================
+        BASHA HOME QUICK NAVIGATION
+        ========================================= */
+
+        .home-primary-nav{
+            display:grid;
+            grid-template-columns:repeat(5,minmax(0,1fr));
+            gap:10px;
+            margin-bottom:18px;
+        }
+
+        .home-primary-link{
+            position:relative;
+            min-width:0;
+            min-height:82px;
+            border:none;
+            border-radius:20px;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            gap:6px;
+            padding:10px 6px;
+            background:#fff;
+            color:#5f36aa;
+            text-decoration:none;
+            box-shadow:
+                0 10px 26px rgba(70,40,120,.10);
+            transition:
+                transform .18s ease,
+                box-shadow .18s ease,
+                background .18s ease;
+        }
+
+        .home-primary-link:hover{
+            color:#5f36aa;
+            background:#faf7ff;
+            transform:translateY(-2px);
+            box-shadow:
+                0 14px 30px rgba(70,40,120,.15);
+        }
+
+        .home-primary-link i{
+            font-size:23px;
+        }
+
+        .home-primary-link span{
+            overflow:hidden;
+            max-width:100%;
+            font-size:12px;
+            font-weight:800;
+            white-space:nowrap;
+            text-overflow:ellipsis;
+        }
+
+        .home-primary-link.is-disabled{
+            opacity:.55;
+            cursor:default;
+        }
+
+        .home-primary-link.is-disabled:hover{
+            transform:none;
+            background:#fff;
+        }
+
+        .home-soon{
+            position:absolute;
+            top:6px;
+            right:6px;
+            padding:2px 5px;
+            border-radius:20px;
+            background:#eee6ff;
+            color:#6f42c1;
+            font-size:8px !important;
+            font-weight:800;
+        }
+
+        .home-translate-heading{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:12px;
+            margin:4px 4px 10px;
+        }
+
+        .home-translate-heading h4{
+            margin:0;
+            font-size:18px;
+            font-weight:800;
+        }
+
+        .home-translate-heading p{
+            margin:2px 0 0;
+            color:#777;
+            font-size:11px;
+        }
+
+        .home-secondary-tools{
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:10px;
+            margin:18px 0;
+        }
+
+        .home-secondary-btn{
+            min-height:52px;
+            border:1px solid #ded2f1;
+            border-radius:16px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap:8px;
+            background:#fff;
+            color:#6f42c1;
+            font-weight:800;
+        }
+
+        .home-secondary-btn.active{
+            background:#6f42c1;
+            color:#fff;
+            border-color:#6f42c1;
+        }
+
+        @media(max-width:600px){
+
+            .home-primary-nav{
+                gap:6px;
+            }
+
+            .home-primary-link{
+                min-height:69px;
+                border-radius:16px;
+                padding:8px 2px;
+            }
+
+            .home-primary-link i{
+                font-size:20px;
+            }
+
+            .home-primary-link span{
+                font-size:10px;
+            }
+
+            .home-soon{
+                top:4px;
+                right:3px;
+                font-size:6px !important;
+            }
+
+            .home-translate-heading{
+                margin-top:0;
+            }
+
+            .home-translate-heading h4{
+                font-size:16px;
+            }
+        }
+
     </style>
 </head>
 
@@ -505,6 +664,101 @@
         </div>
     </div>
 
+    <!-- ==================================
+     MAIN QUICK ACCESS
+    =================================== -->
+
+    <div class="home-primary-nav">
+
+        <a href="#availableContacts"
+        class="home-primary-link">
+
+            <i class="bi bi-chat-dots-fill"></i>
+
+            <span>Chats</span>
+
+        </a>
+
+
+        <a href="/contacts"
+        class="home-primary-link">
+
+            <i class="bi bi-person-lines-fill"></i>
+
+            <span>Contacts</span>
+
+        </a>
+
+
+        <button type="button"
+                class="home-primary-link is-disabled"
+                disabled>
+
+            <span class="home-soon">
+                Soon
+            </span>
+
+            <i class="bi bi-telephone-fill"></i>
+
+            <span>Calls</span>
+
+        </button>
+
+
+        <button type="button"
+                class="home-primary-link is-disabled"
+                disabled>
+
+            <span class="home-soon">
+                Soon
+            </span>
+
+            <i class="bi bi-circle-half"></i>
+
+            <span>Status</span>
+
+        </button>
+
+
+        <a href="/settings"
+        class="home-primary-link">
+
+            <i class="bi bi-grid-3x3-gap-fill"></i>
+
+            <span>More</span>
+
+        </a>
+
+    </div>
+
+
+    <!-- ==================================
+        INSTANT TRANSLATOR - MAIN HOME TOOL
+    =================================== -->
+
+    <div class="home-translate-heading">
+
+        <div>
+
+            <h4>
+                Translate instantly
+            </h4>
+
+            <p>
+                Text, image, document, camera or voice
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div id="translatePanel"
+        class="home-tool-panel">
+
+        {% include "partials/home_quick_translate.html" %}
+
+    </div>
 
     <!-- UNIVERSAL LIVE SEARCH -->
     <div id="searchPanel"
@@ -577,34 +831,34 @@
 
 
     <!-- ==================================
-        PHASE 1 ADVANCED HOME FEATURES
+     SECONDARY HOME TOOLS
     =================================== -->
 
-    <div class="home-tools">
+    <div class="home-secondary-tools">
 
         <button type="button"
-                class="home-tool-btn"
+                class="home-secondary-btn"
                 data-panel="searchPanel">
+
             <i class="bi bi-search"></i>
-            <span>Search</span>
+
+            Search
+
         </button>
 
+
         <button type="button"
-                class="home-tool-btn"
+                class="home-secondary-btn"
                 data-panel="pinnedPanel">
-            <i class="bi bi-pin-angle-fill"></i>
-            <span>Pinned</span>
-        </button>
 
-        <button type="button"
-                class="home-tool-btn"
-                data-panel="translatePanel">
-            <i class="bi bi-translate"></i>
-            <span>Translate</span>
+            <i class="bi bi-pin-angle-fill"></i>
+
+            Pinned Chats
+
         </button>
 
     </div>
-    
+
 
     <div id="pinnedPanel"
         class="home-tool-panel"
@@ -614,17 +868,10 @@
 
     </div>
 
+
     {% include "partials/home_unread_summary.html" %}
 
     {% include "partials/home_recent_files.html" %}
-
-    <div id="translatePanel"
-        class="home-tool-panel"
-        hidden>
-
-        {% include "partials/home_quick_translate.html" %}
-
-    </div>
 
     <!-- END PHASE 1 ADVANCED FEATURES -->
 
@@ -667,7 +914,8 @@
         {% endfor %}
     </div>
 
-    <div class="card contacts-card p-4">
+    <div class="card contacts-card p-4"
+        id="availableContacts">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h4 class="fw-bold mb-0">Available Contacts</h4>
             <span class="badge rounded-pill text-bg-danger">
@@ -734,26 +982,49 @@
 <script src="{{ url_for('static', filename='js/pinned_chats.js') }}"></script>
 <script src="{{ url_for('static', filename='js/unread.js') }}"></script>
 <script src="{{ url_for('static', filename='js/recent_files.js') }}"></script>
-<script src="{{ url_for('static', filename='js/quick_translate.js') }}?v=8"></script>
+<script src="{{ url_for('static', filename='js/quick_translate.js') }}?v=9"></script>
 <script src="{{ url_for('static', filename='js/ai_avatar_advanced.js') }}?v=13"></script>
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
 
     const buttons =
-        document.querySelectorAll(".home-tool-btn");
+        document.querySelectorAll(
+            ".home-secondary-btn"
+        );
 
-    const panels =
-        document.querySelectorAll(".home-tool-panel");
+    const searchPanel =
+        document.getElementById(
+            "searchPanel"
+        );
 
-    buttons.forEach(function (button) {
+    const pinnedPanel =
+        document.getElementById(
+            "pinnedPanel"
+        );
 
-        button.addEventListener("click", function () {
+    const secondaryPanels = [
+        searchPanel,
+        pinnedPanel
+    ].filter(Boolean);
+
+
+    buttons.forEach(
+        function (button) {
+
+        button.addEventListener(
+            "click",
+            function () {
 
             const panelId =
                 button.dataset.panel;
 
             const selectedPanel =
-                document.getElementById(panelId);
+                document.getElementById(
+                    panelId
+                );
 
             if (!selectedPanel) {
                 return;
@@ -762,24 +1033,38 @@ document.addEventListener("DOMContentLoaded", function () {
             const alreadyOpen =
                 !selectedPanel.hidden;
 
-            panels.forEach(function (panel) {
-                panel.hidden = true;
-            });
+            secondaryPanels.forEach(
+                function (panel) {
 
-            buttons.forEach(function (item) {
-                item.classList.remove("active");
-            });
+                    panel.hidden =
+                        true;
+                }
+            );
+
+            buttons.forEach(
+                function (item) {
+
+                    item.classList.remove(
+                        "active"
+                    );
+                }
+            );
 
             if (!alreadyOpen) {
-                selectedPanel.hidden = false;
-                button.classList.add("active");
+
+                selectedPanel.hidden =
+                    false;
+
+                button.classList.add(
+                    "active"
+                );
             }
 
         });
-
     });
 
 });
+
 </script>
 </body>
 </html>
