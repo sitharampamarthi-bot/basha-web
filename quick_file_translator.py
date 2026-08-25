@@ -208,87 +208,116 @@ Rules:
 def build_spatial_prompt(
     target_language
 ):
-    return f"""
-You are the spatial OCR and visual translation engine
-for Basha Messenger Live Camera.
+    target_language = str(
+        target_language
+        or "English"
+    ).strip()
 
-Analyze the supplied camera image.
+    return f"""
+You are Basha Messenger Live Camera OCR
+and spatial translation engine.
+
+Analyze ONE current camera frame.
+
+The source text may be in ANY language.
+
+TARGET LANGUAGE:
+{target_language}
+
+This target language is mandatory.
 
 Tasks:
 
-1. Detect the main visible source language.
-2. Read clearly visible text.
-3. Divide visible text into useful visual regions.
-4. Translate every region into {target_language}.
-5. Return the approximate position of every region
-   relative to the supplied image.
+1. Find ALL clearly readable text in the image.
 
-IMPORTANT:
+2. Automatically detect the source language.
 
-Coordinates MUST be normalized numbers between 0 and 1.
+3. Read the original text accurately.
 
-For every text region return:
+4. Split the visible text into useful visual blocks.
 
-x = left position / image width
-y = top position / image height
-width = region width / image width
-height = region height / image height
+5. Translate EVERY readable block directly into:
+   {target_language}
 
-Use reasonably large text blocks.
+6. Return coordinates corresponding to
+   the original visible text position.
 
-Do NOT create one region for every individual character.
 
-Prefer:
-- sentence
-- message bubble
-- paragraph
-- heading
-- label
-- short grouped lines
+CRITICAL LANGUAGE RULES:
+
+- EVERY translated value MUST be written in {target_language}.
+- translated_text MUST be written in {target_language}.
+- Every regions[].translated MUST be written in {target_language}.
+- NEVER translate into English unless the TARGET LANGUAGE itself is English.
+- NEVER choose the output language based on the source language.
+- NEVER choose English as an intermediate visible output.
+- Source may be Gujarati, Hindi, English, Tamil, Kannada,
+  Malayalam, Marathi, Bengali, Punjabi, Urdu or any other language.
+- Regardless of source language, final visible translation MUST be {target_language}.
+- Brand names, URLs, account numbers, dates and unavoidable
+  proper nouns may remain unchanged where appropriate.
+
+
+COORDINATES:
+
+Coordinates MUST be normalized numbers
+between 0 and 1.
+
+x = left / image width
+y = top / image height
+width = block width / image width
+height = block height / image height
+
+
+REGION RULES:
+
+- Capture all clearly readable text.
+- Prefer paragraph/message/heading blocks.
+- Normally use 1 to 4 visible lines per region.
+- Never create one region per character.
+- Never combine distant text into one region.
+- Return regions in top-to-bottom order.
+- Keep positions close to the source text.
+- Do not omit readable paragraphs because
+  there are many text blocks.
+- For dense pages, create additional regions.
+- Do not invent blurred or unreadable text.
+- If a text block is partially readable,
+  return only the readable portion.
+
+
+PRESERVE EXACTLY:
+
+- numbers
+- phone numbers
+- dates
+- prices
+- account/reference numbers
+- URLs
+- codes
+
 
 Return ONLY valid JSON:
 
 {{
-  "detected_language": "English",
-  "original_text": "Complete readable original text",
-  "translated_text": "Complete translated text",
+  "detected_language": "Detected source language",
+  "original_text": "Complete readable source text",
+  "translated_text": "Complete translation only in {target_language}",
   "regions": [
     {{
-      "original": "Dear Customer",
-      "translated": "Translated text",
-      "x": 0.18,
-      "y": 0.30,
-      "width": 0.45,
-      "height": 0.08
+      "original": "Visible source text",
+      "translated": "Translation only in {target_language}",
+      "x": 0.10,
+      "y": 0.20,
+      "width": 0.50,
+      "height": 0.10
     }}
   ]
 }}
 
-Rules:
-
-- No markdown.
-- No explanations.
-- Preserve numbers exactly.
-- Preserve phone numbers exactly.
-- Preserve dates exactly.
-- Preserve prices exactly.
-- Preserve account/reference numbers exactly.
-- Preserve URLs exactly.
-- Keep brand names unchanged when appropriate.
-- Do not invent unreadable text.
-- Coordinates must correspond to the visible source text.
-- Keep every coordinate between 0 and 1.
-- Regions must not cover unrelated areas unnecessarily.
-- If no readable text exists, return empty strings
-  and an empty regions array.
-- Capture ALL clearly readable text inside the camera frame.
-- Do not omit readable paragraphs only because the screen contains many regions.
-- Prefer multiple smaller regions rather than one very large region.
-- Each region should normally contain 1 to 4 visible text lines.
-- Never combine distant text blocks into one region.
-- Return regions in top-to-bottom visual order.
-- Keep translated text concise but complete.
-- Preserve every visible numeric value.  
+No markdown.
+No explanation.
+No comments outside JSON.
 """.strip()
 
 

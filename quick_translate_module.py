@@ -104,6 +104,33 @@ def get_current_user():
 
     return user
 
+def get_user_preferred_language():
+    user = get_current_user() or {}
+
+    language_code = clean_lower(
+        user.get("languageCode")
+        or user.get("preferredLanguageCode")
+        or "en"
+    )
+
+    language_info = get_language_by_code(
+        language_code
+    )
+
+    if (
+        not language_info
+        or language_code == "auto"
+    ):
+        language_code = "en"
+
+        language_info = get_language_by_code(
+            "en"
+        )
+
+    return (
+        language_code,
+        language_info
+    )
 
 def translate_value(
     text,
@@ -248,17 +275,6 @@ def quick_translate_file_api():
             "file"
         )
 
-        target_language_code = clean_lower(
-            request.form.get(
-                "targetLanguage",
-                "en"
-            )
-        )
-
-        target_info = get_language_by_code(
-            target_language_code
-        )
-
         if not uploaded_file:
             return jsonify({
                 "success": False,
@@ -271,6 +287,40 @@ def quick_translate_file_api():
                 "error": "Invalid file name"
             }), 400
 
+
+        lens_mode = clean_lower(
+            request.form.get(
+                "lensMode",
+                ""
+            )
+        ) in {
+            "1",
+            "true",
+            "yes",
+            "lens"
+        }
+        
+        if lens_mode:
+
+            (
+                target_language_code,
+                target_info
+            ) = get_user_preferred_language()
+
+        else:
+
+            target_language_code = clean_lower(
+                request.form.get(
+                    "targetLanguage",
+                    "en"
+                )
+            )
+
+            target_info = get_language_by_code(
+                target_language_code
+            )
+
+
         if (
             not target_info
             or target_language_code == "auto"
@@ -280,9 +330,11 @@ def quick_translate_file_api():
                 "error": "Invalid target language"
             }), 400
 
+
         extension = get_uploaded_extension(
             uploaded_file.filename
         )
+
 
         if extension not in ALLOWED_EXTENSIONS:
             return jsonify({
@@ -293,6 +345,7 @@ def quick_translate_file_api():
                 )
             }), 400
 
+
         uploaded_file.stream.seek(
             0,
             os.SEEK_END
@@ -300,11 +353,15 @@ def quick_translate_file_api():
 
         file_size = uploaded_file.stream.tell()
 
-        uploaded_file.stream.seek(0)
+        uploaded_file.stream.seek(
+            0
+        )
+
 
         maximum_size = (
             15 * 1024 * 1024
         )
+
 
         if file_size > maximum_size:
             return jsonify({
@@ -313,6 +370,7 @@ def quick_translate_file_api():
                     "File size must be below 15 MB"
                 )
             }), 400
+
 
         temp_file = tempfile.NamedTemporaryFile(
             delete=False,
@@ -327,23 +385,10 @@ def quick_translate_file_api():
 
         temp_file.close()
 
-        lens_mode = clean_lower(
-            request.form.get(
-                "lensMode",
-                ""
-            )
-        ) in {
-            "1",
-            "true",
-            "yes",
-            "lens"
-        }
-
 
         if (
             lens_mode
-            and extension
-            in IMAGE_EXTENSIONS
+            and extension in IMAGE_EXTENSIONS
         ):
 
             result = translate_image_spatial(
@@ -360,6 +405,7 @@ def quick_translate_file_api():
                     target_info["name"]
             )
 
+
         detected_language = clean_text(
             result.get(
                 "detected_language"
@@ -367,17 +413,20 @@ def quick_translate_file_api():
             or "Auto Detected"
         )
 
+
         original_text = clean_text(
             result.get(
                 "original_text"
             )
         )
 
+
         translated_text = clean_text(
             result.get(
                 "translated_text"
             )
         )
+
 
         return jsonify({
             "success": True,
@@ -425,6 +474,7 @@ def quick_translate_file_api():
         })
 
     except Exception as error:
+
         print(
             "QUICK FILE TRANSLATE ERROR:",
             str(error)
@@ -436,16 +486,19 @@ def quick_translate_file_api():
         }), 500
 
     finally:
+
         if (
             temp_path
-            and os.path.exists(temp_path)
+            and os.path.exists(
+                temp_path
+            )
         ):
             try:
                 os.remove(
                     temp_path
                 )
             except OSError:
-                pass        
+                pass
 
 
 @quick_translate_bp.route(

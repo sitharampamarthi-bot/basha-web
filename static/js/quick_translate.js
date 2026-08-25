@@ -1802,7 +1802,7 @@ document.addEventListener(
         * uploads/API latency stay lower.
         */
         const maximumWidth =
-            768;
+            800;
 
         const scale =
             Math.min(
@@ -1888,7 +1888,7 @@ document.addEventListener(
 
                     },
                     "image/jpeg",
-                    0.72
+                    0.68
                 );
             }
         );
@@ -1896,7 +1896,7 @@ document.addEventListener(
 
 
     function scheduleLiveCameraScan(
-        delay = 700
+        delay = 400
     ) {
 
         stopLiveCameraTimer();
@@ -1930,7 +1930,7 @@ document.addEventListener(
         ) {
 
             scheduleLiveCameraScan(
-                900
+                450
             );
 
             return;
@@ -1943,7 +1943,7 @@ document.addEventListener(
         if (!frame) {
 
             scheduleLiveCameraScan(
-                700
+                350
             );
 
             return;
@@ -1972,7 +1972,7 @@ document.addEventListener(
                     : "Looking for text...";
 
             scheduleLiveCameraScan(
-                650
+                400
             );
 
             return;
@@ -2112,13 +2112,25 @@ document.addEventListener(
                 liveCameraStatus.textContent =
                     "Point camera at readable text";
 
+                lastLiveFrameSignature =
+                    "";    
+
                 scheduleLiveCameraScan(
-                    1200
+                    450
                 );
 
                 return;
             }
 
+            if (
+                data.targetLanguage &&
+                target.value !==
+                    data.targetLanguage
+            ) {
+
+                target.value =
+                    data.targetLanguage;
+            }
 
             const original =
                 String(
@@ -2137,15 +2149,20 @@ document.addEventListener(
             if (!translated) {
 
                 liveCameraBadgeText.textContent =
-                    "Looking for text...";
+                    "Reading again...";
+
+                liveCameraStatus.textContent =
+                    "Keep camera steady";
+
+                lastLiveFrameSignature =
+                    "";
 
                 scheduleLiveCameraScan(
-                    1100
+                    450
                 );
 
                 return;
             }
-
 
             const regions =
                 Array.isArray(
@@ -2456,7 +2473,7 @@ document.addEventListener(
             * exposure/focus stabilizes.
             */
             scheduleLiveCameraScan(
-                900
+                450
             );
 
 
