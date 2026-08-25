@@ -1657,3 +1657,199 @@
         padding:6px 8px;
     }
 }
+
+/* ==========================================================
+   BASHA LIVE CAMERA - GOOGLE LENS STYLE SPATIAL VIEW
+========================================================== */
+
+.qt-lens-layer{
+    position:absolute;
+    inset:0;
+    z-index:6;
+    overflow:hidden;
+    pointer-events:none;
+}
+
+.qt-lens-layer[hidden]{
+    display:none !important;
+}
+
+
+/* EACH OCR REGION */
+
+.qt-lens-region{
+    position:absolute;
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+    overflow:hidden;
+    padding:2px 4px;
+    border-radius:4px;
+    background:
+        rgba(
+            250,
+            248,
+            255,
+            .92
+        );
+    color:#17121d;
+    box-shadow:
+        0 1px 4px
+        rgba(0,0,0,.18);
+    backdrop-filter:blur(2px);
+    transform-origin:center;
+    animation:
+        qtLensRegionIn
+        .18s ease;
+}
+
+
+@keyframes qtLensRegionIn{
+
+    from{
+        opacity:0;
+        transform:scale(.97);
+    }
+
+    to{
+        opacity:1;
+        transform:scale(1);
+    }
+}
+
+
+.qt-lens-region-text{
+    display:block;
+    width:100%;
+    max-height:100%;
+    overflow:hidden;
+    font-size:
+        clamp(
+            9px,
+            1.8vw,
+            18px
+        );
+    font-weight:700;
+    line-height:1.16;
+    text-align:left;
+    white-space:normal;
+    overflow-wrap:anywhere;
+}
+
+
+/* Fade old translations while rescanning */
+
+.qt-lens-layer.is-scanning
+.qt-lens-region{
+    opacity:.58;
+}
+
+
+/* MODE SWITCH */
+
+.qt-live-camera-footer-left{
+    flex:1;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+}
+
+
+.qt-live-camera-footer-left > span{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    color:#777;
+    font-size:9px;
+}
+
+
+.qt-live-camera-footer-left > span i{
+    color:#198754;
+}
+
+
+.qt-lens-mode-switch{
+    display:flex;
+    width:max-content;
+    max-width:100%;
+    padding:3px;
+    border-radius:12px;
+    background:#f0e9fb;
+}
+
+
+.qt-lens-mode-btn{
+    min-height:31px;
+    border:none;
+    border-radius:9px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+    padding:5px 10px;
+    background:transparent;
+    color:#715a8e;
+    font-size:9px;
+    font-weight:800;
+}
+
+
+.qt-lens-mode-btn.is-active{
+    background:#6f42c1;
+    color:#fff;
+    box-shadow:
+        0 3px 8px
+        rgba(
+            111,
+            66,
+            193,
+            .22
+        );
+}
+
+
+/* Lens mode hides old big bottom panel */
+
+.qt-live-camera-stage.is-lens-view
+.qt-live-camera-overlay{
+    display:none !important;
+}
+
+
+/* Full text hides spatial regions */
+
+.qt-live-camera-stage.is-full-text-view
+.qt-lens-layer{
+    display:none !important;
+}
+
+
+@media(max-width:600px){
+
+    .qt-lens-region{
+        padding:1px 3px;
+        border-radius:3px;
+    }
+
+    .qt-lens-region-text{
+        font-size:
+            clamp(
+                9px,
+                3.2vw,
+                16px
+            );
+        line-height:1.13;
+    }
+
+    .qt-live-camera-footer{
+        align-items:flex-end;
+    }
+
+    .qt-lens-mode-btn{
+        min-height:30px;
+        padding:5px 8px;
+        font-size:8px;
+    }
+}

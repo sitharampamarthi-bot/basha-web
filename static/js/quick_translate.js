@@ -219,7 +219,30 @@ document.addEventListener(
     const liveTranslatedText =
         document.getElementById(
             "qtLiveTranslatedText"
-        );    
+        );
+        
+    const lensLayer =
+        document.getElementById(
+            "qtLensLayer"
+        );
+
+    const lensModeBtn =
+        document.getElementById(
+            "qtLensModeBtn"
+        );
+
+    const fullTextModeBtn =
+        document.getElementById(
+            "qtFullTextModeBtn"
+        );
+
+    const liveCameraStage =
+        liveCameraVideo
+            ? liveCameraVideo
+                .closest(
+                    ".qt-live-camera-stage"
+                )
+            : null;    
 
 
     /* AUDIO */
@@ -332,6 +355,11 @@ document.addEventListener(
     let lastLiveTranslatedText = "";
 
     let liveCameraGeneration = 0;
+
+    let liveCameraViewMode =
+        "lens";
+
+    let lastLiveRegions = [];
 
 
     /* =========================================
@@ -984,6 +1012,302 @@ document.addEventListener(
     LIVE CAMERA AUTO TRANSLATION
     ========================================= */
 
+    function clearLensRegions() {
+
+        lastLiveRegions = [];
+
+        if (!lensLayer) {
+            return;
+        }
+
+        lensLayer.innerHTML =
+            "";
+
+        lensLayer.hidden =
+            true;
+
+        lensLayer.classList.remove(
+            "is-scanning"
+        );
+    }
+
+
+    function setLiveCameraViewMode(
+        mode
+    ) {
+
+        liveCameraViewMode =
+            mode === "full"
+                ? "full"
+                : "lens";
+
+
+        if (liveCameraStage) {
+
+            liveCameraStage
+                .classList.remove(
+                    "is-lens-view",
+                    "is-full-text-view"
+                );
+
+
+            liveCameraStage
+                .classList.add(
+                    liveCameraViewMode ===
+                        "lens"
+                        ? "is-lens-view"
+                        : "is-full-text-view"
+                );
+        }
+
+
+        if (lensModeBtn) {
+
+            lensModeBtn
+                .classList.toggle(
+                    "is-active",
+                    liveCameraViewMode ===
+                        "lens"
+                );
+        }
+
+
+        if (fullTextModeBtn) {
+
+            fullTextModeBtn
+                .classList.toggle(
+                    "is-active",
+                    liveCameraViewMode ===
+                        "full"
+                );
+        }
+
+
+        if (
+            liveCameraViewMode ===
+                "lens"
+        ) {
+
+            if (
+                lensLayer &&
+                lastLiveRegions.length > 0
+            ) {
+
+                lensLayer.hidden =
+                    false;
+            }
+
+            if (liveCameraOverlay) {
+
+                liveCameraOverlay.hidden =
+                    true;
+            }
+
+        } else {
+
+            if (lensLayer) {
+
+                lensLayer.hidden =
+                    true;
+            }
+
+            if (
+                liveCameraOverlay &&
+                lastLiveTranslatedText
+            ) {
+
+                liveCameraOverlay.hidden =
+                    false;
+            }
+        }
+    }
+
+
+    function sanitizeRegionNumber(
+        value
+    ) {
+
+        const number =
+            Number(value);
+
+        if (
+            !Number.isFinite(
+                number
+            )
+        ) {
+
+            return 0;
+        }
+
+        return Math.max(
+            0,
+            Math.min(
+                1,
+                number
+            )
+        );
+    }
+
+
+    function renderLensRegions(
+        regions
+    ) {
+
+        if (!lensLayer) {
+            return;
+        }
+
+
+        const safeRegions =
+            Array.isArray(
+                regions
+            )
+                ? regions
+                : [];
+
+
+        lastLiveRegions =
+            safeRegions;
+
+
+        lensLayer.innerHTML =
+            "";
+
+
+        if (
+            safeRegions.length ===
+            0
+        ) {
+
+            lensLayer.hidden =
+                true;
+
+            return;
+        }
+
+
+        const fragment =
+            document.createDocumentFragment();
+
+
+        safeRegions.forEach(
+            (region) => {
+
+                const translated =
+                    String(
+                        region.translated ||
+                        ""
+                    ).trim();
+
+
+                if (!translated) {
+                    return;
+                }
+
+
+                const x =
+                    sanitizeRegionNumber(
+                        region.x
+                    );
+
+                const y =
+                    sanitizeRegionNumber(
+                        region.y
+                    );
+
+                let width =
+                    sanitizeRegionNumber(
+                        region.width
+                    );
+
+                let height =
+                    sanitizeRegionNumber(
+                        region.height
+                    );
+
+
+                width =
+                    Math.min(
+                        width,
+                        1 - x
+                    );
+
+                height =
+                    Math.min(
+                        height,
+                        1 - y
+                    );
+
+
+                if (
+                    width <= 0 ||
+                    height <= 0
+                ) {
+
+                    return;
+                }
+
+
+                const regionElement =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                regionElement
+                    .className =
+                        "qt-lens-region";
+
+
+                regionElement.style.left =
+                    `${x * 100}%`;
+
+                regionElement.style.top =
+                    `${y * 100}%`;
+
+                regionElement.style.width =
+                    `${width * 100}%`;
+
+                regionElement.style.height =
+                    `${height * 100}%`;
+
+
+                const textElement =
+                    document.createElement(
+                        "span"
+                    );
+
+
+                textElement.className =
+                    "qt-lens-region-text";
+
+
+                textElement.textContent =
+                    translated;
+
+
+                regionElement.appendChild(
+                    textElement
+                );
+
+
+                fragment.appendChild(
+                    regionElement
+                );
+            }
+        );
+
+
+        lensLayer.appendChild(
+            fragment
+        );
+
+
+        lensLayer.hidden =
+            liveCameraViewMode !==
+                "lens";
+    }
+    
     function stopLiveCameraTracks() {
 
         if (!liveCameraStream) {
@@ -1083,6 +1407,8 @@ document.addEventListener(
             liveTranslatedText.textContent =
                 "";
         }
+
+        clearLensRegions();
 
         lastLiveFrameSignature =
             "";
@@ -1448,6 +1774,12 @@ document.addEventListener(
         liveCameraScanning =
             true;
 
+        if (lensLayer) {
+
+            lensLayer.classList.add(
+                "is-scanning"
+            );
+        }
 
         liveCameraBadgeText.textContent =
             "Reading text...";
@@ -1491,6 +1823,11 @@ document.addEventListener(
         formData.append(
             "targetLanguage",
             target.value
+        );
+
+        formData.append(
+            "lensMode",
+            "1"
         );
 
 
@@ -1594,14 +1931,34 @@ document.addEventListener(
             }
 
 
+            const regions =
+                Array.isArray(
+                    data.regions
+                )
+                    ? data.regions
+                    : [];
+
+
             /*
-            * Show translation directly
-            * on camera view.
+            * Spatial Google-Lens-style result.
             */
-            liveCameraOverlay.hidden =
-                false;
+            renderLensRegions(
+                regions
+            );
 
 
+            if (lensLayer) {
+
+                lensLayer.classList.remove(
+                    "is-scanning"
+                );
+            }
+
+
+            /*
+            * Keep existing full-text overlay.
+            * User can switch to it anytime.
+            */
             liveDetectedLanguage.textContent =
                 `${
                     data.detectedLanguage ||
@@ -1622,6 +1979,20 @@ document.addEventListener(
             lastLiveTranslatedText =
                 translated;
 
+
+            if (
+                liveCameraViewMode ===
+                    "full"
+            ) {
+
+                liveCameraOverlay.hidden =
+                    false;
+
+            } else {
+
+                liveCameraOverlay.hidden =
+                    true;
+            }
 
             liveCameraBadgeText.textContent =
                 "Translated";
@@ -1694,15 +2065,21 @@ document.addEventListener(
 
             if (
                 generation ===
-                liveCameraGeneration
+                    liveCameraGeneration
             ) {
+
+                if (lensLayer) {
+
+                    lensLayer.classList.remove(
+                        "is-scanning"
+                    );
+                }
 
                 liveCameraScanning =
                     false;
 
                 liveCameraRequestController =
                     null;
-
 
                 if (liveCameraRunning) {
 
@@ -1837,6 +2214,11 @@ document.addEventListener(
             lastLiveTranslatedText =
                 "";
 
+            clearLensRegions();
+
+            setLiveCameraViewMode(
+                "lens"
+            );
 
             /*
             * First scan after camera
@@ -1951,6 +2333,33 @@ document.addEventListener(
         liveCameraSwitch.addEventListener(
             "click",
             switchLiveCamera
+        );
+    }
+
+    if (lensModeBtn) {
+
+        lensModeBtn.addEventListener(
+            "click",
+            () => {
+
+                setLiveCameraViewMode(
+                    "lens"
+                );
+            }
+        );
+    }
+
+
+    if (fullTextModeBtn) {
+
+        fullTextModeBtn.addEventListener(
+            "click",
+            () => {
+
+                setLiveCameraViewMode(
+                    "full"
+                );
+            }
         );
     }
 
@@ -3240,6 +3649,8 @@ document.addEventListener(
 
                 lastLiveTranslatedText =
                     "";
+
+                clearLensRegions();    
 
                 liveCameraOverlay.hidden =
                     true;

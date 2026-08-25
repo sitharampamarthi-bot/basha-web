@@ -13,7 +13,9 @@ from werkzeug.utils import secure_filename
 
 from quick_file_translator import (
     ALLOWED_EXTENSIONS,
-    translate_uploaded_file
+    IMAGE_EXTENSIONS,
+    translate_uploaded_file,
+    translate_image_spatial
 )
 
 
@@ -325,10 +327,38 @@ def quick_translate_file_api():
 
         temp_file.close()
 
-        result = translate_uploaded_file(
-            file_path=temp_path,
-            target_language=target_info["name"]
-        )
+        lens_mode = clean_lower(
+            request.form.get(
+                "lensMode",
+                ""
+            )
+        ) in {
+            "1",
+            "true",
+            "yes",
+            "lens"
+        }
+
+
+        if (
+            lens_mode
+            and extension
+            in IMAGE_EXTENSIONS
+        ):
+
+            result = translate_image_spatial(
+                file_path=temp_path,
+                target_language=
+                    target_info["name"]
+            )
+
+        else:
+
+            result = translate_uploaded_file(
+                file_path=temp_path,
+                target_language=
+                    target_info["name"]
+            )
 
         detected_language = clean_text(
             result.get(
@@ -382,7 +412,16 @@ def quick_translate_file_api():
                 target_language_code,
 
             "targetLanguageName":
-                target_info["name"]
+                target_info["name"],
+
+            "lensMode":
+                lens_mode,
+
+            "regions":
+                result.get(
+                    "regions",
+                    []
+                )
         })
 
     except Exception as error:

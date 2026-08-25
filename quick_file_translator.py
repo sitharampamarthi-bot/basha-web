@@ -205,6 +205,84 @@ Rules:
 - If no readable text exists, return empty original_text and translated_text.
 """.strip()
 
+def build_spatial_prompt(
+    target_language
+):
+    return f"""
+You are the spatial OCR and visual translation engine
+for Basha Messenger Live Camera.
+
+Analyze the supplied camera image.
+
+Tasks:
+
+1. Detect the main visible source language.
+2. Read clearly visible text.
+3. Divide visible text into useful visual regions.
+4. Translate every region into {target_language}.
+5. Return the approximate position of every region
+   relative to the supplied image.
+
+IMPORTANT:
+
+Coordinates MUST be normalized numbers between 0 and 1.
+
+For every text region return:
+
+x = left position / image width
+y = top position / image height
+width = region width / image width
+height = region height / image height
+
+Use reasonably large text blocks.
+
+Do NOT create one region for every individual character.
+
+Prefer:
+- sentence
+- message bubble
+- paragraph
+- heading
+- label
+- short grouped lines
+
+Return ONLY valid JSON:
+
+{{
+  "detected_language": "English",
+  "original_text": "Complete readable original text",
+  "translated_text": "Complete translated text",
+  "regions": [
+    {{
+      "original": "Dear Customer",
+      "translated": "Translated text",
+      "x": 0.18,
+      "y": 0.30,
+      "width": 0.45,
+      "height": 0.08
+    }}
+  ]
+}}
+
+Rules:
+
+- No markdown.
+- No explanations.
+- Preserve numbers exactly.
+- Preserve phone numbers exactly.
+- Preserve dates exactly.
+- Preserve prices exactly.
+- Preserve account/reference numbers exactly.
+- Preserve URLs exactly.
+- Keep brand names unchanged when appropriate.
+- Do not invent unreadable text.
+- Coordinates must correspond to the visible source text.
+- Keep every coordinate between 0 and 1.
+- Regions must not cover unrelated areas unnecessarily.
+- If no readable text exists, return empty strings
+  and an empty regions array.
+""".strip()
+
 
 def parse_translation_response(
     response_text
@@ -247,6 +325,192 @@ def parse_translation_response(
         "translated_text":
             translated_text
     }
+    
+def clamp_normalized_number(
+    value,
+    default=0.0
+):
+    try:
+        number = float(value)
+    except (
+        TypeError,
+        ValueError
+    ):
+        number = default
+
+    return max(
+        0.0,
+        min(
+            1.0,
+            number
+        )
+    )
+
+
+def normalize_spatial_regions(
+    regions
+):
+    if not isinstance(
+        regions,
+        list
+    ):
+        return []
+
+    cleaned_regions = []
+
+    for region in regions:
+
+        if not isinstance(
+            region,
+            dict
+        ):
+            continue
+
+        original = str(
+            region.get(
+                "original"
+            )
+            or ""
+        ).strip()
+
+        translated = str(
+            region.get(
+                "translated"
+            )
+            or ""
+        ).strip()
+
+        if not translated:
+            continue
+
+        x = clamp_normalized_number(
+            region.get("x")
+        )
+
+        y = clamp_normalized_number(
+            region.get("y")
+        )
+
+        width = clamp_normalized_number(
+            region.get("width")
+        )
+
+        height = clamp_normalized_number(
+            region.get("height")
+        )
+
+        if width <= 0:
+            continue
+
+        if height <= 0:
+            continue
+
+        # Prevent boxes from extending
+        # outside the source image.
+        width = min(
+            width,
+            1.0 - x
+        )
+
+        height = min(
+            height,
+            1.0 - y
+        )
+
+        if (
+            width <= 0
+            or height <= 0
+        ):
+            continue
+
+        cleaned_regions.append({
+            "original":
+                original,
+
+            "translated":
+                translated,
+
+            "x":
+                round(x, 5),
+
+            "y":
+                round(y, 5),
+
+            "width":
+                round(width, 5),
+
+            "height":
+                round(height, 5)
+        })
+
+    return cleaned_regions
+
+
+def parse_spatial_translation_response(
+    response_text
+):
+    cleaned_response = clean_json_text(
+        response_text
+    )
+
+    try:
+
+        data = json.loads(
+            cleaned_response
+        )
+
+    except json.JSONDecodeError as error:
+
+        raise RuntimeError(
+            "Gemini returned invalid spatial translation JSON."
+        ) from error
+
+
+    detected_language = str(
+        data.get(
+            "detected_language"
+        )
+        or "Auto Detected"
+    ).strip()
+
+
+    original_text = str(
+        data.get(
+            "original_text"
+        )
+        or ""
+    ).strip()
+
+
+    translated_text = str(
+        data.get(
+            "translated_text"
+        )
+        or ""
+    ).strip()
+
+
+    regions = normalize_spatial_regions(
+        data.get(
+            "regions",
+            []
+        )
+    )
+
+
+    return {
+        "detected_language":
+            detected_language,
+
+        "original_text":
+            original_text,
+
+        "translated_text":
+            translated_text,
+
+        "regions":
+            regions
+    }    
 
 
 def translate_uploaded_file(
@@ -377,5 +641,126 @@ def translate_uploaded_file(
     )
 
     result["extension"] = extension
+
+    return result
+
+def translate_image_spatial(
+    file_path,
+    target_language
+):
+    api_key = os.getenv(
+        "GEMINI_API_KEY",
+        ""
+    ).strip()
+
+    if not api_key:
+        raise RuntimeError(
+            "GEMINI_API_KEY is missing."
+        )
+
+    if not os.path.exists(
+        file_path
+    ):
+        raise FileNotFoundError(
+            "Uploaded image was not found."
+        )
+
+    extension = get_extension(
+        file_path
+    )
+
+    if extension not in IMAGE_EXTENSIONS:
+        raise ValueError(
+            "Spatial translation requires an image."
+        )
+
+    target_language = str(
+        target_language
+        or "English"
+    ).strip()
+
+    client = genai.Client(
+        api_key=api_key
+    )
+
+    prompt = build_spatial_prompt(
+        target_language
+    )
+
+    with open(
+        file_path,
+        "rb"
+    ) as file_object:
+
+        image_bytes = (
+            file_object.read()
+        )
+
+    response = (
+        client.models.generate_content(
+            model=MODEL_NAME,
+
+            contents=[
+                prompt,
+
+                types.Part.from_bytes(
+                    data=image_bytes,
+
+                    mime_type=
+                        get_mime_type(
+                            file_path
+                        )
+                )
+            ],
+
+            config=
+                types.GenerateContentConfig(
+                    temperature=0.0,
+
+                    response_mime_type=
+                        "application/json"
+                )
+        )
+    )
+
+    response_text = str(
+        response.text
+        or ""
+    ).strip()
+
+    if not response_text:
+        raise RuntimeError(
+            "Gemini returned an empty spatial response."
+        )
+
+    result = (
+        parse_spatial_translation_response(
+            response_text
+        )
+    )
+
+    if not result[
+        "original_text"
+    ]:
+
+        raise ValueError(
+            "No readable text found in the camera image."
+        )
+
+    if not result[
+        "translated_text"
+    ]:
+
+        raise ValueError(
+            "Unable to translate the visible text."
+        )
+
+    result[
+        "input_type"
+    ] = "image"
+
+    result[
+        "extension"
+    ] = extension
 
     return result
