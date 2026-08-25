@@ -1087,13 +1087,11 @@ document.addEventListener(
             return;
         }
 
-
-        liveCameraFrozen =
-            true;
-
+        liveCameraFrozen = true;
 
         stopLiveCameraTimer();
 
+        liveCameraScanning = false;
 
         /*
         * Do not stop camera hardware.
@@ -1121,45 +1119,69 @@ document.addEventListener(
 
     function resumeLiveCamera() {
 
-        if (
-            !liveCameraRunning
-        ) {
+        if (!liveCameraRunning) {
             return;
         }
 
+        /*
+        * IMPORTANT:
+        * Previous scan may have completed while
+        * freeze state was being applied.
+        *
+        * Re-read must always start from a clean
+        * scanning state.
+        */
+        stopLiveCameraTimer();
 
-        liveCameraFrozen =
-            false;
+        cancelLiveCameraRequest();
 
+        liveCameraScanning = false;
+
+        liveCameraFrozen = false;
 
         if (liveCameraStage) {
 
-            liveCameraStage
-                .classList.remove(
-                    "is-frozen"
-                );
+            liveCameraStage.classList.remove(
+                "is-frozen"
+            );
         }
 
-
         /*
-        * Force next frame to be read again.
+        * Force same page / new page to be
+        * processed again.
         */
-        lastLiveFrameSignature =
-            "";
+        lastLiveFrameSignature = "";
 
         liveCameraBadgeText.textContent =
             "Reading again...";
 
         liveCameraStatus.textContent =
-            "Detecting visible language...";
-
+            "Keep camera steady...";
 
         updateFreezeButton();
 
+        /*
+        * Small delay gives mobile camera
+        * one fresh frame before OCR capture.
+        */
+        liveCameraTimer =
+            setTimeout(
+                () => {
 
-        scheduleLiveCameraScan(
-            180
-        );
+                    liveCameraTimer = null;
+
+                    if (
+                        !liveCameraRunning ||
+                        liveCameraFrozen
+                    ) {
+                        return;
+                    }
+
+                    scanLiveCamera();
+
+                },
+                250
+            );
     }
 
     function toggleLiveCameraFreeze() {
@@ -1530,15 +1552,12 @@ document.addEventListener(
         liveCameraRunning =
             false;
 
-        liveCameraFrozen =
-            false;
+        liveCameraFrozen = false;
 
         if (liveCameraStage) {
-
-            liveCameraStage
-                .classList.remove(
-                    "is-frozen"
-                );
+            liveCameraStage.classList.remove(
+                "is-frozen"
+            );
         }
 
         updateFreezeButton();    
@@ -2262,7 +2281,10 @@ document.addEventListener(
                 liveCameraRequestController =
                     null;
 
-                if (liveCameraRunning) {
+                if (
+                    liveCameraRunning &&
+                    !liveCameraFrozen
+                ) {
 
                     scheduleLiveCameraScan(
                         700
