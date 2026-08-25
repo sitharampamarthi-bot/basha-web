@@ -75,9 +75,17 @@
         }
 
         .last-msg{
+            display:block;
+            width:100%;
+            max-width:100%;
+            overflow:hidden;
+
             color:#666;
             font-size:14px;
-            word-break:break-word;
+            line-height:1.35;
+
+            white-space:nowrap;
+            text-overflow:ellipsis;
         }
 
         .chat-btn{
@@ -197,6 +205,11 @@
             .contact-info{
                 min-width:0;
             }
+
+            .contact-info .last-msg{
+                max-width:100%;
+            }
+            
             .home-search-card{
                 border-radius:22px;
                 padding:14px !important;
@@ -940,13 +953,22 @@
 
                 <div class="contact-info">
                     <div class="contact-name">
+
                         {{ c.savedName }}
+
+                        {% if not c.isSaved %}
+                            <span class="badge rounded-pill bg-secondary ms-1"
+                                style="font-size:9px;">
+                                New
+                            </span>
+                        {% endif %}
 
                         {% if c.unreadCount > 0 %}
                             <span class="badge rounded-pill text-bg-danger ms-2">
                                 {{ c.unreadCount }}
                             </span>
                         {% endif %}
+
                     </div>
 
                     {% if c.isOnline %}

@@ -16,7 +16,7 @@
                 <i class="bi bi-arrow-left"></i>
             </a>
             <span class="navbar-brand fw-bold">My Contacts</span>
-            <a href="/" class="btn btn-light btn-sm">Logout</a>
+            <a href="/logout" class="btn btn-light btn-sm">Logout</a>
         </div>
     </nav>
 
@@ -43,11 +43,14 @@
                 <div id="contactResult"></div>
             </form>
 
-            <a class="btn btn-success w-100 mt-3"
-            href="https://wa.me/?text=Join%20Basha%20App%20and%20chat%20with%20me:%20http://127.0.0.1:5000"
-            target="_blank">
-                <i class="bi bi-whatsapp"></i> Invite on WhatsApp
-            </a>
+            <button type="button"
+                    class="btn btn-success w-100 mt-3"
+                    onclick="inviteBashaOnWhatsApp()">
+
+                <i class="bi bi-whatsapp"></i>
+                    Invite on WhatsApp
+
+            </button>
         </div>
 
         {% if contacts|length == 0 %}
@@ -81,50 +84,296 @@
 
     </div>
     <script>
+
+    let phoneContactSelectionRunning =
+        false;
+
     async function selectPhoneContact() {
-        if (!('contacts' in navigator)) {
-            alert("Phone contacts option only works in supported mobile browsers like Android Chrome.");
+
+        if (phoneContactSelectionRunning) {
             return;
         }
 
+        if (
+            !("contacts" in navigator)
+            ||
+            !navigator.contacts
+            ||
+            typeof navigator.contacts.select
+                !== "function"
+        ) {
+
+            alert(
+                "Phone contact picker is supported only on compatible mobile browsers such as Android Chrome."
+            );
+
+            return;
+        }
+
+        phoneContactSelectionRunning =
+            true;
+
+        const resultBox =
+            document.getElementById(
+                "contactResult"
+            );
+
+        resultBox.innerHTML = `
+            <div class="alert alert-info">
+                Select the contacts you want to add.
+            </div>
+        `;
+
         try {
-            const props = ['name', 'tel'];
-            const opts = { multiple: true };
 
-            const contacts = await navigator.contacts.select(props, opts);
+            const contacts =
+                await navigator.contacts.select(
+                    [
+                        "name",
+                        "tel"
+                    ],
+                    {
+                        multiple:
+                            true
+                    }
+                );
 
-            for (const contact of contacts) {
-                const name = contact.name ? contact.name[0] : "";
-                const mobile = contact.tel ? contact.tel[0] : "";
+            if (
+                !contacts
+                ||
+                contacts.length === 0
+            ) {
 
-                const res = await fetch("/check-phone-contact", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        name: name,
-                        mobile: mobile
-                    })
-                });
+                resultBox.innerHTML =
+                    "";
 
-                const data = await res.json();
-
-                document.getElementById("contactResult").innerHTML += `
-                    <div class="alert alert-info">
-                        ${name} - ${mobile} : ${data.message}
-                    </div>
-                `;
+                return;
             }
 
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
+            const results = [];
 
-        } catch (e) {
-            alert("Contact selection cancelled or not supported.");
+            for (
+                const contact
+                of contacts
+            ) {
+
+                const name = (
+                    contact.name
+                    &&
+                    contact.name.length
+                        ? contact.name[0]
+                        : ""
+                );
+
+                const mobile = (
+                    contact.tel
+                    &&
+                    contact.tel.length
+                        ? contact.tel[0]
+                        : ""
+                );
+
+                if (!mobile) {
+                    continue;
+                }
+
+                try {
+
+                    const response =
+                        await fetch(
+                            "/check-phone-contact",
+                            {
+                                method:
+                                    "POST",
+
+                                headers: {
+                                    "Content-Type":
+                                        "application/json"
+                                },
+
+                                body:
+                                    JSON.stringify({
+                                        name:
+                                            name,
+
+                                        mobile:
+                                            mobile
+                                    })
+                            }
+                        );
+
+                    const data =
+                        await response.json();
+
+                    results.push({
+                        name:
+                            name,
+
+                        mobile:
+                            mobile,
+
+                        success:
+                            Boolean(
+                                data.success
+                            ),
+
+                        message:
+                            data.message
+                            || "Completed"
+                    });
+
+                } catch (error) {
+
+                    results.push({
+                        name:
+                            name,
+
+                        mobile:
+                            mobile,
+
+                        success:
+                            false,
+
+                        message:
+                            "Unable to add"
+                    });
+                }
+            }
+
+            resultBox.innerHTML =
+                results.map(
+                    (item) => {
+
+                        return `
+                            <div class="alert ${
+                                item.success
+                                    ? "alert-success"
+                                    : "alert-warning"
+                            } py-2 mb-2">
+
+                                <strong>
+                                    ${escapeContactHtml(
+                                        item.name
+                                        || item.mobile
+                                    )}
+                                </strong>
+
+                                <div class="small">
+                                    ${escapeContactHtml(
+                                        item.message
+                                    )}
+                                </div>
+
+                            </div>
+                        `;
+
+                    }
+                ).join("");
+
+            /*
+            * NO automatic page reload.
+            *
+            * Browser contact picker will
+            * therefore never appear because
+            * of our own reload logic.
+            */
+            if (
+                results.some(
+                    item =>
+                        item.success
+                )
+            ) {
+
+                const refreshNotice =
+                    document.createElement(
+                        "div"
+                    );
+
+                refreshNotice.className =
+                    "text-center mt-2";
+
+                refreshNotice.innerHTML = `
+                    <button type="button"
+                            class="btn btn-outline-primary btn-sm"
+                            onclick="window.location.reload()">
+
+                        Refresh Contact List
+
+                    </button>
+                `;
+
+                resultBox.appendChild(
+                    refreshNotice
+                );
+            }
+
+        } catch (error) {
+
+            /*
+            * User cancelled picker:
+            * no alert needed.
+            */
+            console.log(
+                "PHONE CONTACT PICKER:",
+                error
+            );
+
+        } finally {
+
+            phoneContactSelectionRunning =
+                false;
         }
     }
+
+    function escapeContactHtml(
+        value
+    ) {
+
+        return String(
+            value || ""
+        )
+            .replaceAll(
+                "&",
+                "&amp;"
+            )
+            .replaceAll(
+                "<",
+                "&lt;"
+            )
+            .replaceAll(
+                ">",
+                "&gt;"
+            )
+            .replaceAll(
+                '"',
+                "&quot;"
+            )
+            .replaceAll(
+                "'",
+                "&#039;"
+            );
+    }
+
+    function inviteBashaOnWhatsApp() {
+
+        const appUrl =
+            window.location.origin;
+
+        const message =
+            "Join Basha App and chat with me: "
+            + appUrl;
+
+        const whatsappUrl =
+            "https://wa.me/?text="
+            + encodeURIComponent(message);
+
+        window.open(
+            whatsappUrl,
+            "_blank",
+            "noopener,noreferrer"
+        );
+    }
+
     </script>
         
     </body>

@@ -563,123 +563,606 @@ def reset_password(user_id):
 
 @app.route("/home")
 def home():
+
     if "user_id" not in session:
         return redirect("/")
 
     current_user_id = session["user_id"]
 
-    user_doc = db.collection("users").document(current_user_id).get()
-    user_data = user_doc.to_dict()
+    user_doc = (
+        db.collection("users")
+        .document(current_user_id)
+        .get()
+    )
 
-    current_mobile = clean_mobile(user_data.get("mobile", "") or session.get("mobile", ""))
-    user_name = user_data.get("name", "User")
-    profile_pic = user_data.get("profilePic", "")
+    if not user_doc.exists:
+        session.clear()
+        return redirect("/")
+
+    user_data = (
+        user_doc.to_dict()
+        or {}
+    )
+
+    current_mobile = clean_mobile(
+        user_data.get("mobile", "")
+        or session.get("mobile", "")
+    )
+
+    user_name = (
+        user_data.get("name")
+        or "User"
+    )
+
+    profile_pic = (
+        user_data.get("profilePic")
+        or ""
+    )
 
     contacts = []
+
     groups = []
+
     total_unread = 0
-    
 
-    contact_docs = db.collection("users").document(current_user_id)\
-        .collection("contacts").stream()
 
-    for c in contact_docs:
-        cdata = c.to_dict()
-        contact_user_id = cdata.get("contactUserId")
+    # ==========================================
+    # 1. SAVED CONTACTS
+    # ==========================================
 
-        udoc = db.collection("users").document(contact_user_id).get()
+    contact_map = {}
 
-        if udoc.exists:
-            u = udoc.to_dict()
-            contact_mobile = clean_mobile(u.get("mobile", ""))
+    contact_docs = (
+        db.collection("users")
+        .document(current_user_id)
+        .collection("contacts")
+        .stream()
+    )
 
-            chat_id = get_chat_id(current_mobile, contact_mobile)
-            chat_doc = db.collection("chats").document(chat_id).get()
+    for contact_doc in contact_docs:
 
-            unread_count = 0
-            last_time = None
-            last_message = ""
+        contact_data = (
+            contact_doc.to_dict()
+            or {}
+        )
 
-            if chat_doc.exists:
-                chat_data = chat_doc.to_dict()
-                last_time = chat_data.get("lastMessageTime")
-                last_message = chat_data.get("lastMessage", "")
+        contact_user_id = (
+            contact_data.get(
+                "contactUserId"
+            )
+        )
 
-                msg_docs = db.collection("chats").document(chat_id)\
-                    .collection("messages")\
-                    .where("receiverMobile", "==", current_mobile)\
-                    .stream()
+        if not contact_user_id:
+            continue
 
-                for msg in msg_docs:
-                    m = msg.to_dict()
-                    read_by = m.get("readBy", [])
-                    if current_mobile not in read_by:
-                        unread_count += 1
+        registered_doc = (
+            db.collection("users")
+            .document(contact_user_id)
+            .get()
+        )
 
-            total_unread += unread_count
+        if not registered_doc.exists:
+            continue
 
-            contacts.append({
-                "isOnline": u.get("isOnline", False),
-                "profilePic": u.get("profilePic", ""),
-                "savedName": cdata.get("savedName", u.get("name", "")),
-                "mobile": contact_mobile,
-                "languageName": u.get("languageName", "English"),
-                "unreadCount": unread_count,
-                "lastMessage": last_message,
-                "lastTime": last_time
-            })
-            
+        registered_user = (
+            registered_doc.to_dict()
+            or {}
+        )
+
+        contact_mobile = clean_mobile(
+            registered_user.get(
+                "mobile",
+                ""
+            )
+        )
+
+        if not contact_mobile:
+            continue
+
+        contact_map[
+            contact_mobile
+        ] = {
+            "userId":
+                contact_user_id,
+
+            "savedName":
+                (
+                    contact_data.get(
+                        "savedName"
+                    )
+                    or registered_user.get(
+                        "name"
+                    )
+                    or contact_mobile
+                ),
+
+            "profilePic":
+                (
+                    registered_user.get(
+                        "profilePic"
+                    )
+                    or ""
+                ),
+
+            "languageName":
+                (
+                    registered_user.get(
+                        "languageName"
+                    )
+                    or "English"
+                ),
+
+            "isOnline":
+                bool(
+                    registered_user.get(
+                        "isOnline",
+                        False
+                    )
+                ),
+
+            "isSaved":
+                True
+        }
+
+
+    # ==========================================
+    # 2. PERSONAL CHATS
+    #
+    # Saved contact kakapoyina,
+    # current user participant ayina chat
+    # Home list lo show chestham.
+    # ==========================================
+
+    chat_items = {}
+
+
+    chat_docs = (
+        db.collection("chats")
+        .where(
+            "participants",
+            "array_contains",
+            current_mobile
+        )
+        .stream()
+    )
+
+
+    for chat_doc in chat_docs:
+
+        chat_data = (
+            chat_doc.to_dict()
+            or {}
+        )
+
+
+        participants = [
+            clean_mobile(number)
+            for number
+            in (
+                chat_data.get(
+                    "participants",
+                    []
+                )
+                or []
+            )
+        ]
+
+
+        other_mobile = ""
+
+        for number in participants:
+
+            if (
+                number
+                and number != current_mobile
+            ):
+
+                other_mobile = (
+                    number
+                )
+
+                break
+
+
+        if not other_mobile:
+            continue
+
+
+        # ======================================
+        # User saved contact aa?
+        # ======================================
+
+        saved_contact = (
+            contact_map.get(
+                other_mobile
+            )
+        )
+
+
+        if saved_contact:
+
+            display_name = (
+                saved_contact[
+                    "savedName"
+                ]
+            )
+
+            profile = (
+                saved_contact[
+                    "profilePic"
+                ]
+            )
+
+            language_name = (
+                saved_contact[
+                    "languageName"
+                ]
+            )
+
+            is_online = (
+                saved_contact[
+                    "isOnline"
+                ]
+            )
+
+            is_saved = True
+
+
+        else:
+
+            # ==================================
+            # UNKNOWN / UNSAVED BASHA USER
+            # ==================================
+
+            user_docs = (
+                db.collection("users")
+                .where(
+                    "mobile",
+                    "==",
+                    other_mobile
+                )
+                .limit(1)
+                .get()
+            )
+
+
+            other_user = {}
+
+            if user_docs:
+
+                other_user = (
+                    user_docs[0]
+                    .to_dict()
+                    or {}
+                )
+
+
+            display_name = (
+                other_user.get(
+                    "name"
+                )
+                or other_mobile
+            )
+
+            profile = (
+                other_user.get(
+                    "profilePic"
+                )
+                or ""
+            )
+
+            language_name = (
+                other_user.get(
+                    "languageName"
+                )
+                or "English"
+            )
+
+            is_online = bool(
+                other_user.get(
+                    "isOnline",
+                    False
+                )
+            )
+
+            is_saved = False
+
+
+        # ======================================
+        # UNREAD COUNT
+        # ======================================
+
+        unread_count = 0
+
+
+        message_docs = (
+            chat_doc.reference
+            .collection("messages")
+            .where(
+                "receiverMobile",
+                "==",
+                current_mobile
+            )
+            .stream()
+        )
+
+
+        for message_doc in message_docs:
+
+            message_data = (
+                message_doc.to_dict()
+                or {}
+            )
+
+            read_by = (
+                message_data.get(
+                    "readBy",
+                    []
+                )
+                or []
+            )
+
+            if (
+                current_mobile
+                not in read_by
+            ):
+
+                unread_count += 1
+
+
+        total_unread += (
+            unread_count
+        )
+
+
+        # ONLY ONE LAST MESSAGE.
+        # Full chat Home ki load cheyyatledu.
+        last_message = str(
+            chat_data.get(
+                "lastMessage",
+                ""
+            )
+            or ""
+        ).strip()
+
+
+        chat_items[
+            other_mobile
+        ] = {
+
+            "isOnline":
+                is_online,
+
+            "profilePic":
+                profile,
+
+            "savedName":
+                display_name,
+
+            "mobile":
+                other_mobile,
+
+            "languageName":
+                language_name,
+
+            "unreadCount":
+                unread_count,
+
+            "lastMessage":
+                last_message,
+
+            "lastTime":
+                chat_data.get(
+                    "lastMessageTime"
+                ),
+
+            "isSaved":
+                is_saved
+        }
+
+
+    # ==========================================
+    # 3. SAVED CONTACTS WITHOUT CHAT
+    # ==========================================
+
+    for (
+        contact_mobile,
+        contact_data
+    ) in contact_map.items():
+
+        if (
+            contact_mobile
+            in chat_items
+        ):
+            continue
+
+
+        chat_items[
+            contact_mobile
+        ] = {
+
+            "isOnline":
+                contact_data[
+                    "isOnline"
+                ],
+
+            "profilePic":
+                contact_data[
+                    "profilePic"
+                ],
+
+            "savedName":
+                contact_data[
+                    "savedName"
+                ],
+
+            "mobile":
+                contact_mobile,
+
+            "languageName":
+                contact_data[
+                    "languageName"
+                ],
+
+            "unreadCount":
+                0,
+
+            "lastMessage":
+                "",
+
+            "lastTime":
+                None,
+
+            "isSaved":
+                True
+        }
+
+
+    contacts = list(
+        chat_items.values()
+    )
+
+
     def sort_time(contact):
-        t = contact.get("lastTime")
 
-        if t is None:
+        timestamp = (
+            contact.get(
+                "lastTime"
+            )
+        )
+
+        if timestamp is None:
             return 0
 
         try:
-            return t.timestamp()
-        except:
+            return (
+                timestamp.timestamp()
+            )
+
+        except Exception:
             return 0
-    groups_dict = {}
 
-    group_docs = db.collection("groups").stream()
 
-    for g in group_docs:
-        gdata = g.to_dict()
-
-        members_raw = gdata.get("members", [])
-        members_mobile = [clean_mobile(m) for m in members_raw]
-
-        created_by = clean_mobile(gdata.get("createdBy", ""))
-
-        if (
-            current_mobile in members_mobile
-            or current_mobile == created_by
-            or current_user_id in members_raw
-        ):
-            gdata["id"] = g.id
-            groups_dict[g.id] = gdata
-
-    groups = list(groups_dict.values())
-
-    groups.sort(
-        key=lambda x: x.get("lastMessageTime").timestamp() if x.get("lastMessageTime") else 0,
-        reverse=True
-    )
     contacts.sort(
         key=sort_time,
         reverse=True
     )
-    print("CURRENT MOBILE:", current_mobile)
-    print("GROUPS COUNT:", len(groups))
+
+
+    # ==========================================
+    # 4. GROUPS
+    # OLD WORKING LOGIC PRESERVED
+    # ==========================================
+
+    groups_dict = {}
+
+    group_docs = (
+        db.collection("groups")
+        .stream()
+    )
+
+
+    for group_doc in group_docs:
+
+        group_data = (
+            group_doc.to_dict()
+            or {}
+        )
+
+        members_raw = (
+            group_data.get(
+                "members",
+                []
+            )
+            or []
+        )
+
+        members_mobile = [
+            clean_mobile(member)
+            for member
+            in members_raw
+        ]
+
+        created_by = clean_mobile(
+            group_data.get(
+                "createdBy",
+                ""
+            )
+        )
+
+
+        if (
+            current_mobile
+            in members_mobile
+            or
+            current_mobile
+            == created_by
+            or
+            current_user_id
+            in members_raw
+        ):
+
+            group_data[
+                "id"
+            ] = group_doc.id
+
+            groups_dict[
+                group_doc.id
+            ] = group_data
+
+
+    groups = list(
+        groups_dict.values()
+    )
+
+
+    groups.sort(
+        key=lambda item: (
+            item.get(
+                "lastMessageTime"
+            ).timestamp()
+            if item.get(
+                "lastMessageTime"
+            )
+            else 0
+        ),
+        reverse=True
+    )
+
+
+    print(
+        "CURRENT MOBILE:",
+        current_mobile
+    )
+
+    print(
+        "HOME CHAT USERS:",
+        len(contacts)
+    )
+
+    print(
+        "GROUPS COUNT:",
+        len(groups)
+    )
+
 
     return render_template(
         "home.html",
-        user_name=user_name,
-        profile_pic=profile_pic,
-        contacts=contacts,
-        groups=groups,
-        total_unread=total_unread
-        
+
+        user_name=
+            user_name,
+
+        profile_pic=
+            profile_pic,
+
+        contacts=
+            contacts,
+
+        groups=
+            groups,
+
+        total_unread=
+            total_unread
     )
     
 @app.route("/logout")
@@ -803,7 +1286,36 @@ def save_chat_message(sender_id, receiver_mobile, message, file_url="", file_nam
         receiver_data = receiver_docs[0].to_dict()
         receiver_language = receiver_data.get("languageCode") or "en"
 
-    translated_message = translate_text(message, receiver_language) if message else ""
+    if message:
+        translated_message = translate_text(
+            message,
+            receiver_language
+        )
+
+        # Translation service error page/text vachina
+        # original message ni use cheyyali.
+        translated_lower = str(
+            translated_message or ""
+        ).lower()
+
+        if (
+            "error 500" in translated_lower
+            or "server error" in translated_lower
+            or "that's an error" in translated_lower
+            or "that’s an error" in translated_lower
+            or "please try again later" in translated_lower
+            or "that's all we know" in translated_lower
+            or "that’s all we know" in translated_lower
+        ):
+            print(
+                "BAD TRANSLATION RESPONSE - USING ORIGINAL:",
+                translated_message
+            )
+
+            translated_message = message
+
+    else:
+        translated_message = ""
 
     chat_id = get_chat_id(sender_mobile, receiver_mobile)
     chat_ref = db.collection("chats").document(chat_id)
@@ -1057,22 +1569,73 @@ def groups():
 
     return render_template("groups.html", groups=groups)           
     
-@app.route("/check-phone-contact", methods=["POST"])
+@app.route(
+    "/check-phone-contact",
+    methods=["POST"]
+)
 def check_phone_contact():
+
     if "user_id" not in session:
-        return jsonify({"success": False, "message": "Not logged in"})
 
-    data = request.get_json()
-    name = data.get("name", "")
-    mobile = data.get("mobile", "")
+        return jsonify({
+            "success": False,
+            "message": "Not logged in"
+        }), 401
 
-    mobile = mobile.replace(" ", "").replace("+91", "").replace("-", "")
 
-    current_user_id = session["user_id"]
+    data = (
+        request.get_json(
+            silent=True
+        )
+        or {}
+    )
 
-    docs = db.collection("users").where("mobile", "==", mobile).limit(1).get()
+
+    name = str(
+        data.get(
+            "name",
+            ""
+        )
+        or ""
+    ).strip()
+
+
+    mobile = clean_mobile(
+        data.get(
+            "mobile",
+            ""
+        )
+    )
+
+
+    if not mobile:
+
+        return jsonify({
+            "success": False,
+            "registered": False,
+            "message": "Invalid mobile number"
+        }), 400
+
+
+    current_user_id = (
+        session["user_id"]
+    )
+
+
+    docs = (
+        db.collection("users")
+        .where(
+            "mobile",
+            "==",
+            mobile
+        )
+        .limit(1)
+        .get()
+    )
+
 
     if not docs:
+
         return jsonify({
             "success": False,
             "registered": False,
@@ -1081,32 +1644,79 @@ def check_phone_contact():
             "name": name
         })
 
-    found_doc = docs[0]
-    found_id = found_doc.id
-    found_user = found_doc.to_dict()
 
-    if found_id == current_user_id:
+    found_doc = docs[0]
+
+    found_id = (
+        found_doc.id
+    )
+
+    found_user = (
+        found_doc.to_dict()
+        or {}
+    )
+
+
+    if (
+        found_id
+        == current_user_id
+    ):
+
         return jsonify({
             "success": False,
             "registered": True,
             "message": "This is your own number"
         })
 
-    db.collection("users").document(current_user_id)\
-        .collection("contacts").document(found_id).set({
-            "contactUserId": found_id,
-            "savedName": name or found_user.get("name", ""),
-            "mobile": mobile,
-            "registered": True,
-            "createdAt": firestore.SERVER_TIMESTAMP
-        })
+
+    (
+        db.collection("users")
+        .document(current_user_id)
+        .collection("contacts")
+        .document(found_id)
+        .set(
+            {
+                "contactUserId":
+                    found_id,
+
+                "savedName":
+                    (
+                        name
+                        or
+                        found_user.get(
+                            "name",
+                            ""
+                        )
+                    ),
+
+                "mobile":
+                    mobile,
+
+                "registered":
+                    True,
+
+                "createdAt":
+                    firestore
+                    .SERVER_TIMESTAMP
+            },
+            merge=True
+        )
+    )
+
 
     return jsonify({
         "success": True,
         "registered": True,
         "message": "Contact added",
         "mobile": mobile,
-        "name": name
+        "name": (
+            name
+            or
+            found_user.get(
+                "name",
+                ""
+            )
+        )
     })
     
 # @app.route("/settings", methods=["GET", "POST"])
@@ -1210,62 +1820,229 @@ def check_phone_contact():
 #         message=message
 #     )            
     
-@app.route("/contacts", methods=["GET", "POST"])
+@app.route(
+    "/contacts",
+    methods=[
+        "GET",
+        "POST"
+    ]
+)
 def contacts():
+
     if "user_id" not in session:
         return redirect("/")
 
-    current_user_id = session["user_id"]
+    current_user_id = (
+        session["user_id"]
+    )
+
     message = ""
+
     contacts_list = []
 
+
     if request.method == "POST":
-        saved_name = request.form.get("saved_name", "").strip()
-        mobile = request.form.get("mobile", "").strip()
 
-        found_user = None
-        found_id = None
+        saved_name = (
+            request.form.get(
+                "saved_name",
+                ""
+            ).strip()
+        )
 
-        docs = db.collection("users").where("mobile", "==", mobile).limit(1).get()
+        mobile = clean_mobile(
+            request.form.get(
+                "mobile",
+                ""
+            )
+        )
 
-        if docs:
-            found_id = docs[0].id
-            found_user = docs[0].to_dict()
 
-            if found_id == current_user_id:
-                message = "You cannot add yourself"
-            else:
-                db.collection("users").document(current_user_id)\
-                    .collection("contacts").document(found_id).set({
-                        "contactUserId": found_id,
-                        "savedName": saved_name or found_user.get("name", ""),
-                        "mobile": mobile,
-                        "registered": True,
-                        "createdAt": firestore.SERVER_TIMESTAMP
-                    })
-                message = "Contact added successfully"
+        if not mobile:
+
+            message = (
+                "Enter a valid mobile number"
+            )
+
         else:
-            message = "This mobile number is not registered. Send invite link."
 
-    contact_docs = db.collection("users").document(current_user_id)\
-        .collection("contacts").stream()
+            docs = (
+                db.collection("users")
+                .where(
+                    "mobile",
+                    "==",
+                    mobile
+                )
+                .limit(1)
+                .get()
+            )
 
-    for c in contact_docs:
-        cdata = c.to_dict()
-        contact_user_id = cdata.get("contactUserId")
 
-        user_doc = db.collection("users").document(contact_user_id).get()
+            if docs:
 
-        if user_doc.exists:
-            u = user_doc.to_dict()
-            u["id"] = contact_user_id
-            u["savedName"] = cdata.get("savedName", u.get("name", ""))
-            contacts_list.append(u)
+                found_id = (
+                    docs[0].id
+                )
+
+                found_user = (
+                    docs[0].to_dict()
+                    or {}
+                )
+
+
+                if (
+                    found_id
+                    == current_user_id
+                ):
+
+                    message = (
+                        "You cannot add yourself"
+                    )
+
+                else:
+
+                    (
+                        db.collection("users")
+                        .document(
+                            current_user_id
+                        )
+                        .collection(
+                            "contacts"
+                        )
+                        .document(
+                            found_id
+                        )
+                        .set(
+                            {
+                                "contactUserId":
+                                    found_id,
+
+                                "savedName":
+                                    (
+                                        saved_name
+                                        or
+                                        found_user.get(
+                                            "name",
+                                            ""
+                                        )
+                                    ),
+
+                                "mobile":
+                                    mobile,
+
+                                "registered":
+                                    True,
+
+                                "createdAt":
+                                    firestore
+                                    .SERVER_TIMESTAMP
+                            },
+                            merge=True
+                        )
+                    )
+
+                    message = (
+                        "Contact added successfully"
+                    )
+
+            else:
+
+                message = (
+                    "This mobile number is not registered. "
+                    "Send invite link."
+                )
+
+
+    contact_docs = (
+        db.collection("users")
+        .document(current_user_id)
+        .collection("contacts")
+        .stream()
+    )
+
+
+    for contact_doc in contact_docs:
+
+        contact_data = (
+            contact_doc.to_dict()
+            or {}
+        )
+
+        contact_user_id = (
+            contact_data.get(
+                "contactUserId"
+            )
+        )
+
+        if not contact_user_id:
+            continue
+
+
+        user_doc = (
+            db.collection("users")
+            .document(
+                contact_user_id
+            )
+            .get()
+        )
+
+
+        if not user_doc.exists:
+            continue
+
+
+        user = (
+            user_doc.to_dict()
+            or {}
+        )
+
+        user["id"] = (
+            contact_user_id
+        )
+
+        user["mobile"] = clean_mobile(
+            user.get(
+                "mobile",
+                ""
+            )
+        )
+
+        user["savedName"] = (
+            contact_data.get(
+                "savedName"
+            )
+            or
+            user.get(
+                "name",
+                ""
+            )
+        )
+
+        contacts_list.append(
+            user
+        )
+
+
+    contacts_list.sort(
+        key=lambda item: (
+            str(
+                item.get(
+                    "savedName",
+                    ""
+                )
+            ).lower()
+        )
+    )
+
 
     return render_template(
         "contacts.html",
-        contacts=contacts_list,
-        message=message
+
+        contacts=
+            contacts_list,
+
+        message=
+            message
     )
     
 @app.route("/create-group", methods=["GET", "POST"])
