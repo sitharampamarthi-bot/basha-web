@@ -14,6 +14,11 @@ MODEL_NAME = os.getenv(
     "gemini-3.1-flash-lite"
 ).strip()
 
+LIVE_MODEL_NAME = os.getenv(
+    "GEMINI_LIVE_MODEL",
+    "gemini-3.1-flash-lite"
+).strip()
+
 
 IMAGE_EXTENSIONS = {
     ".png",
