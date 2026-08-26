@@ -331,38 +331,44 @@ def build_live_fast_prompt(target_language):
     ).strip()
 
     return f"""
-Translate the clearly visible text in this camera image into {target_language}.
+You are the Live Camera OCR and Translation engine
+for Basha Messenger.
 
-FAST LIVE CAMERA MODE.
+Analyze this ONE captured camera image.
 
-Rules:
-- Detect source language automatically.
-- Output MUST be in {target_language}.
-- Never use English unless target language is English.
-- Read only clear visible text.
-- Ignore tiny, blurred and uncertain text.
-- Prefer the largest important text first.
-- Combine nearby lines into large blocks.
-- Maximum 5 regions.
-- No explanations.
-- Keep numbers, dates, URLs and names unchanged where needed.
+TARGET LANGUAGE:
+{target_language}
 
-Return JSON only:
+Tasks:
+
+1. Read ALL clearly visible useful text.
+2. Detect the main source language automatically.
+3. Preserve the original reading order.
+4. Translate all readable text into {target_language}.
+
+IMPORTANT:
+
+- Accuracy is more important than visual coordinates.
+- Do NOT return bounding boxes.
+- Do NOT return regions.
+- Do NOT guess blurred text.
+- Ignore extremely tiny unreadable text.
+- Read headings, paragraphs, labels and important visible text.
+- Preserve numbers, dates, URLs, formulas and names where appropriate.
+- translated_text MUST be in {target_language}.
+- Never translate into English unless target language is English.
+
+Return ONLY valid JSON:
 
 {{
-  "detected_language": "",
-  "original_text": "",
-  "translated_text": "",
-  "regions": [
-    {{
-      "translated": "",
-      "x": 0.0,
-      "y": 0.0,
-      "width": 0.0,
-      "height": 0.0
-    }}
-  ]
+    "detected_language": "English",
+    "original_text": "complete readable original text",
+    "translated_text": "complete translation in {target_language}"
 }}
+
+No markdown.
+No explanation.
+No text outside JSON.
 """.strip()
 
 def parse_translation_response(
@@ -895,8 +901,11 @@ def translate_live_camera_fast(
 
         config=types.GenerateContentConfig(
             temperature=0.0,
-            response_mime_type="application/json",
-            max_output_tokens=900
+
+            response_mime_type=
+                "application/json",
+
+            max_output_tokens=3000
         )
     )
 
@@ -909,13 +918,26 @@ def translate_live_camera_fast(
             "Empty live camera response."
         )
 
-    result = (
-        parse_spatial_translation_response(
-            response_text
-        )
+    result = parse_translation_response(
+        response_text
     )
 
+    if not result["original_text"]:
+        raise ValueError(
+            "No readable text found in captured image."
+        )
+
+    if not result["translated_text"]:
+        raise ValueError(
+            "Unable to translate captured text."
+        )
+
+    # Lens regions intentionally optional.
+    # Reliable OCR + translation first.
+    result["regions"] = []
+
     result["input_type"] = "image"
+
     result["extension"] = ".jpg"
 
     return result

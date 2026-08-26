@@ -200,10 +200,26 @@ def quick_translate_live_api():
 
         # Live Camera always uses
         # logged-in user's preferred language.
-        (
-            target_language_code,
-            target_info
-        ) = get_user_preferred_language()
+        
+        target_language_code = clean_lower(
+            request.form.get(
+                "targetLanguage",
+                ""
+            )
+        )
+
+        target_info = get_language_by_code(
+            target_language_code
+        )
+
+        if (
+            not target_info
+            or target_language_code == "auto"
+        ):
+            (
+                target_language_code,
+                target_info
+            ) = get_user_preferred_language()
 
         mime_type = (
             uploaded_file.mimetype

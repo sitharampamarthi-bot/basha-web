@@ -376,6 +376,8 @@ document.addEventListener(
 
     let frozenFrameDataUrl =
         "";
+    let liveCaptureInProgress = false;
+
     let liveLastRequestAt = 0;
 
     let liveLastSuccessAt = 0;
@@ -1103,11 +1105,18 @@ document.addEventListener(
             return;
         }
 
-        liveCameraFrozen = true;
 
         stopLiveCameraTimer();
 
-        liveCameraScanning = false;
+        cancelLiveCameraRequest();
+
+
+        liveCameraFrozen =
+            true;
+
+        liveCameraScanning =
+            false;
+
 
         if (liveCameraStage) {
 
@@ -1116,36 +1125,39 @@ document.addEventListener(
             );
         }
 
+
         liveCameraBadgeText.textContent =
             "Frozen";
 
+
         liveCameraStatus.textContent =
-            "Read translation — tap Resume to continue";
+            "Tap Re-read to capture again";
 
-        if (liveResumeBtn) {
-
-            liveResumeBtn.hidden =
-                false;
-        }
 
         updateFreezeButton();
     }
 
     function resumeLiveCamera() {
 
-        if (!liveCameraRunning) {
+        if (
+            !liveCameraRunning ||
+            liveCaptureInProgress
+        ) {
             return;
         }
+
 
         stopLiveCameraTimer();
 
         cancelLiveCameraRequest();
+
 
         liveCameraScanning =
             false;
 
         liveCameraFrozen =
             false;
+
 
         if (liveCameraStage) {
 
@@ -1154,23 +1166,16 @@ document.addEventListener(
             );
         }
 
-        if (liveResumeBtn) {
-
-            liveResumeBtn.hidden =
-                true;
-        }
 
         /*
-        * Force next scan even if
-        * same camera view is still visible.
+        * Force a completely fresh frame.
         */
         lastLiveFrameSignature =
             "";
 
-        lastLiveTranslatedText =
-            "";
 
         clearLensRegions();
+
 
         if (liveCameraOverlay) {
 
@@ -1178,32 +1183,43 @@ document.addEventListener(
                 true;
         }
 
+
         liveCameraBadgeText.textContent =
-            "Reading again...";
+            "Focusing...";
+
 
         liveCameraStatus.textContent =
-            "Keep camera steady...";
+            "Hold camera steady";
+
 
         updateFreezeButton();
 
+
         /*
-        * Fresh scan immediately.
+        * Camera gets enough time to adjust
+        * focus/exposure after user moves
+        * to another page.
         */
-        setTimeout(
-            () => {
+        liveCameraTimer =
+            setTimeout(
+                () => {
 
-                if (
-                    !liveCameraRunning ||
-                    liveCameraFrozen
-                ) {
-                    return;
-                }
+                    liveCameraTimer =
+                        null;
 
-                scanLiveCamera();
+                    if (
+                        !liveCameraRunning ||
+                        liveCameraFrozen
+                    ) {
+                        return;
+                    }
 
-            },
-            150
-        );
+
+                    captureAndTranslateLiveFrame();
+
+                },
+                750
+            );
     }
 
     function toggleLiveCameraFreeze() {
@@ -1913,14 +1929,15 @@ document.addEventListener(
 
 
     function scheduleLiveCameraScan(
-        delay = LIVE_SCAN_INTERVAL
+        delay = 800
     ) {
 
         stopLiveCameraTimer();
 
         if (
             !liveCameraRunning ||
-            liveCameraFrozen
+            liveCameraFrozen ||
+            liveCaptureInProgress
         ) {
             return;
         }
@@ -1932,36 +1949,73 @@ document.addEventListener(
                     liveCameraTimer =
                         null;
 
-                    scanLiveCamera();
+                    captureAndTranslateLiveFrame();
 
                 },
-                Math.max(
-                    100,
-                    Number(delay) ||
-                    LIVE_SCAN_INTERVAL
-                )
+                delay
             );
     }
 
-    async function scanLiveCamera() {
+    async function captureAndTranslateLiveFrame() {
 
         if (
             !liveCameraRunning ||
-            liveCameraFrozen
+            liveCameraFrozen ||
+            liveCaptureInProgress
         ) {
             return;
         }
 
+        const generation =
+            liveCameraGeneration;
+
+        liveCaptureInProgress =
+            true;
+
+        liveCameraScanning =
+            true;
+
+        stopLiveCameraTimer();
+
+        cancelLiveCameraRequest();
+
+        hideError();
+
+
+        liveCameraBadgeText.textContent =
+            "Capturing...";
+
+        liveCameraStatus.textContent =
+            "Hold camera steady";
+
 
         /*
-        * Never start two Gemini requests
-        * simultaneously.
+        * Give mobile autofocus/exposure
+        * a small final settling time.
         */
-        if (liveCameraScanning) {
+        await new Promise(
+            (resolve) => {
 
-            scheduleLiveCameraScan(
-                LIVE_SCAN_INTERVAL
-            );
+                setTimeout(
+                    resolve,
+                    180
+                );
+            }
+        );
+
+
+        if (
+            !liveCameraRunning ||
+            liveCameraFrozen ||
+            generation !==
+                liveCameraGeneration
+        ) {
+
+            liveCaptureInProgress =
+                false;
+
+            liveCameraScanning =
+                false;
 
             return;
         }
@@ -1973,90 +2027,76 @@ document.addEventListener(
 
         if (!frame) {
 
-            scheduleLiveCameraScan(
-                250
-            );
+            liveCaptureInProgress =
+                false;
 
-            return;
-        }
-
-
-        const difference =
-            frameDifference(
-                lastLiveFrameSignature,
-                frame.signature
-            );
-
-
-        /*
-        * Camera view is almost identical.
-        *
-        * Do not send duplicate Gemini
-        * requests continuously.
-        */
-        if (
-            lastLiveFrameSignature &&
-            difference < 0.035
-        ) {
+            liveCameraScanning =
+                false;
 
             liveCameraBadgeText.textContent =
-                lastLiveTranslatedText
-                    ? "Watching..."
-                    : "Looking for text...";
+                "Camera not ready";
 
             liveCameraStatus.textContent =
-                lastLiveTranslatedText
-                    ? "Move camera to translate new text"
-                    : "Keep camera steady";
+                "Tap Re-read";
 
-            scheduleLiveCameraScan(
-                LIVE_SAME_FRAME_INTERVAL
+            return;
+        }
+
+
+        const blob =
+            await canvasToJpegBlob(
+                frame.canvas
             );
+
+
+        if (
+            !blob ||
+            !blob.size
+        ) {
+
+            liveCaptureInProgress =
+                false;
+
+            liveCameraScanning =
+                false;
+
+            liveCameraBadgeText.textContent =
+                "Capture failed";
+
+            liveCameraStatus.textContent =
+                "Tap Re-read";
 
             return;
         }
 
 
         /*
-        * Protect backend from extremely
-        * rapid camera movement.
+        * Freeze immediately after capture.
+        *
+        * User sees the exact frame being
+        * translated — camera movement after
+        * this point does not affect OCR.
         */
-        const now =
-            Date.now();
-
-        const elapsed =
-            now -
-            liveLastRequestAt;
+        liveCameraFrozen =
+            true;
 
 
-        if (
-            liveLastRequestAt &&
-            elapsed <
-                LIVE_MIN_REQUEST_GAP
-        ) {
+        if (liveCameraStage) {
 
-            scheduleLiveCameraScan(
-                LIVE_MIN_REQUEST_GAP -
-                elapsed
+            liveCameraStage.classList.add(
+                "is-frozen"
             );
-
-            return;
         }
 
 
-        lastLiveFrameSignature =
-            frame.signature;
+        updateFreezeButton();
 
 
-        const generation =
-            liveCameraGeneration;
+        liveCameraBadgeText.textContent =
+            "Reading...";
 
-
-        liveCameraScanning =
-            true;
-
-        liveLastRequestAt =
-            Date.now();
+        liveCameraStatus.textContent =
+            "Reading captured image...";
 
 
         if (lensLayer) {
@@ -2067,49 +2107,6 @@ document.addEventListener(
         }
 
 
-        liveCameraBadgeText.textContent =
-            "Reading...";
-
-
-        liveCameraStatus.textContent =
-            "Reading visible text...";
-
-
-        let blob = null;
-
-
-        try {
-
-            blob =
-                await canvasToJpegBlob(
-                    frame.canvas
-                );
-
-        } catch (_) {
-
-            blob = null;
-        }
-
-
-        if (
-            !blob ||
-            !liveCameraRunning ||
-            liveCameraFrozen ||
-            generation !==
-                liveCameraGeneration
-        ) {
-
-            liveCameraScanning =
-                false;
-
-            scheduleLiveCameraScan(
-                250
-            );
-
-            return;
-        }
-
-
         const formData =
             new FormData();
 
@@ -2117,7 +2114,7 @@ document.addEventListener(
         formData.append(
             "file",
             blob,
-            "basha-live-camera.jpg"
+            "basha-live-capture.jpg"
         );
 
 
@@ -2127,36 +2124,19 @@ document.addEventListener(
         );
 
 
+        /*
+        * Keep lens request enabled.
+        * Backend fallback will make regions
+        * optional instead of failing entire OCR.
+        */
         formData.append(
             "lensMode",
             "1"
         );
 
 
-        /*
-        * There should normally be no
-        * previous request here because
-        * liveCameraScanning prevents it.
-        *
-        * Still clean stale controller.
-        */
-        if (liveCameraRequestController) {
-
-            try {
-
-                liveCameraRequestController
-                    .abort();
-
-            } catch (_) {}
-        }
-
-
-        const controller =
-            new AbortController();
-
-
         liveCameraRequestController =
-            controller;
+            new AbortController();
 
 
         try {
@@ -2177,46 +2157,33 @@ document.addEventListener(
                             formData,
 
                         signal:
-                            controller.signal,
-
-                        cache:
-                            "no-store"
+                            liveCameraRequestController
+                                .signal
                     }
                 );
 
 
-            /*
-            * Protect against HTML Render
-            * error pages being parsed
-            * directly as JSON.
-            */
-            const contentType =
-                response.headers.get(
-                    "content-type"
-                ) || "";
+            let data = null;
 
 
-            if (
-                !contentType.includes(
-                    "application/json"
-                )
-            ) {
+            try {
+
+                data =
+                    await response.json();
+
+            } catch (_) {
 
                 throw new Error(
-                    `Live translation server returned HTTP ${response.status}`
+                    "Translation server returned an invalid response."
                 );
             }
 
 
-            const data =
-                await response.json();
-
-
             if (
                 generation !==
-                    liveCameraGeneration ||
-                !liveCameraRunning ||
-                liveCameraFrozen
+                    liveCameraGeneration
+                ||
+                !liveCameraRunning
             ) {
 
                 return;
@@ -2225,47 +2192,14 @@ document.addEventListener(
 
             if (
                 !response.ok ||
+                !data ||
                 !data.success
             ) {
 
-                liveConsecutiveNoText +=
-                    1;
-
-
-                liveCameraBadgeText.textContent =
-                    "Looking for text...";
-
-
-                liveCameraStatus.textContent =
-                    "Point camera at readable text";
-
-
-                /*
-                * Allow another attempt even
-                * when camera remains steady.
-                */
-                lastLiveFrameSignature =
-                    "";
-
-
-                scheduleLiveCameraScan(
-                    liveConsecutiveNoText >= 2
-                        ? 650
-                        : 400
+                throw new Error(
+                    data?.error ||
+                    "Unable to read captured image."
                 );
-
-                return;
-            }
-
-
-            if (
-                data.targetLanguage &&
-                target.value !==
-                    data.targetLanguage
-            ) {
-
-                target.value =
-                    data.targetLanguage;
             }
 
 
@@ -2283,42 +2217,45 @@ document.addEventListener(
                 ).trim();
 
 
-            if (!translated) {
-
-                liveConsecutiveNoText +=
-                    1;
-
+            if (!original) {
 
                 liveCameraBadgeText.textContent =
-                    "Looking for text...";
-
+                    "No text found";
 
                 liveCameraStatus.textContent =
-                    "Keep camera steady";
-
-
-                lastLiveFrameSignature =
-                    "";
-
-
-                scheduleLiveCameraScan(
-                    450
-                );
+                    "Adjust camera and tap Re-read";
 
                 return;
             }
 
 
+            if (!translated) {
+
+                liveCameraBadgeText.textContent =
+                    "Translation unavailable";
+
+                liveCameraStatus.textContent =
+                    "Tap Re-read";
+
+                return;
+            }
+
+
+            lastLiveFrameSignature =
+                frame.signature;
+
+
+            lastLiveTranslatedText =
+                translated;
+
+
             /*
-            * Successful live translation.
+            * Spatial regions are OPTIONAL.
+            *
+            * Translation must still succeed
+            * even when Gemini does not return
+            * perfect bounding boxes.
             */
-            liveConsecutiveNoText =
-                0;
-
-            liveLastSuccessAt =
-                Date.now();
-
-
             const regions =
                 Array.isArray(
                     data.regions
@@ -2327,16 +2264,17 @@ document.addEventListener(
                     : [];
 
 
-            renderLensRegions(
-                regions
-            );
+            if (
+                regions.length > 0
+            ) {
 
-
-            if (lensLayer) {
-
-                lensLayer.classList.remove(
-                    "is-scanning"
+                renderLensRegions(
+                    regions
                 );
+
+            } else {
+
+                clearLensRegions();
             }
 
 
@@ -2357,13 +2295,20 @@ document.addEventListener(
                 translated;
 
 
-            lastLiveTranslatedText =
-                translated;
-
-
+            /*
+            * If Gemini returned useful regions,
+            * Lens View is shown.
+            *
+            * Otherwise Full Text remains
+            * available instead of treating
+            * the entire translation as failed.
+            */
             if (
                 liveCameraViewMode ===
                     "full"
+                ||
+                regions.length ===
+                    0
             ) {
 
                 liveCameraOverlay.hidden =
@@ -2376,36 +2321,12 @@ document.addEventListener(
             }
 
 
-            liveCameraBadgeText.textContent =
-                "Translated";
-
-
-            /*
-            * IMPORTANT:
-            *
-            * DO NOT freeze automatically.
-            * Google Lens keeps watching the
-            * camera after every translation.
-            */
-            liveCameraStatus.textContent =
-                "Live — move camera to translate new text";
-
-
-            /*
-            * Synchronize normal translator
-            * fields without stopping camera.
-            */
             input.value =
                 original;
 
 
             charCount.textContent =
                 `${input.value.length} / 5000`;
-
-
-            showTranslatedOutput(
-                data
-            );
 
 
             source.value =
@@ -2418,22 +2339,24 @@ document.addEventListener(
                 "Auto Detected";
 
 
-            /*
-            * Continue watching.
-            *
-            * Same-frame detection above
-            * prevents unnecessary requests.
-            */
-            scheduleLiveCameraScan(
-                LIVE_SCAN_INTERVAL
+            showTranslatedOutput(
+                data
             );
+
+
+            liveCameraBadgeText.textContent =
+                "Translated";
+
+
+            liveCameraStatus.textContent =
+                "Translation ready — tap Re-read for next image";
 
 
         } catch (error) {
 
             if (
                 error.name ===
-                    "AbortError"
+                "AbortError"
             ) {
 
                 return;
@@ -2441,88 +2364,59 @@ document.addEventListener(
 
 
             console.error(
-                "LIVE CAMERA TRANSLATE ERROR:",
+                "LIVE CAPTURE TRANSLATE ERROR:",
                 error
             );
 
 
             if (
                 generation ===
-                    liveCameraGeneration &&
-                liveCameraRunning &&
-                !liveCameraFrozen
+                    liveCameraGeneration
+                &&
+                liveCameraRunning
             ) {
 
                 liveCameraBadgeText.textContent =
-                    "Trying again...";
-
+                    "Unable to read";
 
                 liveCameraStatus.textContent =
-                    "Keep camera steady";
+                    "Adjust camera and tap Re-read";
 
-
-                /*
-                * Retry current view because
-                * network/API error does not
-                * mean frame was unreadable.
-                */
-                lastLiveFrameSignature =
-                    "";
-
-
-                scheduleLiveCameraScan(
-                    700
+                showError(
+                    error.message ||
+                    "Unable to translate captured image."
                 );
             }
 
 
         } finally {
 
-            if (
-                generation ===
-                    liveCameraGeneration
-            ) {
+            if (lensLayer) {
 
-                if (lensLayer) {
-
-                    lensLayer.classList.remove(
-                        "is-scanning"
-                    );
-                }
-
-
-                liveCameraScanning =
-                    false;
-
-
-                if (
-                    liveCameraRequestController ===
-                        controller
-                ) {
-
-                    liveCameraRequestController =
-                        null;
-                }
-
-
-                /*
-                * Safety scheduler.
-                *
-                * If success/error branch has
-                * already scheduled a timer,
-                * don't replace it.
-                */
-                if (
-                    liveCameraRunning &&
-                    !liveCameraFrozen &&
-                    !liveCameraTimer
-                ) {
-
-                    scheduleLiveCameraScan(
-                        LIVE_SCAN_INTERVAL
-                    );
-                }
+                lensLayer.classList.remove(
+                    "is-scanning"
+                );
             }
+
+
+            liveCaptureInProgress =
+                false;
+
+
+            liveCameraScanning =
+                false;
+
+
+            liveCameraRequestController =
+                null;
+
+            /*
+            * IMPORTANT:
+            * No automatic second request.
+            *
+            * Re-read button alone starts
+            * the next capture.
+            */
         }
     }
 
@@ -2676,7 +2570,7 @@ document.addEventListener(
             liveConsecutiveNoText = 0;
 
             scheduleLiveCameraScan(
-                250
+                850
             );
 
 
