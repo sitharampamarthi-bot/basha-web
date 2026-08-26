@@ -331,44 +331,39 @@ def build_live_fast_prompt(target_language):
     ).strip()
 
     return f"""
-Read the visible text in this camera frame.
+Translate the clearly visible text in this camera image into {target_language}.
 
-Source language can be ANY language.
+FAST LIVE CAMERA MODE.
 
-Translate ALL clearly readable text directly into:
-{target_language}
-
-IMPORTANT:
-- Output translation MUST be {target_language}.
-- Never output English unless target is English.
+Rules:
 - Detect source language automatically.
-- Do not explain.
-- Do not translate unreadable text.
-- Preserve numbers, dates, URLs, codes and names.
+- Output MUST be in {target_language}.
+- Never use English unless target language is English.
+- Read only clear visible text.
+- Ignore tiny, blurred and uncertain text.
+- Prefer the largest important text first.
+- Combine nearby lines into large blocks.
+- Maximum 5 regions.
+- No explanations.
+- Keep numbers, dates, URLs and names unchanged where needed.
 
-Group nearby text into paragraph-sized blocks.
-
-Return ONLY JSON:
+Return JSON only:
 
 {{
-  "detected_language": "source language",
-  "original_text": "visible source text",
-  "translated_text": "complete {target_language} translation",
+  "detected_language": "",
+  "original_text": "",
+  "translated_text": "",
   "regions": [
     {{
-      "translated": "{target_language} translation",
-      "x": 0.10,
-      "y": 0.20,
-      "width": 0.50,
-      "height": 0.10
+      "translated": "",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 0.0,
+      "height": 0.0
     }}
   ]
 }}
-
-Coordinates are normalized 0 to 1.
-Return maximum 8 useful regions.
 """.strip()
-
 
 def parse_translation_response(
     response_text
@@ -901,7 +896,7 @@ def translate_live_camera_fast(
         config=types.GenerateContentConfig(
             temperature=0.0,
             response_mime_type="application/json",
-            max_output_tokens=1800
+            max_output_tokens=900
         )
     )
 
